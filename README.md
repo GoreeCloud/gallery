@@ -21,7 +21,7 @@ GoreeCloud Gallery is intended to remain:
 - governed by Android user/profile isolation and platform-authorized media access and mutation/write consent;
 - free of advertising and unnecessary tracking;
 - governed by the current Stable Glaze UI contract;
-- integrated substantively with Privacy Shield, Wardveil Security, Everkeep, Manager, Mesh, and Identity where those platform responsibilities apply; and
+- integrated substantively with Privacy Shield, Wardveil Security, Everkeep, Manager, Mesh, Identity, and Sync where those platform responsibilities apply; and
 - honest about which capabilities are source foundations, packaged, device-accepted, released, or Stable.
 
 Optional GoreeCloud Photos integration may be added behind explicit adapters and user control. Local browsing must not depend on a GoreeCloud account, network connection, or cloud service.
@@ -46,15 +46,15 @@ The current Move candidate is also Development evidence only. It derives existin
 
 ## Platform Contract
 
-`goreecloud.platform.yaml` is the machine-readable declaration of Gallery's current GoreeCloud Platform Contract state. It deliberately separates:
+`goreecloud.platform.yaml` declares Gallery against **GoreeCloud Platform Contract 0.3**, including all eight Integral Platform Systems. It deliberately separates:
 
 - the repository-local Glaze V1.4 source mapping now present in Development;
 - the still-incomplete whole-application Glaze acceptance gates;
 - Development lifecycle state;
-- blocked/unaccepted Platform-System integrations; and
+- blocked/unaccepted Platform-System integrations, including future Sync responsibility; and
 - outstanding representative-device, accessibility, recovery, signing, release, and Stable gates.
 
-The Platform Contract workflow validates that declaration against the pinned central contract authority. A green manifest check is evidence of declaration validity, not evidence that blocked integrations or release gates are accepted.
+The Platform Contract workflow validates that declaration against an exact central contract authority whose current Stable Glaze target is `1.4.0`. A green manifest check is evidence of declaration validity, not evidence that blocked integrations or release gates are accepted.
 
 ## Transitional reconstruction line
 
@@ -78,12 +78,13 @@ Gallery must remain current with the applicable GoreeCloud platform systems:
 - **Manager** — accepted platform visibility and administrative integration where required.
 - **GoreeCloud Mesh** — authenticated cross-service registration/capability publication where required.
 - **GoreeCloud Identity** — any future account, device, session, Photos-account, or delegated-authority behavior.
+- **GoreeCloud Sync** — any future accepted cross-device synchronization of Gallery-owned state or Photos continuity; local Gallery browsing must remain useful without it.
 
 These are functional requirements, not decorative labels. Missing or unvalidated required integration blocks Stable qualification.
 
 ## Stable-release work
 
-The native application still requires substantial work before Stable qualification, including representative-device acceptance of the current Move candidate, New folder/Copy organization design, native video playback, mature media/viewer/editor behavior, destructive-operation edge-case acceptance, hidden/protected/excluded media policy, Android user/profile acceptance, rendered accessibility and current-Stable Glaze UI acceptance, applicable Privacy Shield/Wardveil/Everkeep/Manager/Mesh/Identity integration evidence, packaging/signing, upgrade/recovery validation, and representative physical-device testing.
+The native application still requires substantial work before Stable qualification, including representative-device acceptance of the current Move candidate, New folder/Copy organization design, native video playback, mature media/viewer/editor behavior, destructive-operation edge-case acceptance, hidden/protected/excluded media policy, Android user/profile acceptance, rendered accessibility and current-Stable Glaze UI acceptance, applicable Privacy Shield/Wardveil/Everkeep/Manager/Mesh/Identity/Sync integration evidence, packaging/signing, upgrade/recovery validation, and representative physical-device testing.
 
 The old Fossify-based acceptance candidate is not a shortcut around those native acceptance gates.
 
@@ -95,7 +96,7 @@ The old Fossify-based acceptance candidate is not a shortcut around those native
 - [FEATURE-ROADMAP.md](FEATURE-ROADMAP.md) — current Development sequencing and lifecycle obligations.
 - [BENEFITS.md](BENEFITS.md) — current and intended product benefits without Stable overclaiming.
 - [COMPETITIVE-OBJECTIVES.md](COMPETITIVE-OBJECTIVES.md) — current first-party product objectives.
-- [goreecloud.platform.yaml](goreecloud.platform.yaml) — machine-readable Development, compatibility, Platform-System, and conformance state.
+- [goreecloud.platform.yaml](goreecloud.platform.yaml) — machine-readable Development, Platform Contract 0.3 compatibility, Platform-System, and conformance state.
 - [docs/NATIVE-MIGRATION.md](docs/NATIVE-MIGRATION.md) — native replacement and transitional-source boundary.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — architecture/security context; inherited-application sections remain transitional/historical unless superseded by native milestones.
 - [docs/PLATFORM_CONFORMANCE.md](docs/PLATFORM_CONFORMANCE.md) — platform conformance requirements.
