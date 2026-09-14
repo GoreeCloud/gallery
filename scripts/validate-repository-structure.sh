@@ -30,6 +30,9 @@ required_files=(
   docs/STABLE-RELEASE-CHECKLIST.md
   docs/RELEASE-EVIDENCE-TEMPLATE.md
   docs/REPOSITORY-READINESS.md
+  native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt
+  native/app/src/test/kotlin/com/goreecloud/gallery/GalleryGlazeContractTest.kt
+  native/core/src/test/kotlin/com/goreecloud/gallery/core/GallerySelectionPolicyTest.kt
   patches/gc9/build_goreecloud_gallery_gc9.py
   patches/gc10/build_goreecloud_gallery_gc10.py
   patches/gc11/build_goreecloud_gallery_gc11.py
@@ -68,25 +71,29 @@ grep -Fq 'acfd352df1a1852d17a5f77def8b7ad6e522a5b6' NOTICE.md || fail 'NOTICE do
 
 grep -Fq 'Android user / profile boundary' docs/ARCHITECTURE.md || fail 'architecture does not document Android user/profile isolation'
 grep -Fq 'Glaze UI architecture' docs/ARCHITECTURE.md || fail 'architecture does not document the Glaze UI layer'
-grep -Fq 'GoreeCloud Gallery Glaze UI Contract' docs/GLAZE-UI.md || fail 'Glaze UI contract does not identify its Gallery scope'
-grep -Fq 'Target design system: **Glaze UI 1.0.0**' docs/GLAZE-UI.md || fail 'Glaze UI target version is not documented'
-grep -Fq 'd6e446fd8ef251259d16368d50aad90d9287a774' docs/GLAZE-UI.md || fail 'canonical Glaze UI reference revision is not documented'
-grep -Fq 'Current Gallery implementation line: `gc.16`' docs/GLAZE-UI.md || fail 'merged Glaze UI baseline is not documented'
-grep -Fq 'No permanent Glaze UI exception is approved' docs/GLAZE-UI.md || fail 'Glaze UI exception boundary is not documented'
-grep -Fq 'meaningful GoreeCloud-owned JVM tests actually execute' docs/GLAZE-UI.md || fail 'Glaze UI contract does not preserve behavioral-test evidence requirements'
+grep -Fq 'GoreeCloud Gallery — Glaze UI Conformance Contract' docs/GLAZE-UI.md || fail 'Glaze UI contract does not identify its Gallery scope'
+grep -Fq 'GLAZE UI V1.4 / 1.4.0 Stable' docs/GLAZE-UI.md || fail 'current Glaze UI Stable target is not documented'
+grep -Fq 'GoreeCloud/goreecloud-glaze-ui' docs/GLAZE-UI.md || fail 'canonical Glaze UI repository is not documented'
+grep -Fq 'Permanent Glaze exceptions:** none approved' docs/GLAZE-UI.md || fail 'Glaze UI exception boundary is not documented'
+grep -Fq 'does not automatically make Gallery conformant or Stable' docs/GLAZE-UI.md || fail 'downstream Glaze acceptance boundary is not documented'
+grep -Fq 'representative-device acceptance are verified' docs/GLAZE-UI.md || fail 'Gallery device acceptance boundary is not documented'
+grep -Fq 'const val VERSION = "1.4.0"' native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt || fail 'native Gallery Glaze contract does not target current Stable'
+grep -Fq 'GoreeCloud/goreecloud-glaze-ui' native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt || fail 'native Gallery Glaze contract does not name canonical authority'
+grep -Fq 'class GalleryGlazeContractTest' native/app/src/test/kotlin/com/goreecloud/gallery/GalleryGlazeContractTest.kt || fail 'native Gallery Glaze conformance tests are missing'
+grep -Fq 'class GallerySelectionPolicyTest' native/core/src/test/kotlin/com/goreecloud/gallery/core/GallerySelectionPolicyTest.kt || fail 'native Gallery selection behavioral tests are missing'
 grep -Fq 'The third finding is a functional defect' docs/GC17-DEVICE-ACCEPTANCE-FIXES.md || fail 'gc.17 functional regression record is incomplete'
 grep -Fq 'deleteEmptyFolders' docs/GC17-DEVICE-ACCEPTANCE-FIXES.md || fail 'gc.17 explicit delete regression is not documented'
 grep -Fq 'overflow text is readable' docs/GC17-DEVICE-ACCEPTANCE-FIXES.md || fail 'gc.17 popup device gate is not documented'
 grep -Fq 'GoreeCloud Gallery Stable Signing Runbook' docs/STABLE-SIGNING-RUNBOOK.md || fail 'stable signing runbook does not identify its Gallery scope'
 grep -Fq 'GoreeCloud Gallery Real-Device Acceptance Runbook' docs/REAL-DEVICE-ACCEPTANCE-RUNBOOK.md || fail 'real-device runbook does not identify its Gallery scope'
-grep -Fq 'GoreeCloud Gallery 1.0.0 Stable Candidate' docs/STABLE-CANDIDATE-1.0.0.md || fail 'Stable candidate contract does not identify the final candidate'
+grep -Fq 'GoreeCloud Gallery 1.0.0 Stable Candidate' docs/STABLE-CANDIDATE-1.0.0.md || fail 'historical Stable candidate contract does not identify its candidate'
 grep -Fq 'Stable release: Not approved' docs/REPOSITORY-READINESS.md || fail 'repository readiness record does not preserve the stable-release boundary'
 
-grep -Fq 'VERSION_NAME = "1.0.0"' patches/gc9/build_goreecloud_gallery_gc9.py || fail 'gc.9 does not set the final semantic version'
+grep -Fq 'VERSION_NAME = "1.0.0"' patches/gc9/build_goreecloud_gallery_gc9.py || fail 'gc.9 does not set the historical semantic version'
 grep -Fq 'VERSION_CODE = "10016"' patches/gc16/build_goreecloud_gallery_gc16.py || fail 'gc.16 historical version identity is missing'
 grep -Fq 'compact_dialog' patches/gc16/build_goreecloud_gallery_gc16.py || fail 'gc.16 compact-dialog contract is missing'
 grep -Fq 'fillViewport' patches/gc16/build_goreecloud_gallery_gc16.py || fail 'gc.16 dialog viewport contract is missing'
-grep -Fq 'VERSION_CODE = "10017"' patches/gc17/build_goreecloud_gallery_gc17.py || fail 'gc.17 does not set the current test-build version code'
+grep -Fq 'VERSION_CODE = "10017"' patches/gc17/build_goreecloud_gallery_gc17.py || fail 'gc.17 historical test-build version code is missing'
 grep -Fq 'patch_explicit_folder_delete' patches/gc17/build_goreecloud_gallery_gc17.py || fail 'gc.17 explicit folder-delete fix is missing'
 grep -Fq 'patch_popup_contrast' patches/gc17/build_goreecloud_gallery_gc17.py || fail 'gc.17 popup contrast fix is missing'
 grep -Fq 'patch_confirm_delete_layout' patches/gc17/build_goreecloud_gallery_gc17.py || fail 'gc.17 destructive-dialog geometry fix is missing'

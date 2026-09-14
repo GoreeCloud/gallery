@@ -3,6 +3,7 @@ package com.goreecloud.gallery.core
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class GalleryBulkActionPolicyTest {
@@ -75,7 +76,61 @@ class GalleryBulkActionPolicyTest {
         )
     }
 
-    private fun media(id: String, mimeType: String): MediaItem = MediaItem(
+    @Test
+    fun `move plan is bounded to authorized selection and excludes destination residents`() {
+        val cameraItem = media("1", "image/jpeg", albumId = "camera", albumName = "Camera")
+        val downloadItem = media("2", "image/jpeg", albumId = "downloads", albumName = "Downloads")
+        val destination = album("downloads", "Downloads", downloadItem.id)
+
+        val plan = GalleryBulkActionPolicy.movePlan(
+            currentScope = listOf(cameraItem, downloadItem),
+            selectedContentUris = setOf(cameraItem.contentUri, downloadItem.contentUri, "content://foreign/999"),
+            destination = destination,
+        )
+
+        assertEquals("downloads", plan?.destinationAlbumId)
+        assertEquals("Downloads", plan?.destinationAlbumName)
+        assertEquals(listOf(cameraItem.contentUri), plan?.contentUris)
+    }
+
+    @Test
+    fun `move plan is null when every selected item already belongs to destination`() {
+        val item = media("1", "image/jpeg", albumId = "camera", albumName = "Camera")
+        assertNull(
+            GalleryBulkActionPolicy.movePlan(
+                currentScope = listOf(item),
+                selectedContentUris = setOf(item.contentUri),
+                destination = album("camera", "Camera", item.id),
+            ),
+        )
+    }
+
+    @Test
+    fun `move plan enforces Android mutation item bound`() {
+        val items = (1..101).map { media(it.toString(), "image/jpeg", albumId = "camera", albumName = "Camera") }
+        assertFailsWith<IllegalArgumentException> {
+            GalleryBulkActionPolicy.movePlan(
+                currentScope = items,
+                selectedContentUris = items.mapTo(linkedSetOf()) { it.contentUri },
+                destination = album("downloads", "Downloads", "cover"),
+            )
+        }
+    }
+
+    private fun album(id: String, name: String, coverId: String): MediaAlbum = MediaAlbum(
+        id = id,
+        displayName = name,
+        itemCount = 1,
+        coverItemId = coverId,
+        newestAt = Instant.parse("2026-08-31T12:00:00Z"),
+    )
+
+    private fun media(
+        id: String,
+        mimeType: String,
+        albumId: String = "camera",
+        albumName: String = "Camera",
+    ): MediaItem = MediaItem(
         id = id,
         contentUri = "content://media/external/file/$id",
         displayName = "item-$id",
@@ -86,7 +141,7 @@ class GalleryBulkActionPolicyTest {
         height = 1920,
         durationMillis = if (mimeType.startsWith("video/")) 5_000 else null,
         sizeBytes = 1024,
-        albumId = "camera",
-        albumName = "Camera",
+        albumId = albumId,
+        albumName = albumName,
     )
 }

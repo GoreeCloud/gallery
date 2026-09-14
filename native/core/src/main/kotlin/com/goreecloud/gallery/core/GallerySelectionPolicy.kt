@@ -5,18 +5,57 @@ package com.goreecloud.gallery.core
  *
  * Selection is presentation state over a caller-supplied current scope. It never creates media
  * authority: content URIs that are not in the current scope are pruned and cannot be resolved for
- * bulk actions.
+ * bulk actions. Sweep/range helpers preserve the same rule and are deterministic so touch gestures
+ * never gain authority beyond what the current Gallery surface already presents.
  */
 object GallerySelectionPolicy {
     fun toggle(
         selectedContentUris: Set<String>,
         item: MediaItem,
         currentScope: List<MediaItem>,
+    ): Set<String> = setSelected(
+        selectedContentUris = selectedContentUris,
+        item = item,
+        currentScope = currentScope,
+        selected = item.contentUri !in prune(selectedContentUris, currentScope),
+    )
+
+    /** Set one item to an explicit selection state without toggle jitter. */
+    fun setSelected(
+        selectedContentUris: Set<String>,
+        item: MediaItem,
+        currentScope: List<MediaItem>,
+        selected: Boolean,
     ): Set<String> {
         val valid = prune(selectedContentUris, currentScope).toMutableSet()
         if (currentScope.none { it.contentUri == item.contentUri }) return valid
+        if (selected) valid.add(item.contentUri) else valid.remove(item.contentUri)
+        return valid
+    }
 
-        if (!valid.add(item.contentUri)) valid.remove(item.contentUri)
+    /**
+     * Apply one desired state to the inclusive presentation-order range between two authorized URIs.
+     *
+     * This is suitable for touch sweep/drag selection. Replaying the same range is idempotent, so
+     * pointer jitter over already-visited tiles cannot repeatedly toggle them on and off.
+     */
+    fun applyRange(
+        selectedContentUris: Set<String>,
+        currentScope: List<MediaItem>,
+        anchorContentUri: String,
+        targetContentUri: String,
+        selected: Boolean,
+    ): Set<String> {
+        val valid = prune(selectedContentUris, currentScope).toMutableSet()
+        val anchor = currentScope.indexOfFirst { it.contentUri == anchorContentUri }
+        val target = currentScope.indexOfFirst { it.contentUri == targetContentUri }
+        if (anchor < 0 || target < 0) return valid
+
+        val start = minOf(anchor, target)
+        val end = maxOf(anchor, target)
+        currentScope.subList(start, end + 1).forEach { item ->
+            if (selected) valid.add(item.contentUri) else valid.remove(item.contentUri)
+        }
         return valid
     }
 
