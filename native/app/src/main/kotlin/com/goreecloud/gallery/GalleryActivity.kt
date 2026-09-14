@@ -1793,7 +1793,7 @@ class GalleryActivity : Activity() {
             setTextColor(primaryTextColor())
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setTypeface(typeface, Typeface.BOLD)
-            background = Color.TRANSPARENT
+            setBackgroundColor(Color.TRANSPARENT)
             isClickable = true
             isFocusable = true
             contentDescription = "Cancel new folder"
