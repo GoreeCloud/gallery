@@ -62,7 +62,10 @@ object GalleryGlazeContract {
     const val CONTENT_BOTTOM_INSET_DP = SPACE_CONTENT_DP
     const val NAVIGATION_ICON_DP = 20
     const val NAVIGATION_LABEL_SP = 10.5f
-    const val NAVIGATION_ITEM_RADIUS_DP = SHAPE_CONTROL_DP
+
+    // The active destination is a nested capsule, not a rounded rectangle. Matching the outer
+    // capsule geometry prevents the selected-state halo from protruding past the navigation shell.
+    const val NAVIGATION_ITEM_RADIUS_DP = SHAPE_CAPSULE_DP
 
     /**
      * Android Gallery capability adapter for current composition widths.
