@@ -6,12 +6,13 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 
 /**
- * Native Android material mapping for Gallery's GLAZE UI V1.3 Adaptive Resonance pass.
+ * Native Android material mapping for Gallery's GLAZE UI V1.4 Optical Intelligence pass.
  *
- * Environmental color is deliberately low influence and non-semantic. Selection, destructive,
- * privacy, permission, and other protected states continue to use their semantic authorities.
- * These surfaces remain near-opaque so loss of transparency/blur cannot remove hierarchy or text
- * readability; Gallery does not require a blur implementation for V1.3 identity.
+ * Environmental memory tint is deliberately low influence and non-semantic. Selection,
+ * destructive, privacy, permission, and other protected states continue to use their semantic
+ * authorities. These surfaces remain near-opaque so Reduced Transparency, Increased Contrast,
+ * performance constraints, or lack of platform blur support can collapse them to readable solid
+ * treatments without changing task hierarchy or authority.
  */
 object GalleryGlazeSurfaces {
     enum class Role {
@@ -38,7 +39,7 @@ object GalleryGlazeSurfaces {
             Role.CHROME -> 0.035f
             Role.RAISED -> 0.045f
             Role.OVERLAY -> 0.025f
-        }.coerceAtMost(GalleryGlazeContract.ENVIRONMENT_TINT_MAX_FRACTION)
+        }.coerceAtMost(GalleryGlazeContract.OPTICAL_MEMORY_TINT_MAX_FRACTION)
         val surface = mix(base, environment, tintFraction)
         val alpha = when (role) {
             Role.CONTROL -> if (isNight) 0.96f else 0.94f
@@ -62,7 +63,7 @@ object GalleryGlazeSurfaces {
     }
 
     private fun mix(base: Int, tint: Int, fraction: Float): Int {
-        val amount = fraction.coerceIn(0f, GalleryGlazeContract.ENVIRONMENT_TINT_MAX_FRACTION)
+        val amount = fraction.coerceIn(0f, GalleryGlazeContract.OPTICAL_MEMORY_TINT_MAX_FRACTION)
         fun channel(baseChannel: Int, tintChannel: Int): Int =
             (baseChannel + ((tintChannel - baseChannel) * amount)).toInt().coerceIn(0, 255)
 
