@@ -21,9 +21,9 @@ import java.util.WeakHashMap
  *
  * GalleryActivity and RecycleBinActivity retain all navigation/media authority. This helper only
  * refines already-rendered first-party controls. It never changes Android permissions, media scope,
- * mutation authority, or destination semantics. Repeated layout work is intentionally bounded to
- * direct bottom/viewer chrome plus the four primary navigation controls; large media grids are not
- * repeatedly traversed.
+ * mutation authority, destination semantics, or Activity-owned navigation accessibility identity.
+ * Repeated layout work is intentionally bounded to direct bottom/viewer chrome plus the four
+ * primary navigation controls; large media grids are not repeatedly traversed.
  */
 object GalleryUiRefinement {
     private data class Installation(
@@ -120,7 +120,7 @@ object GalleryUiRefinement {
             styleControl(
                 activity = activity,
                 view = view,
-                marker = "control:$description:${if (primary) "primary" else "quiet"}",
+                marker = "control:$description",
                 role = if (primary) GalleryGlazeSurfaces.Role.CONTROL else GalleryGlazeSurfaces.Role.RAISED,
                 elevationDp = if (primary) 2 else 1,
             )
@@ -145,8 +145,11 @@ object GalleryUiRefinement {
             val item = capsule.getChildAt(index) as? TextView ?: continue
             val label = item.text?.toString() ?: continue
             val icon = navigationIcons[label] ?: continue
-            val selected = item.isSelected
-            val marker = "navigation:$label:$selected:v2"
+            // GalleryActivity owns the navigation selection and accessibility identity. Read that
+            // identity rather than replacing it from presentation-only refinement state.
+            val activityDescription = item.contentDescription?.toString().orEmpty()
+            val selected = activityDescription == "$label, selected" || item.isSelected
+            val marker = "navigation:$label:$selected:v3"
             if (item.getTag(R.id.gallery_ui_refinement_tag) == marker) continue
 
             val foreground = if (selected) activityAccent(activity) else activityPrimaryText(activity)
@@ -169,7 +172,6 @@ object GalleryUiRefinement {
             } else {
                 ColorDrawable(Color.TRANSPARENT)
             }
-            item.contentDescription = "$label${if (selected) ", selected" else ""}"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 item.stateDescription = if (selected) "Selected" else null
             }
