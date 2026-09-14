@@ -10,7 +10,7 @@
         android:allowBackup="false"
         android:icon="@mipmap/ic_gallery_launcher"
         android:roundIcon="@mipmap/ic_gallery_launcher"
-        android:label="GoreeCloud Gallery"
+        android:label="Gallery"
         android:supportsRtl="true"
         android:theme="@style/Theme.GoreeCloudGallery">
         <activity

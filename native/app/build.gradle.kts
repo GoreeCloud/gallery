@@ -11,8 +11,8 @@ android {
         applicationId = "com.goreecloud.gallery"
         minSdk = 29
         targetSdk = 36
-        versionCode = 14
-        versionName = "0.8.2-dev"
+        versionCode = 15
+        versionName = "0.8.3-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

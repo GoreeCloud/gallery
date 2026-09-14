@@ -40,6 +40,7 @@ class GalleryApplication : Application(), Application.ActivityLifecycleCallbacks
 
     override fun onActivityDestroyed(activity: Activity) {
         recycleBinScopes.remove(activity)
+        GalleryUiRefinement.uninstall(activity)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
@@ -48,6 +49,7 @@ class GalleryApplication : Application(), Application.ActivityLifecycleCallbacks
         // Install after Activity.onCreate() has completed so the main root hierarchy is available,
         // but before the resumed frame is presented to the user.
         GallerySystemBars.install(activity)
+        GalleryUiRefinement.install(activity)
     }
 
     override fun onActivityPaused(activity: Activity) = Unit

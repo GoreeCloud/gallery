@@ -60,6 +60,9 @@ object GalleryGlazeContract {
     const val NAVIGATION_ELEVATION_DP = 6
     const val NAVIGATION_RESERVED_SPACE_DP = 82
     const val CONTENT_BOTTOM_INSET_DP = SPACE_CONTENT_DP
+    const val NAVIGATION_ICON_DP = 20
+    const val NAVIGATION_LABEL_SP = 10.5f
+    const val NAVIGATION_ITEM_RADIUS_DP = SHAPE_CONTROL_DP
 
     /**
      * Android Gallery capability adapter for current composition widths.

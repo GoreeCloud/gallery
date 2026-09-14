@@ -9,6 +9,7 @@ import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -37,33 +38,43 @@ class GalleryRenderedAcceptanceTest {
             "Albums",
             "Videos",
             "Settings",
-            "Gallery media access action",
         ).forEach { description ->
             onView(withContentDescription(description))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
+                .check(matches(hasTopCompoundDrawable()))
         }
+
+        onView(withContentDescription("Gallery media access action"))
+            .check(matches(isDisplayed()))
+            .check(matches(isClickable()))
+            .check(matches(hasMinimumTouchSizeDp(48f)))
     }
 
     @Test
     fun destinationNavigationUpdatesRenderedSelectionState() {
-        onView(withContentDescription("Albums"))
-            .perform(click())
-        onView(withContentDescription("Albums, selected"))
-            .check(matches(isDisplayed()))
-            .check(matches(hasMinimumTouchSizeDp(48f)))
+        repeat(2) {
+            onView(withContentDescription("Albums"))
+                .perform(click())
+            onView(withContentDescription("Albums, selected"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasMinimumTouchSizeDp(48f)))
+                .check(matches(hasTopCompoundDrawable()))
 
-        onView(withContentDescription("Settings"))
-            .perform(click())
-        onView(withContentDescription("Settings, selected"))
-            .check(matches(isDisplayed()))
-            .check(matches(hasMinimumTouchSizeDp(48f)))
+            onView(withContentDescription("Settings"))
+                .perform(click())
+            onView(withContentDescription("Settings, selected"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasMinimumTouchSizeDp(48f)))
+                .check(matches(hasTopCompoundDrawable()))
 
-        onView(withContentDescription("Photos"))
-            .perform(click())
-        onView(withContentDescription("Photos, selected"))
-            .check(matches(isDisplayed()))
+            onView(withContentDescription("Photos"))
+                .perform(click())
+            onView(withContentDescription("Photos, selected"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasTopCompoundDrawable()))
+        }
     }
 
     @Test
@@ -161,5 +172,14 @@ class GalleryRenderedAcceptanceTest {
             val heightDp = view.height / density
             mismatchDescription.appendText("rendered ${widthDp}dp x ${heightDp}dp")
         }
+    }
+
+    private fun hasTopCompoundDrawable() = object : TypeSafeMatcher<View>() {
+        override fun describeTo(description: Description) {
+            description.appendText("is a Gallery navigation label with a rendered top icon")
+        }
+
+        override fun matchesSafely(view: View): Boolean =
+            view is TextView && view.compoundDrawables[1] != null
     }
 }
