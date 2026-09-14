@@ -12,12 +12,53 @@ object GallerySelectionPolicy {
         selectedContentUris: Set<String>,
         item: MediaItem,
         currentScope: List<MediaItem>,
+    ): Set<String> = setSelected(
+        selectedContentUris = selectedContentUris,
+        item = item,
+        currentScope = currentScope,
+        selected = item.contentUri !in prune(selectedContentUris, currentScope),
+    )
+
+    /**
+     * Applies an explicit selected/unselected state while preserving the current authorized scope.
+     *
+     * Drag-to-select uses explicit state instead of repeated toggle semantics so revisiting a tile
+     * during one gesture cannot accidentally invert it a second time.
+     */
+    fun setSelected(
+        selectedContentUris: Set<String>,
+        item: MediaItem,
+        currentScope: List<MediaItem>,
+        selected: Boolean,
     ): Set<String> {
         val valid = prune(selectedContentUris, currentScope).toMutableSet()
         if (currentScope.none { it.contentUri == item.contentUri }) return valid
 
-        if (!valid.add(item.contentUri)) valid.remove(item.contentUri)
+        if (selected) valid.add(item.contentUri) else valid.remove(item.contentUri)
         return valid
+    }
+
+    /**
+     * Applies one explicit state to an ordered collection of current-scope items.
+     *
+     * This is intentionally scope-bounded and is useful for contiguous drag selection, keyboard
+     * range selection, and future desktop/tablet pointer selection without expanding media access.
+     */
+    fun setSelectedRange(
+        selectedContentUris: Set<String>,
+        items: Collection<MediaItem>,
+        currentScope: List<MediaItem>,
+        selected: Boolean,
+    ): Set<String> {
+        val allowed = currentScope.asSequence().map { it.contentUri }.toHashSet()
+        val updated = prune(selectedContentUris, currentScope).toMutableSet()
+        items.asSequence()
+            .map { it.contentUri }
+            .filter { it in allowed }
+            .forEach { contentUri ->
+                if (selected) updated.add(contentUri) else updated.remove(contentUri)
+            }
+        return updated
     }
 
     fun selectAll(currentScope: List<MediaItem>): Set<String> =
