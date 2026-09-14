@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Environmental color is non-semantic. Gallery's GoreeCloud accent remains stable. -->
+    <color name="gallery_environment_accent">@android:color/system_accent1_500</color>
+</resources>
