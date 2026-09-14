@@ -8,10 +8,9 @@ import kotlin.test.assertTrue
 class GalleryGlazeContractTest {
     @Test
     fun `native shell maps current Stable Gallery Glaze source contract at exact authority revision`() {
-        assertEquals("1.3.0", GalleryGlazeContract.VERSION)
-        assertEquals("v1.3.0", GalleryGlazeContract.AUTHORITY_TAG)
+        assertEquals("1.4.0", GalleryGlazeContract.VERSION)
         assertEquals(
-            "ff34f232f295c9dcb07e4c681f66d4104d0b9323",
+            "ee057ce9e729296aeaeda182d01db89f52bd66f3",
             GalleryGlazeContract.AUTHORITY_REVISION,
         )
         assertTrue(GalleryGlazeContract.GENERAL_TARGET_DP >= 48)
@@ -19,13 +18,13 @@ class GalleryGlazeContractTest {
     }
 
     @Test
-    fun `v1_3 adaptive resonance remains bounded and accessibility safe`() {
-        assertTrue(GalleryGlazeContract.ADAPTIVE_EXPRESSION_ENABLED)
-        assertTrue(GalleryGlazeContract.LIVING_MATERIAL_2_ENABLED)
-        assertTrue(GalleryGlazeContract.REDUCED_TRANSPARENCY_FALLBACK_REQUIRED)
-        assertTrue(GalleryGlazeContract.INCREASED_CONTRAST_FALLBACK_REQUIRED)
-        assertTrue(GalleryGlazeContract.ENVIRONMENT_TINT_MAX_FRACTION in 0f..0.08f)
-        assertFalse(GalleryGlazeContract.ENVIRONMENT_TINT_MAY_OVERRIDE_SEMANTIC_STATE)
+    fun `v1_4 optical intelligence remains bounded and accessibility safe`() {
+        assertTrue(GalleryGlazeContract.OPTICAL_CONTENT_AWARE_FROST_ENABLED)
+        assertTrue(GalleryGlazeContract.OPTICAL_SEMANTIC_BLUR_PROTECTION_ENABLED)
+        assertTrue(GalleryGlazeContract.OPTICAL_REDUCED_TRANSPARENCY_FALLBACK_REQUIRED)
+        assertTrue(GalleryGlazeContract.OPTICAL_INCREASED_CONTRAST_FALLBACK_REQUIRED)
+        assertTrue(GalleryGlazeContract.OPTICAL_MEMORY_TINT_MAX_FRACTION in 0f..0.08f)
+        assertFalse(GalleryGlazeContract.OPTICAL_ENVIRONMENT_TINT_MAY_OVERRIDE_SEMANTIC_STATE)
     }
 
     @Test
