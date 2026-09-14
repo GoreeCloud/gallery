@@ -1,4 +1,4 @@
-schema_version: "0.2"
+schema_version: "0.3"
 
 component:
   type: application
@@ -74,6 +74,13 @@ platform_systems:
     evidence:
       - SPECIFICATIONS.md
     notes: Device-local browsing does not require a GoreeCloud account, but accepted Identity integration for any future account, Photos, device, or delegated-authority behavior is not established.
+  sync:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - SPECIFICATIONS.md
+      - README.md
+    notes: Device-local Gallery browsing and organization do not require GoreeCloud Sync, but accepted Sync integration for any future cross-device Gallery-owned state or GoreeCloud Photos continuity is not established.
 
 health:
   health_endpoint: null
@@ -107,10 +114,10 @@ external_dependencies:
     version_constraint: ">=29"
 
 compatibility:
-  platform_contract: "0.2"
+  platform_contract: "0.3"
   glaze_ui_required: "1.4.0"
   requires:
-    - goreecloud-platform-contract==0.2
+    - goreecloud-platform-contract==0.3
     - glaze-ui==1.4.0
     - android-api>=29
   provides: []
@@ -145,6 +152,7 @@ conformance:
     - Everkeep integration and complete Gallery-owned backup and recovery acceptance are not established.
     - GoreeCloud Identity integration is not established for any future identity-aware or Photos-backed capability.
     - GoreeCloud Mesh registration, capability publication, and runtime acceptance are not established.
+    - GoreeCloud Sync integration and acceptance are not established for any future cross-device Gallery-owned state or Photos continuity behavior.
     - Manager platform visibility and administrative integration acceptance are not established.
     - Representative physical-device/OEM/profile photo-editor, accessibility, orientation, media-permission, and destructive-operation edge-case acceptance remains incomplete.
     - Production signing, distribution, release approval, Release Candidate qualification, and Stable qualification remain outstanding.
