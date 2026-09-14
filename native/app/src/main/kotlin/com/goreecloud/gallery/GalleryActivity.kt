@@ -10,6 +10,7 @@ import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
@@ -41,6 +42,8 @@ import com.goreecloud.gallery.android.AndroidMediaMutationRequests
 import com.goreecloud.gallery.android.AndroidMediaStoreReader
 import com.goreecloud.gallery.android.AndroidTrashedMediaStoreReader
 import com.goreecloud.gallery.core.GalleryBulkActionPolicy
+import com.goreecloud.gallery.core.GalleryDragSelectionPolicy
+import com.goreecloud.gallery.core.GalleryDragSelectionSession
 import com.goreecloud.gallery.core.GalleryFavoriteBulkAction
 import com.goreecloud.gallery.core.GallerySelectionPolicy
 import com.goreecloud.gallery.core.MediaItem
@@ -71,6 +74,7 @@ class GalleryActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var action: TextView
     private lateinit var library: LinearLayout
+    private lateinit var libraryScroll: ScrollView
     private lateinit var navigationCapsule: LinearLayout
     private lateinit var selectionActionCapsule: LinearLayout
 
@@ -84,6 +88,11 @@ class GalleryActivity : Activity() {
     private val selectedUris = linkedSetOf<String>()
     private val renderedMediaTiles = linkedMapOf<String, FrameLayout>()
     private var selectionScopeItems: List<MediaItem> = emptyList()
+    private var dragSelectionSession: GalleryDragSelectionSession? = null
+    private var dragSelectionScope: List<MediaItem> = emptyList()
+    private var dragSelectionRawX = 0f
+    private var dragSelectionRawY = 0f
+    private var dragSelectionAutoScrollPosted = false
     private var loadGeneration = 0
     private var authorizedItems: List<MediaItem> = emptyList()
     private var selectedSort = MediaSortOrder.NEWEST
@@ -95,7 +104,7 @@ class GalleryActivity : Activity() {
     private var pendingMediaMutation: AndroidMediaMutationPendingState? = null
 
     private val inSelectionMode: Boolean
-        get() = selectedUris.isNotEmpty()
+        get() = selectedUris.isNotEmpty() || dragSelectionSession != null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -228,7 +237,7 @@ class GalleryActivity : Activity() {
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
         )
 
-        val scroll = ScrollView(this).apply {
+        libraryScroll = ScrollView(this).apply {
             isFillViewport = true
             clipToPadding = false
             addView(
@@ -237,7 +246,7 @@ class GalleryActivity : Activity() {
             )
         }
         rootFrame.addView(
-            scroll,
+            libraryScroll,
             FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT).apply {
                 bottomMargin = dp(GalleryGlazeContract.NAVIGATION_RESERVED_SPACE_DP)
             },
@@ -621,7 +630,11 @@ class GalleryActivity : Activity() {
 
         if (inSelectionMode) {
             headerTitle.text = if (selectedUris.size == 1) "1 selected" else "${selectedUris.size} selected"
-            headerSubtitle.text = "Tap items to add or remove"
+            headerSubtitle.text = if (dragSelectionSession != null) {
+                "Drag across photos and videos to select quickly"
+            } else {
+                "Tap items to add or remove"
+            }
             backControl.visibility = View.VISIBLE
             backControl.contentDescription = "Exit selection"
             sortControl.visibility = View.GONE
@@ -1249,8 +1262,21 @@ class GalleryActivity : Activity() {
             }
             setOnLongClickListener {
                 performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                toggleSelection(item, items)
-                true
+                beginDragSelection(item, items)
+            }
+            setOnTouchListener { _, event ->
+                if (dragSelectionSession == null) return@setOnTouchListener false
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_MOVE -> {
+                        updateDragSelectionPointer(event.rawX, event.rawY)
+                        true
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        finishDragSelection()
+                        true
+                    }
+                    else -> true
+                }
             }
             addView(
                 thumbnail,
@@ -1260,7 +1286,7 @@ class GalleryActivity : Activity() {
                 View(context).apply {
                     tag = SELECTION_OVERLAY_TAG
                     visibility = if (selected) View.VISIBLE else View.GONE
-                    background = roundedSurface(withAlpha(accentColor(), 0.20f), cornerDp)
+                    background = selectedTileSurface(cornerDp)
                     importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 },
                 FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
@@ -1291,15 +1317,15 @@ class GalleryActivity : Activity() {
                     text = "✓"
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                     setTypeface(typeface, Typeface.BOLD)
-                    background = roundedSurface(accentColor(), 14)
+                    background = roundedSurface(accentColor(), 12)
                     importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 },
-                FrameLayout.LayoutParams(dp(28), dp(28)).apply {
+                FrameLayout.LayoutParams(dp(24), dp(24)).apply {
                     gravity = Gravity.END or Gravity.TOP
-                    marginEnd = dp(5)
-                    topMargin = dp(5)
+                    marginEnd = dp(6)
+                    topMargin = dp(6)
                 },
             )
         }.also { tile ->
@@ -1311,7 +1337,7 @@ class GalleryActivity : Activity() {
         if (inSelectionMode) {
             "${item.displayName}. ${if (selected) "Selected" else "Not selected"}. Double tap to toggle selection."
         } else {
-            "${item.displayName}. ${mediaMetadata(item)}. Double tap to open viewer. Long press to select."
+            "${item.displayName}. ${mediaMetadata(item)}. Double tap to open viewer. Long press then drag to select multiple items."
         }
 
     private fun refreshRenderedSelectionState() {
@@ -1353,8 +1379,117 @@ class GalleryActivity : Activity() {
         renderNavigation()
     }
 
+    private fun beginDragSelection(item: MediaItem, currentScope: List<MediaItem>): Boolean {
+        val result = GalleryDragSelectionPolicy.begin(
+            selectedContentUris = selectedUris,
+            item = item,
+            currentScope = currentScope,
+        ) ?: return false
+
+        selectionScopeItems = currentScope
+        dragSelectionScope = currentScope
+        dragSelectionSession = result.session
+        selectedUris.clear()
+        selectedUris.addAll(result.selectedContentUris)
+        if (::libraryScroll.isInitialized) libraryScroll.requestDisallowInterceptTouchEvent(true)
+        refreshRenderedSelectionState()
+        updateHeader()
+        renderNavigation()
+        announceSelectionCount()
+        return true
+    }
+
+    private fun updateDragSelectionPointer(rawX: Float, rawY: Float) {
+        if (dragSelectionSession == null) return
+        dragSelectionRawX = rawX
+        dragSelectionRawY = rawY
+        applyDragSelectionAtRawPoint(rawX, rawY)
+        scheduleDragSelectionAutoScroll()
+    }
+
+    private fun applyDragSelectionAtRawPoint(rawX: Float, rawY: Float) {
+        val session = dragSelectionSession ?: return
+        val hitUri = renderedMediaTiles.entries.firstOrNull { (_, tile) ->
+            val bounds = Rect()
+            tile.getGlobalVisibleRect(bounds) && bounds.contains(rawX.toInt(), rawY.toInt())
+        }?.key ?: return
+        val item = dragSelectionScope.firstOrNull { it.contentUri == hitUri } ?: return
+        val result = GalleryDragSelectionPolicy.apply(
+            selectedContentUris = selectedUris,
+            session = session,
+            item = item,
+            currentScope = dragSelectionScope,
+        )
+        dragSelectionSession = result.session
+        selectedUris.clear()
+        selectedUris.addAll(result.selectedContentUris)
+        refreshRenderedSelectionState()
+        updateHeader()
+        renderNavigation()
+    }
+
+    private fun scheduleDragSelectionAutoScroll() {
+        if (dragSelectionSession == null || dragSelectionAutoScrollPosted || !::libraryScroll.isInitialized) return
+        dragSelectionAutoScrollPosted = true
+        libraryScroll.postOnAnimation(object : Runnable {
+            override fun run() {
+                if (dragSelectionSession == null) {
+                    dragSelectionAutoScrollPosted = false
+                    return
+                }
+                val viewport = Rect()
+                if (!libraryScroll.getGlobalVisibleRect(viewport)) {
+                    dragSelectionAutoScrollPosted = false
+                    return
+                }
+                val edgePx = dp(DRAG_SELECTION_EDGE_DP)
+                val delta = when {
+                    dragSelectionRawY < viewport.top + edgePx && libraryScroll.canScrollVertically(-1) ->
+                        -dp(DRAG_SELECTION_SCROLL_STEP_DP)
+                    dragSelectionRawY > viewport.bottom - edgePx && libraryScroll.canScrollVertically(1) ->
+                        dp(DRAG_SELECTION_SCROLL_STEP_DP)
+                    else -> 0
+                }
+                if (delta == 0) {
+                    dragSelectionAutoScrollPosted = false
+                    return
+                }
+                libraryScroll.scrollBy(0, delta)
+                applyDragSelectionAtRawPoint(dragSelectionRawX, dragSelectionRawY)
+                libraryScroll.postOnAnimation(this)
+            }
+        })
+    }
+
+    private fun finishDragSelection() {
+        if (dragSelectionSession == null) return
+        dragSelectionSession = null
+        dragSelectionScope = emptyList()
+        dragSelectionAutoScrollPosted = false
+        if (::libraryScroll.isInitialized) libraryScroll.requestDisallowInterceptTouchEvent(false)
+        if (selectedUris.isEmpty()) selectionScopeItems = emptyList()
+        refreshRenderedSelectionState()
+        updateHeader()
+        renderNavigation()
+        announceSelectionCount()
+    }
+
+    private fun announceSelectionCount() {
+        announceForAccessibility(
+            when (selectedUris.size) {
+                0 -> "Selection cleared"
+                1 -> "1 item selected"
+                else -> "${selectedUris.size} items selected"
+            },
+        )
+    }
+
     private fun clearSelection(render: Boolean = true) {
-        val hadSelection = selectedUris.isNotEmpty()
+        val hadSelection = selectedUris.isNotEmpty() || dragSelectionSession != null
+        dragSelectionSession = null
+        dragSelectionScope = emptyList()
+        dragSelectionAutoScrollPosted = false
+        if (::libraryScroll.isInitialized) libraryScroll.requestDisallowInterceptTouchEvent(false)
         selectedUris.clear()
         selectionScopeItems = emptyList()
         if (!::navigationCapsule.isInitialized) return
@@ -2783,6 +2918,13 @@ class GalleryActivity : Activity() {
         cornerRadius = dp(radiusDp).toFloat()
     }
 
+    private fun selectedTileSurface(radiusDp: Int): GradientDrawable = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        setColor(withAlpha(accentColor(), 0.10f))
+        cornerRadius = dp(radiusDp).toFloat()
+        setStroke(dp(2), withAlpha(accentColor(), 0.95f))
+    }
+
     private fun withAlpha(color: Int, alpha: Float): Int = Color.argb(
         (255f * alpha.coerceIn(0f, 1f)).toInt(),
         Color.red(color),
@@ -2834,6 +2976,8 @@ class GalleryActivity : Activity() {
         const val ALBUM_THUMBNAIL_DP = 320
         const val VIEWER_THUMBNAIL_DP = 720
         const val VIEWER_SWIPE_DISTANCE_DP = 56
+        const val DRAG_SELECTION_EDGE_DP = 72
+        const val DRAG_SELECTION_SCROLL_STEP_DP = 14
         const val THUMBNAIL_CACHE_KIB = 8 * 1024
         const val GRID_THUMBNAIL_NAMESPACE = "grid"
         const val ALBUM_THUMBNAIL_NAMESPACE = "album"
