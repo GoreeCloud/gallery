@@ -21,9 +21,9 @@ import java.util.WeakHashMap
  *
  * GalleryActivity and RecycleBinActivity retain all navigation/media authority. This helper only
  * refines already-rendered first-party controls. It never changes Android permissions, media scope,
- * mutation authority, or destination semantics. Repeated layout work is bounded to direct bottom
- * chrome plus four navigation controls; the larger media hierarchy is walked only once per Activity
- * to refine persistent header/permission controls.
+ * mutation authority, or destination semantics. Repeated layout work is intentionally bounded to
+ * direct bottom/viewer chrome plus the four primary navigation controls; large media grids are not
+ * repeatedly traversed.
  */
 object GalleryUiRefinement {
     private data class Installation(
@@ -48,6 +48,22 @@ object GalleryUiRefinement {
         "Gallery media access action",
         "Back to GoreeCloud Gallery",
         "Refresh Recycle Bin",
+    )
+
+    private val recycleBinActionDescriptions = setOf(
+        "Select all currently loaded trashed media",
+        "Restore selected media through Android confirmation",
+        "Permanently delete selected media through Android confirmation",
+        "Clear Recycle Bin selection",
+    )
+
+    private val recycleBinViewerDescriptions = setOf(
+        "Close Recycle Bin viewer",
+        "Previous trashed media",
+        "Next trashed media",
+        "Restore this media through Android confirmation",
+        "Permanently delete this media through Android confirmation",
+        "Show details for this trashed media",
     )
 
     fun install(activity: Activity) {
@@ -82,7 +98,7 @@ object GalleryUiRefinement {
 
         when (activity) {
             is GalleryActivity -> findNavigationCapsule(root)?.let { refineNavigation(activity, it) }
-            is RecycleBinActivity -> refineRecycleBinActionBar(activity, root)
+            is RecycleBinActivity -> refineRecycleBinChrome(activity, root)
         }
     }
 
@@ -90,15 +106,7 @@ object GalleryUiRefinement {
         walk(root) { view ->
             val description = view.contentDescription?.toString() ?: return@walk
             if (description !in persistentControlDescriptions) return@walk
-            val marker = "control:$description"
-            if (view.getTag(R.id.gallery_ui_refinement_tag) == marker) return@walk
-            view.background = GalleryGlazeSurfaces.drawable(
-                activity,
-                GalleryGlazeSurfaces.Role.CONTROL,
-                GalleryGlazeContract.SHAPE_CONTROL_DP,
-            )
-            view.elevation = dp(activity, 2).toFloat()
-            view.setTag(R.id.gallery_ui_refinement_tag, marker)
+            styleControl(activity, view, "control:$description")
         }
     }
 
@@ -150,27 +158,89 @@ object GalleryUiRefinement {
         return null
     }
 
-    private fun refineRecycleBinActionBar(activity: RecycleBinActivity, root: FrameLayout) {
+    private fun refineRecycleBinChrome(activity: RecycleBinActivity, root: FrameLayout) {
         for (index in 0 until root.childCount) {
-            val child = root.getChildAt(index) as? LinearLayout ?: continue
-            val params = child.layoutParams as? FrameLayout.LayoutParams ?: continue
-            if (
-                params.gravity == -1 ||
-                (params.gravity and Gravity.VERTICAL_GRAVITY_MASK) != Gravity.BOTTOM
-            ) continue
-            if (child.childCount != RECYCLE_BIN_ACTION_COUNT) continue
+            when (val child = root.getChildAt(index)) {
+                is LinearLayout -> refineRecycleBinActionBar(activity, child)
+                is FrameLayout -> refineRecycleBinViewerOverlay(activity, child)
+            }
+        }
+    }
 
-            val marker = "recycle-action-bar:${child.childCount}"
-            if (child.getTag(R.id.gallery_ui_refinement_tag) == marker) return
+    private fun refineRecycleBinActionBar(activity: RecycleBinActivity, child: LinearLayout) {
+        val params = child.layoutParams as? FrameLayout.LayoutParams ?: return
+        if (
+            params.gravity == -1 ||
+            (params.gravity and Gravity.VERTICAL_GRAVITY_MASK) != Gravity.BOTTOM ||
+            child.childCount != RECYCLE_BIN_ACTION_COUNT
+        ) return
+
+        val barMarker = "recycle-action-bar:${child.childCount}"
+        if (child.getTag(R.id.gallery_ui_refinement_tag) != barMarker) {
             child.background = GalleryGlazeSurfaces.drawable(
                 activity,
                 GalleryGlazeSurfaces.Role.CHROME,
                 GalleryGlazeContract.SHAPE_CAPSULE_DP,
             )
             child.elevation = dp(activity, GalleryGlazeContract.NAVIGATION_ELEVATION_DP).toFloat()
-            child.setTag(R.id.gallery_ui_refinement_tag, marker)
-            return
+            child.setTag(R.id.gallery_ui_refinement_tag, barMarker)
         }
+
+        for (index in 0 until child.childCount) {
+            val control = child.getChildAt(index)
+            val description = control.contentDescription?.toString() ?: continue
+            if (description !in recycleBinActionDescriptions) continue
+            styleControl(activity, control, "recycle-action:$description")
+        }
+    }
+
+    private fun refineRecycleBinViewerOverlay(activity: RecycleBinActivity, overlay: FrameLayout) {
+        if (!containsDescription(overlay, "Close Recycle Bin viewer")) return
+
+        for (index in 0 until overlay.childCount) {
+            val child = overlay.getChildAt(index)
+            if (child is LinearLayout) {
+                val params = child.layoutParams as? FrameLayout.LayoutParams
+                val verticalGravity = params?.gravity?.and(Gravity.VERTICAL_GRAVITY_MASK)
+                if (verticalGravity == Gravity.TOP || verticalGravity == Gravity.BOTTOM) {
+                    val marker = "recycle-viewer-chrome:$verticalGravity"
+                    if (child.getTag(R.id.gallery_ui_refinement_tag) != marker) {
+                        child.background = GalleryGlazeSurfaces.drawable(
+                            activity,
+                            GalleryGlazeSurfaces.Role.OVERLAY,
+                            GalleryGlazeContract.SHAPE_ROUNDED_DP,
+                        )
+                        child.setTag(R.id.gallery_ui_refinement_tag, marker)
+                    }
+                }
+            }
+        }
+
+        walk(overlay) { view ->
+            val description = view.contentDescription?.toString() ?: return@walk
+            if (description !in recycleBinViewerDescriptions) return@walk
+            styleControl(activity, view, "recycle-viewer:$description")
+        }
+    }
+
+    private fun containsDescription(root: View, expected: String): Boolean {
+        if (root.contentDescription?.toString() == expected) return true
+        if (root !is ViewGroup) return false
+        for (index in 0 until root.childCount) {
+            if (containsDescription(root.getChildAt(index), expected)) return true
+        }
+        return false
+    }
+
+    private fun styleControl(activity: Activity, view: View, marker: String) {
+        if (view.getTag(R.id.gallery_ui_refinement_tag) == marker) return
+        view.background = GalleryGlazeSurfaces.drawable(
+            activity,
+            GalleryGlazeSurfaces.Role.CONTROL,
+            GalleryGlazeContract.SHAPE_CONTROL_DP,
+        )
+        view.elevation = dp(activity, 2).toFloat()
+        view.setTag(R.id.gallery_ui_refinement_tag, marker)
     }
 
     private fun walk(root: View, visitor: (View) -> Unit) {
@@ -205,6 +275,6 @@ object GalleryUiRefinement {
     private fun dp(activity: Activity, value: Int): Int =
         (value * activity.resources.displayMetrics.density).toInt()
 
-    private const val ROOT_REFINED_MARKER = "gallery-ui-refinement-root-v1"
+    private const val ROOT_REFINED_MARKER = "gallery-ui-refinement-root-v2"
     private const val RECYCLE_BIN_ACTION_COUNT = 4
 }
