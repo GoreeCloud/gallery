@@ -49,6 +49,7 @@ import com.goreecloud.gallery.core.GalleryDragSelectionSession
 import com.goreecloud.gallery.core.GalleryFavoriteBulkAction
 import com.goreecloud.gallery.core.GalleryMoveDestination
 import com.goreecloud.gallery.core.GalleryMoveDestinationPolicy
+import com.goreecloud.gallery.core.GalleryNewFolderMovePolicy
 import com.goreecloud.gallery.core.GallerySelectionPolicy
 import com.goreecloud.gallery.core.MediaItem
 import com.goreecloud.gallery.core.MediaSortOrder
@@ -260,7 +261,7 @@ class GalleryActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(
                 dp(GalleryGlazeContract.horizontalGutterDp(resources.configuration.screenWidthDp)),
-                dp(12),
+                dp(16),
                 dp(GalleryGlazeContract.horizontalGutterDp(resources.configuration.screenWidthDp)),
                 dp(GalleryGlazeContract.CONTENT_BOTTOM_INSET_DP),
             )
@@ -361,13 +362,13 @@ class GalleryActivity : Activity() {
         }
         headerTitle = TextView(this).apply {
             setTextColor(primaryTextColor)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
             setTypeface(typeface, Typeface.BOLD)
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         }
         headerSubtitle = TextView(this).apply {
             setTextColor(secondaryTextColor)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setPadding(0, dp(1), 0, 0)
         }
         titles.addView(headerTitle)
@@ -422,9 +423,10 @@ class GalleryActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             visibility = View.GONE
             setPadding(dp(14), dp(2), dp(4), dp(2))
-            background = roundedSurface(
-                withAlpha(primaryTextColor(), if (isNightMode()) 0.12f else 0.055f),
-                18,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.CONTROL,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
             )
         }
 
@@ -484,9 +486,10 @@ class GalleryActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             visibility = View.GONE
             setPadding(dp(12), dp(8), dp(6), dp(8))
-            background = roundedSurface(
-                withAlpha(primaryTextColor(), if (isNightMode()) 0.12f else 0.05f),
-                16,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
             )
         }
 
@@ -535,8 +538,9 @@ class GalleryActivity : Activity() {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
         setPadding(dp(3), dp(3), dp(3), dp(3))
-        background = roundedSurface(
-            if (isNightMode()) 0xf21d1d1f.toInt() else 0xf2ffffff.toInt(),
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.CHROME,
             GalleryGlazeContract.NAVIGATION_RADIUS_DP,
         )
         elevation = dp(GalleryGlazeContract.NAVIGATION_ELEVATION_DP).toFloat()
@@ -619,18 +623,28 @@ class GalleryActivity : Activity() {
             else -> "Permanently delete selected media after Android confirmation"
         }
         val moveSupported = AndroidMediaMoveRequests.isSupported()
+        val currentScope = visibleAuthorizedItems()
         val moveDestinations = if (selectedItems.isEmpty()) {
             emptyList()
         } else {
             GalleryMoveDestinationPolicy.existingDestinations(
-                currentScope = visibleAuthorizedItems(),
+                currentScope = currentScope,
+                selectedContentUris = selectedUris,
+            )
+        }
+        val newFolderParent = if (selectedItems.isEmpty()) null else {
+            GalleryNewFolderMovePolicy.parentForSelection(
+                currentScope = currentScope,
                 selectedContentUris = selectedUris,
             )
         }
         val moveDescription = when {
             !moveSupported -> "Move requires Android 11 or newer in this Development build"
-            moveDestinations.isEmpty() -> "No other existing authorized folders are available"
-            else -> "Move selected media to an existing authorized folder"
+            moveDestinations.isNotEmpty() && newFolderParent != null ->
+                "Move selected media to an existing authorized folder or create a new folder inside ${newFolderParent.displayName}"
+            moveDestinations.isNotEmpty() -> "Move selected media to an existing authorized folder"
+            newFolderParent != null -> "Create a new folder inside ${newFolderParent.displayName} and move selected media there"
+            else -> "No eligible move destination is available for this selection"
         }
 
         val actions = listOf(
@@ -642,7 +656,10 @@ class GalleryActivity : Activity() {
             },
             selectionAction(
                 "Move",
-                selectedItems.isNotEmpty() && moveSupported && moveDestinations.isNotEmpty() && pendingMediaMove == null,
+                selectedItems.isNotEmpty() &&
+                    moveSupported &&
+                    (moveDestinations.isNotEmpty() || newFolderParent != null) &&
+                    pendingMediaMove == null,
                 moveDescription,
             ) {
                 showMoveDestinationDialog()
@@ -1093,9 +1110,10 @@ class GalleryActivity : Activity() {
         gravity = Gravity.CENTER_VERTICAL
         minimumHeight = dp(76)
         setPadding(dp(14), dp(10), dp(12), dp(10))
-        background = roundedSurface(
-            withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
-            18,
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.RAISED,
+            GalleryGlazeContract.SHAPE_CONTAINER_DP,
         )
         isClickable = true
         isFocusable = true
@@ -1620,12 +1638,17 @@ class GalleryActivity : Activity() {
         if (pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
 
         val selectedItems = currentSelectedItems()
+        val currentScope = visibleAuthorizedItems()
         val destinations = GalleryMoveDestinationPolicy.existingDestinations(
-            currentScope = visibleAuthorizedItems(),
+            currentScope = currentScope,
             selectedContentUris = selectedUris,
         )
-        if (selectedItems.isEmpty() || destinations.isEmpty()) {
-            Toast.makeText(this, "No other existing authorized folders are available.", Toast.LENGTH_SHORT).show()
+        val newFolderParent = GalleryNewFolderMovePolicy.parentForSelection(
+            currentScope = currentScope,
+            selectedContentUris = selectedUris,
+        )
+        if (selectedItems.isEmpty() || (destinations.isEmpty() && newFolderParent == null)) {
+            Toast.makeText(this, "No eligible move destination is available for this selection.", Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -1633,24 +1656,52 @@ class GalleryActivity : Activity() {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(22), dp(20), dp(22), dp(14))
-            background = roundedSurface(
-                if (isNightMode()) 0xff242426.toInt() else 0xffffffff.toInt(),
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.OVERLAY,
                 GalleryGlazeContract.SHAPE_OVERLAY_DP,
             )
         }
         panel.addView(TextView(this).apply {
-            text = "Move to folder"
+            text = "Move"
             setTextColor(primaryTextColor())
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
             setTypeface(typeface, Typeface.BOLD)
         })
         panel.addView(TextView(this).apply {
-            text = "Choose an existing local folder from media Android currently authorizes."
+            text = if (newFolderParent != null) {
+                "Choose an existing local folder, or create a new folder inside ${newFolderParent.displayName}."
+            } else {
+                "Choose an existing local folder from media Android currently authorizes."
+            }
             setTextColor(secondaryTextColor())
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
             setLineSpacing(0f, 1.06f)
             setPadding(0, dp(4), 0, dp(14))
         })
+
+        if (newFolderParent != null) {
+            panel.addView(
+                glazeDialogActionRow(
+                    title = "New folder",
+                    subtitle = "Create inside ${newFolderParent.displayName}",
+                ) {
+                    dialog?.dismiss()
+                    showNewFolderDialog(selectedItems, newFolderParent.displayName)
+                },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    bottomMargin = dp(10)
+                },
+            )
+        } else {
+            panel.addView(TextView(this).apply {
+                text = "New folder requires selected items from one current folder."
+                setTextColor(secondaryTextColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+                setPadding(dp(4), dp(2), dp(4), dp(10))
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            })
+        }
 
         destinations.forEach { moveDestination ->
             panel.addView(
@@ -1667,14 +1718,6 @@ class GalleryActivity : Activity() {
             )
         }
 
-        panel.addView(TextView(this).apply {
-            text = "New folder is not enabled in this Development build"
-            setTextColor(secondaryTextColor())
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
-            gravity = Gravity.CENTER
-            setPadding(dp(4), dp(8), dp(4), dp(6))
-            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
-        })
         panel.addView(TextView(this).apply {
             text = "Cancel"
             gravity = Gravity.CENTER
@@ -1709,6 +1752,129 @@ class GalleryActivity : Activity() {
         )
     }
 
+    private fun showNewFolderDialog(items: List<MediaItem>, parentDisplayName: String) {
+        if (items.isEmpty() || pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
+
+        var dialog: AlertDialog? = null
+        val folderNameField = EditText(this).apply {
+            hint = "Folder name"
+            setSingleLine(true)
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setPadding(dp(14), 0, dp(14), 0)
+            setTextColor(primaryTextColor())
+            setHintTextColor(secondaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.CONTROL,
+                GalleryGlazeContract.SHAPE_CONTROL_DP,
+            )
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            contentDescription = "New folder name"
+        }
+        val createAction = TextView(this).apply {
+            text = "Create & move"
+            gravity = Gravity.CENTER
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setPadding(dp(14), 0, dp(14), 0)
+            setTextColor(accentColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = roundedSurface(withAlpha(accentColor(), 0.12f), GalleryGlazeContract.SHAPE_CONTROL_DP)
+            isClickable = true
+            isFocusable = true
+            contentDescription = "Create new folder and move selected media"
+        }
+        val cancelAction = TextView(this).apply {
+            text = "Cancel"
+            gravity = Gravity.CENTER
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setPadding(dp(14), 0, dp(14), 0)
+            setTextColor(primaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = Color.TRANSPARENT
+            isClickable = true
+            isFocusable = true
+            contentDescription = "Cancel new folder"
+            setOnClickListener { dialog?.dismiss() }
+        }
+
+        createAction.setOnClickListener {
+            val destination = try {
+                GalleryNewFolderMovePolicy.destinationForSelection(
+                    currentScope = visibleAuthorizedItems(),
+                    selectedContentUris = selectedUris,
+                    rawFolderName = folderNameField.text?.toString().orEmpty(),
+                )
+            } catch (error: IllegalArgumentException) {
+                folderNameField.error = error.message ?: "Choose a valid folder name"
+                folderNameField.requestFocus()
+                return@setOnClickListener
+            }
+            dialog?.dismiss()
+            requestMediaMove(items, destination.relativePath)
+        }
+
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            setPadding(0, dp(14), 0, 0)
+            addView(cancelAction, LinearLayout.LayoutParams(0, dp(GalleryGlazeContract.GENERAL_TARGET_DP), 1f).apply {
+                marginEnd = dp(6)
+            })
+            addView(createAction, LinearLayout.LayoutParams(0, dp(GalleryGlazeContract.GENERAL_TARGET_DP), 1f))
+        }
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(20), dp(22), dp(18))
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.OVERLAY,
+                GalleryGlazeContract.SHAPE_OVERLAY_DP,
+            )
+            addView(TextView(context).apply {
+                text = "New folder"
+                setTextColor(primaryTextColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+                setTypeface(typeface, Typeface.BOLD)
+            })
+            addView(TextView(context).apply {
+                text = "Create inside $parentDisplayName and move ${itemCountLabel(items.size)} there after Android authorizes the selected media."
+                setTextColor(secondaryTextColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+                setLineSpacing(0f, 1.06f)
+                setPadding(0, dp(4), 0, dp(14))
+            })
+            addView(folderNameField, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)))
+            addView(actions)
+        }
+
+        dialog = AlertDialog.Builder(this)
+            .setView(panel)
+            .create()
+        dialog?.setOnShowListener {
+            dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            dialog?.window?.setDimAmount(0.42f)
+            dialog?.window?.setLayout(
+                resources.displayMetrics.widthPixels - dp(32),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+            folderNameField.requestFocus()
+            folderNameField.post {
+                (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)
+                    ?.showSoftInput(folderNameField, InputMethodManager.SHOW_IMPLICIT)
+            }
+        }
+        dialog?.show()
+        dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+        dialog?.window?.setDimAmount(0.42f)
+        dialog?.window?.setLayout(
+            resources.displayMetrics.widthPixels - dp(32),
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
     private fun glazeDialogActionRow(
         title: String,
         subtitle: String,
@@ -1718,8 +1884,9 @@ class GalleryActivity : Activity() {
         gravity = Gravity.CENTER_VERTICAL
         minimumHeight = dp(64)
         setPadding(dp(14), dp(9), dp(10), dp(9))
-        background = roundedSurface(
-            withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.RAISED,
             GalleryGlazeContract.SHAPE_CONTAINER_DP,
         )
         val labels = LinearLayout(context).apply {
@@ -1756,7 +1923,10 @@ class GalleryActivity : Activity() {
         setOnClickListener { onClick() }
     }
 
-    private fun requestMediaMove(items: List<MediaItem>, destination: GalleryMoveDestination) {
+    private fun requestMediaMove(items: List<MediaItem>, destination: GalleryMoveDestination) =
+        requestMediaMove(items, destination.relativePath)
+
+    private fun requestMediaMove(items: List<MediaItem>, destinationRelativePath: String) {
         if (items.isEmpty() || pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
         if (!AndroidMediaMoveRequests.isSupported()) {
             Toast.makeText(this, "Move requires Android 11 or newer in this Development build.", Toast.LENGTH_SHORT).show()
@@ -1767,7 +1937,7 @@ class GalleryActivity : Activity() {
             AndroidMediaMoveRequests.create(
                 contentResolver = contentResolver,
                 contentUris = items.map { it.contentUri },
-                destinationRelativePath = destination.relativePath,
+                destinationRelativePath = destinationRelativePath,
             )
         } catch (_: IllegalArgumentException) {
             Toast.makeText(this, "Gallery refused an invalid move request.", Toast.LENGTH_SHORT).show()
@@ -2484,9 +2654,10 @@ class GalleryActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             minimumHeight = dp(68)
             setPadding(dp(14), dp(10), dp(10), dp(10))
-            background = roundedSurface(
-                withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
-                17,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
             )
             alpha = if (enabled) 1f else 0.55f
 
@@ -2554,9 +2725,10 @@ class GalleryActivity : Activity() {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(22), dp(20), dp(22), dp(14))
-            background = roundedSurface(
-                if (isNightMode()) 0xff242426.toInt() else 0xffffffff.toInt(),
-                28,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.OVERLAY,
+                GalleryGlazeContract.SHAPE_OVERLAY_DP,
             )
         }
         panel.addView(TextView(this).apply {
@@ -2639,11 +2811,15 @@ class GalleryActivity : Activity() {
         gravity = Gravity.CENTER_VERTICAL
         minimumHeight = dp(64)
         setPadding(dp(14), dp(9), dp(10), dp(9))
-        background = roundedSurface(
-            if (selected) withAlpha(accentColor(), 0.13f)
-            else withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
-            18,
-        )
+        background = if (selected) {
+            roundedSurface(withAlpha(accentColor(), 0.13f), GalleryGlazeContract.SHAPE_CONTAINER_DP)
+        } else {
+            GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
+            )
+        }
         val labels = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
@@ -2953,7 +3129,11 @@ class GalleryActivity : Activity() {
         setColorFilter(primaryTextColor())
         setPadding(dp(13), dp(13), dp(13), dp(13))
         scaleType = ImageView.ScaleType.CENTER_INSIDE
-        background = roundedSurface(withAlpha(primaryTextColor(), if (isNightMode()) 0.12f else 0.05f), 16)
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.CONTROL,
+            GalleryGlazeContract.SHAPE_CONTAINER_DP,
+        )
         isClickable = true
         isFocusable = true
         contentDescription = description
@@ -3113,7 +3293,11 @@ class GalleryActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setPadding(dp(18), dp(24), dp(18), dp(24))
-            background = roundedSurface(withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f), 20)
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
+            )
             addView(TextView(context).apply {
                 text = title
                 gravity = Gravity.CENTER
