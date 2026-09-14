@@ -30,6 +30,77 @@ class GallerySelectionPolicyTest {
     }
 
     @Test
+    fun `explicit selection state is idempotent for sweep gestures`() {
+        val first = media("1")
+        val scope = listOf(first)
+
+        val selected = GallerySelectionPolicy.setSelected(emptySet(), first, scope, selected = true)
+        val replayed = GallerySelectionPolicy.setSelected(selected, first, scope, selected = true)
+        assertEquals(selected, replayed)
+
+        val cleared = GallerySelectionPolicy.setSelected(replayed, first, scope, selected = false)
+        val replayedClear = GallerySelectionPolicy.setSelected(cleared, first, scope, selected = false)
+        assertEquals(cleared, replayedClear)
+    }
+
+    @Test
+    fun `range selection follows current presentation order inclusively`() {
+        val items = (1..6).map { media(it.toString()) }
+        val selected = GallerySelectionPolicy.applyRange(
+            selectedContentUris = setOf(items[0].contentUri),
+            currentScope = items,
+            anchorContentUri = items[1].contentUri,
+            targetContentUri = items[4].contentUri,
+            selected = true,
+        )
+
+        assertEquals(
+            linkedSetOf(
+                items[0].contentUri,
+                items[1].contentUri,
+                items[2].contentUri,
+                items[3].contentUri,
+                items[4].contentUri,
+            ),
+            selected,
+        )
+    }
+
+    @Test
+    fun `range deselection removes range without changing authorized selections outside it`() {
+        val items = (1..6).map { media(it.toString()) }
+        val selected = GallerySelectionPolicy.selectAll(items)
+        val updated = GallerySelectionPolicy.applyRange(
+            selectedContentUris = selected,
+            currentScope = items,
+            anchorContentUri = items[1].contentUri,
+            targetContentUri = items[3].contentUri,
+            selected = false,
+        )
+
+        assertEquals(linkedSetOf(items[0].contentUri, items[4].contentUri, items[5].contentUri), updated)
+    }
+
+    @Test
+    fun `range selection fails closed when either endpoint is outside current scope`() {
+        val first = media("1")
+        val second = media("2")
+        val outside = media("3")
+        val existing = setOf(first.contentUri)
+
+        assertEquals(
+            existing,
+            GallerySelectionPolicy.applyRange(
+                selectedContentUris = existing,
+                currentScope = listOf(first, second),
+                anchorContentUri = first.contentUri,
+                targetContentUri = outside.contentUri,
+                selected = true,
+            ),
+        )
+    }
+
+    @Test
     fun `prune removes stale selection when presentation scope changes`() {
         val first = media("1")
         val second = media("2")
