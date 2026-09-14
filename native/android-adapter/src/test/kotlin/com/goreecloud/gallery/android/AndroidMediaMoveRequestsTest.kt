@@ -20,6 +20,14 @@ class AndroidMediaMoveRequestsTest {
     }
 
     @Test
+    fun `validated new folder path uses the same bounded MediaStore destination contract`() {
+        assertEquals(
+            "Download/Trip Photos/",
+            AndroidMediaMoveRequests.normalizeDestinationRelativePath("Download/Trip Photos/"),
+        )
+    }
+
+    @Test
     fun `unsafe destination paths fail closed`() {
         listOf(
             "",
