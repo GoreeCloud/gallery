@@ -1,23 +1,23 @@
 package com.goreecloud.gallery
 
 /**
- * Repository-local GLAZE UI V1.3 source mapping for the first-party native Gallery shell.
+ * Repository-local GLAZE UI V1.4 source mapping for the first-party native Gallery shell.
  *
- * The current published GoreeCloud design-system authority is GLAZE UI V1.3 / 1.3.0 — Adaptive
- * Resonance. Native Android maps the shared semantics through platform primitives rather than
- * copying web CSS or requiring a web runtime.
+ * The current authoritative GoreeCloud design-system lifecycle registry identifies GLAZE UI V1.4 /
+ * 1.4.0 — Optical Intelligence as the current Official Stable, consumer-eligible release. Native
+ * Android maps the shared semantics through platform primitives rather than copying web CSS or
+ * requiring a web runtime.
  *
  * VERSION records the source contract mapped by this native implementation. It does not establish
  * Gallery application conformance, rendered acceptance, production eligibility, Release Candidate,
- * or Stable status. Gallery remains fail-closed on those claims until its application-specific
+ * or Stable status. Gallery remains fail-closed on those claims until its application-specific V1.4
  * migration, accessibility, representative-device, and release gates are completed and accepted.
  */
 object GalleryGlazeContract {
-    const val VERSION = "1.3.0"
-    const val AUTHORITY_REVISION = "ff34f232f295c9dcb07e4c681f66d4104d0b9323"
-    const val AUTHORITY_TAG = "v1.3.0"
+    const val VERSION = "1.4.0"
+    const val AUTHORITY_REVISION = "ee057ce9e729296aeaeda182d01db89f52bd66f3"
 
-    // Shared spatial baseline consumed by the Gallery V1.3 native adapter.
+    // GLAZE UI V1.4 inherits the governed V1.3/V1.2 spatial baseline.
     const val SPACE_MICRO_DP = 2
     const val SPACE_HAIRLINE_DP = 4
     const val SPACE_CONTROL_DP = 8
@@ -27,7 +27,7 @@ object GalleryGlazeContract {
     const val SPACE_SECTION_DP = 32
     const val SPACE_REGION_DP = 48
 
-    // Semantic shape roles used by Gallery's V1.3 platform mapping.
+    // GLAZE UI V1.4 semantic shape roles.
     const val SHAPE_QUIET_DP = 10
     const val SHAPE_CONTROL_DP = 12
     const val SHAPE_CONTAINER_DP = 20
@@ -35,7 +35,7 @@ object GalleryGlazeContract {
     const val SHAPE_OVERLAY_DP = 28
     const val SHAPE_CAPSULE_DP = 999
 
-    // Semantic motion roles used by Gallery's V1.3 platform mapping.
+    // GLAZE UI V1.4 semantic motion roles.
     const val MOTION_MICRO_MS = 160L
     const val MOTION_STANDARD_MS = 240L
     const val MOTION_CONNECTED_MS = 360L
@@ -43,23 +43,23 @@ object GalleryGlazeContract {
     const val MOTION_REDUCED_STANDARD_MS = 180L
     const val MOTION_MINIMAL_MS = 0L
 
-    // Gallery-local Adaptive Resonance boundaries. Environmental expression remains non-semantic
-    // and must yield to legibility, task completion, protected states, and accessibility.
-    const val ENVIRONMENT_TINT_MAX_FRACTION = 0.08f
-    const val ADAPTIVE_EXPRESSION_ENABLED = true
-    const val LIVING_MATERIAL_2_ENABLED = true
-    const val REDUCED_TRANSPARENCY_FALLBACK_REQUIRED = true
-    const val INCREASED_CONTRAST_FALLBACK_REQUIRED = true
-    const val ENVIRONMENT_TINT_MAY_OVERRIDE_SEMANTIC_STATE = false
+    // Optical Intelligence boundaries used by native Gallery adapters.
+    // Gallery must remain fully functional when optical effects collapse to solid accessible surfaces.
+    const val OPTICAL_MEMORY_TINT_MAX_FRACTION = 0.08f
+    const val OPTICAL_CONTENT_AWARE_FROST_ENABLED = true
+    const val OPTICAL_SEMANTIC_BLUR_PROTECTION_ENABLED = true
+    const val OPTICAL_REDUCED_TRANSPARENCY_FALLBACK_REQUIRED = true
+    const val OPTICAL_INCREASED_CONTRAST_FALLBACK_REQUIRED = true
+    const val OPTICAL_ENVIRONMENT_TINT_MAY_OVERRIDE_SEMANTIC_STATE = false
 
-    // Current Android interaction floor used by this Gallery mapping.
+    // Current Android interaction floor used by the V1.4 form-factor contract.
     const val GENERAL_TARGET_DP = 48
 
     const val MAX_RENDERED_MEDIA_ROWS = 100
     const val MIN_GRID_TILE_DP = 78
     const val MIN_ALBUM_TILE_DP = 132
 
-    // Gallery-specific bottom navigation composition mapped onto semantic V1.3 roles.
+    // Gallery-specific bottom navigation composition mapped onto semantic V1.4 roles.
     const val NAVIGATION_HEIGHT_DP = 60
     const val NAVIGATION_RADIUS_DP = SHAPE_CAPSULE_DP
     const val NAVIGATION_SIDE_MARGIN_DP = SPACE_STANDARD_CLUSTER_DP
@@ -71,7 +71,7 @@ object GalleryGlazeContract {
     /**
      * Android Gallery capability adapter for current composition widths.
      *
-     * The returned gutters are governed spatial values. Width thresholds are local Android
+     * The returned gutters are governed Glaze spatial values. The width thresholds are local Android
      * composition heuristics, not canonical Glaze device identities or universal breakpoints.
      */
     fun horizontalGutterDp(widthDp: Int): Int = when {
