@@ -6,10 +6,21 @@ import kotlin.test.assertTrue
 
 class GalleryGlazeContractTest {
     @Test
-    fun `native shell targets current Gallery Glaze contract and accessible target floor`() {
-        assertEquals("1.0.0", GalleryGlazeContract.VERSION)
+    fun `native shell targets current Glaze Stable and accessible target floor`() {
+        assertEquals("1.4.0", GalleryGlazeContract.VERSION)
+        assertEquals("GoreeCloud/goreecloud-glaze-ui", GalleryGlazeContract.CANONICAL_REPOSITORY)
+        assertEquals("GLAZE UI V1.4 — Optical Intelligence", GalleryGlazeContract.RELEASE_LABEL)
         assertTrue(GalleryGlazeContract.GENERAL_TARGET_DP >= 48)
         assertTrue(GalleryGlazeContract.NAVIGATION_HEIGHT_DP >= GalleryGlazeContract.GENERAL_TARGET_DP)
+    }
+
+    @Test
+    fun `v14 native semantic surfaces stay readability first and bounded`() {
+        assertTrue(GalleryGlazeContract.SEMANTIC_SURFACE_MIN_ALPHA >= 0.88f)
+        assertTrue(GalleryGlazeContract.MUTED_SURFACE_LIGHT_ALPHA >= GalleryGlazeContract.SEMANTIC_SURFACE_MIN_ALPHA)
+        assertTrue(GalleryGlazeContract.MUTED_SURFACE_DARK_ALPHA >= GalleryGlazeContract.SEMANTIC_SURFACE_MIN_ALPHA)
+        assertTrue(GalleryGlazeContract.SELECTION_OVERLAY_ALPHA in 0f..0.30f)
+        assertEquals(0.08f, GalleryGlazeContract.MEMORY_TINT_MAX_INFLUENCE)
     }
 
     @Test
@@ -41,12 +52,12 @@ class GalleryGlazeContractTest {
     }
 
     @Test
-    fun `navigation capsule reserves a dedicated phone action zone`() {
-        assertEquals(54, GalleryGlazeContract.NAVIGATION_HEIGHT_DP)
-        assertEquals(26, GalleryGlazeContract.NAVIGATION_RADIUS_DP)
-        assertEquals(24, GalleryGlazeContract.NAVIGATION_SIDE_MARGIN_DP)
+    fun `navigation capsule reserves a current Glaze phone action zone`() {
+        assertEquals(58, GalleryGlazeContract.NAVIGATION_HEIGHT_DP)
+        assertEquals(29, GalleryGlazeContract.NAVIGATION_RADIUS_DP)
+        assertEquals(16, GalleryGlazeContract.NAVIGATION_SIDE_MARGIN_DP)
         assertEquals(10, GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP)
-        assertEquals(4, GalleryGlazeContract.NAVIGATION_ELEVATION_DP)
+        assertEquals(6, GalleryGlazeContract.NAVIGATION_ELEVATION_DP)
         assertTrue(
             GalleryGlazeContract.NAVIGATION_RESERVED_SPACE_DP >=
                 GalleryGlazeContract.NAVIGATION_HEIGHT_DP + GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP,
