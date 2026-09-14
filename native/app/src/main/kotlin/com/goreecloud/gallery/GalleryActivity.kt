@@ -35,6 +35,8 @@ import android.widget.ScrollView
 import android.widget.Space
 import android.widget.TextView
 import android.widget.Toast
+import com.goreecloud.gallery.android.AndroidMediaMovePendingState
+import com.goreecloud.gallery.android.AndroidMediaMoveRequests
 import com.goreecloud.gallery.android.AndroidMediaMutationMode
 import com.goreecloud.gallery.android.AndroidMediaMutationPendingState
 import com.goreecloud.gallery.android.AndroidMediaMutationPendingStates
@@ -45,6 +47,8 @@ import com.goreecloud.gallery.core.GalleryBulkActionPolicy
 import com.goreecloud.gallery.core.GalleryDragSelectionPolicy
 import com.goreecloud.gallery.core.GalleryDragSelectionSession
 import com.goreecloud.gallery.core.GalleryFavoriteBulkAction
+import com.goreecloud.gallery.core.GalleryMoveDestination
+import com.goreecloud.gallery.core.GalleryMoveDestinationPolicy
 import com.goreecloud.gallery.core.GallerySelectionPolicy
 import com.goreecloud.gallery.core.MediaItem
 import com.goreecloud.gallery.core.MediaSortOrder
@@ -102,6 +106,8 @@ class GalleryActivity : Activity() {
     private var searchQuery = ""
     private var viewerOverlay: View? = null
     private var pendingMediaMutation: AndroidMediaMutationPendingState? = null
+    private var pendingMediaMove: AndroidMediaMovePendingState? = null
+    private var mediaMoveExecutionInProgress = false
 
     private val inSelectionMode: Boolean
         get() = selectedUris.isNotEmpty() || dragSelectionSession != null
@@ -112,6 +118,11 @@ class GalleryActivity : Activity() {
             .getStringSet(FAVORITES_KEY, emptySet())
             .orEmpty()
         pendingMediaMutation = restorePendingMediaMutation(savedInstanceState)
+        pendingMediaMove = restorePendingMediaMove(savedInstanceState)
+        if (pendingMediaMutation != null && pendingMediaMove != null) {
+            pendingMediaMutation = null
+            pendingMediaMove = null
+        }
         reconfigureThumbnailExecutor(currentUserSettings().fileLoadingPriority)
         buildSurface()
     }
@@ -127,12 +138,27 @@ class GalleryActivity : Activity() {
                 AndroidMediaMutationPendingStates.contentUriValues(mutation),
             )
         }
+        pendingMediaMove?.let { move ->
+            outState.putStringArray(
+                STATE_PENDING_MEDIA_MOVE_URIS,
+                AndroidMediaMoveRequests.contentUriValues(move),
+            )
+            outState.putString(
+                STATE_PENDING_MEDIA_MOVE_DESTINATION,
+                move.destinationRelativePath,
+            )
+        }
         super.onSaveInstanceState(outState)
     }
 
     override fun onResume() {
         super.onResume()
-        if (viewerOverlay != null || pendingMediaMutation != null) return
+        if (
+            viewerOverlay != null ||
+            pendingMediaMutation != null ||
+            pendingMediaMove != null ||
+            mediaMoveExecutionInProgress
+        ) return
         if (destination == GalleryDestination.SETTINGS) {
             renderCurrentDestination()
         } else {
@@ -159,6 +185,17 @@ class GalleryActivity : Activity() {
             return
         }
 
+        if (requestCode == MEDIA_MOVE_REQUEST) {
+            val move = pendingMediaMove
+            pendingMediaMove = null
+            if (resultCode == RESULT_OK && move != null) {
+                completeConfirmedMediaMove(move)
+            } else if (move != null) {
+                Toast.makeText(this, "Move canceled", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
         if (resultCode != RESULT_OK) return
         val uri = data?.data ?: return
         when (requestCode) {
@@ -181,6 +218,12 @@ class GalleryActivity : Activity() {
         GalleryMediaMutationPendingPolicy.restore(
             modeName = savedInstanceState?.getString(STATE_PENDING_MEDIA_MUTATION_MODE),
             contentUris = savedInstanceState?.getStringArray(STATE_PENDING_MEDIA_MUTATION_URIS)?.asList(),
+        )
+
+    private fun restorePendingMediaMove(savedInstanceState: Bundle?): AndroidMediaMovePendingState? =
+        AndroidMediaMoveRequests.restore(
+            contentUris = savedInstanceState?.getStringArray(STATE_PENDING_MEDIA_MOVE_URIS)?.asList(),
+            destinationRelativePath = savedInstanceState?.getString(STATE_PENDING_MEDIA_MOVE_DESTINATION),
         )
 
     override fun onDestroy() {
@@ -575,6 +618,20 @@ class GalleryActivity : Activity() {
             currentUserSettings().moveDeletedItemsToRecycleBin -> "Move selected media to the Android Recycle Bin"
             else -> "Permanently delete selected media after Android confirmation"
         }
+        val moveSupported = AndroidMediaMoveRequests.isSupported()
+        val moveDestinations = if (selectedItems.isEmpty()) {
+            emptyList()
+        } else {
+            GalleryMoveDestinationPolicy.existingDestinations(
+                currentScope = visibleAuthorizedItems(),
+                selectedContentUris = selectedUris,
+            )
+        }
+        val moveDescription = when {
+            !moveSupported -> "Move requires Android 11 or newer in this Development build"
+            moveDestinations.isEmpty() -> "No other existing authorized folders are available"
+            else -> "Move selected media to an existing authorized folder"
+        }
 
         val actions = listOf(
             selectionAction("Share", selectedItems.isNotEmpty(), "Share selected media") {
@@ -583,7 +640,13 @@ class GalleryActivity : Activity() {
             selectionAction(favoriteLabel, selectedItems.isNotEmpty(), "$favoriteLabel selected media") {
                 applySelectedFavoriteAction()
             },
-            selectionAction("Move", false, "Move is unavailable until media mutation is implemented") {},
+            selectionAction(
+                "Move",
+                selectedItems.isNotEmpty() && moveSupported && moveDestinations.isNotEmpty() && pendingMediaMove == null,
+                moveDescription,
+            ) {
+                showMoveDestinationDialog()
+            },
             selectionAction("Delete", selectedItems.isNotEmpty() && deleteSupported, deletionDescription) {
                 requestMediaDeletion(selectedItems)
             },
@@ -1549,8 +1612,236 @@ class GalleryActivity : Activity() {
         clearSelection()
     }
 
+    private fun showMoveDestinationDialog() {
+        if (!AndroidMediaMoveRequests.isSupported()) {
+            Toast.makeText(this, "Move requires Android 11 or newer in this Development build.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
+
+        val selectedItems = currentSelectedItems()
+        val destinations = GalleryMoveDestinationPolicy.existingDestinations(
+            currentScope = visibleAuthorizedItems(),
+            selectedContentUris = selectedUris,
+        )
+        if (selectedItems.isEmpty() || destinations.isEmpty()) {
+            Toast.makeText(this, "No other existing authorized folders are available.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        var dialog: AlertDialog? = null
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(20), dp(22), dp(14))
+            background = roundedSurface(
+                if (isNightMode()) 0xff242426.toInt() else 0xffffffff.toInt(),
+                GalleryGlazeContract.SHAPE_OVERLAY_DP,
+            )
+        }
+        panel.addView(TextView(this).apply {
+            text = "Move to folder"
+            setTextColor(primaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        panel.addView(TextView(this).apply {
+            text = "Choose an existing local folder from media Android currently authorizes."
+            setTextColor(secondaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setLineSpacing(0f, 1.06f)
+            setPadding(0, dp(4), 0, dp(14))
+        })
+
+        destinations.forEach { moveDestination ->
+            panel.addView(
+                glazeDialogActionRow(
+                    title = moveDestination.displayName,
+                    subtitle = "${itemCountLabel(moveDestination.itemCount)} · Existing local folder",
+                ) {
+                    requestMediaMove(selectedItems, moveDestination)
+                    dialog?.dismiss()
+                },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    bottomMargin = dp(7)
+                },
+            )
+        }
+
+        panel.addView(TextView(this).apply {
+            text = "New folder is not enabled in this Development build"
+            setTextColor(secondaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+            gravity = Gravity.CENTER
+            setPadding(dp(4), dp(8), dp(4), dp(6))
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        })
+        panel.addView(TextView(this).apply {
+            text = "Cancel"
+            gravity = Gravity.CENTER
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setTextColor(accentColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = roundedSurface(Color.TRANSPARENT, GalleryGlazeContract.SHAPE_CONTROL_DP)
+            isClickable = true
+            isFocusable = true
+            contentDescription = "Cancel move"
+            setOnClickListener { dialog?.dismiss() }
+        })
+
+        dialog = AlertDialog.Builder(this)
+            .setView(panel)
+            .create()
+        dialog?.setOnShowListener {
+            dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            dialog?.window?.setDimAmount(0.42f)
+            dialog?.window?.setLayout(
+                resources.displayMetrics.widthPixels - dp(32),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+        dialog?.show()
+        dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+        dialog?.window?.setDimAmount(0.42f)
+        dialog?.window?.setLayout(
+            resources.displayMetrics.widthPixels - dp(32),
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
+    private fun glazeDialogActionRow(
+        title: String,
+        subtitle: String,
+        onClick: () -> Unit,
+    ): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        minimumHeight = dp(64)
+        setPadding(dp(14), dp(9), dp(10), dp(9))
+        background = roundedSurface(
+            withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
+            GalleryGlazeContract.SHAPE_CONTAINER_DP,
+        )
+        val labels = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        labels.addView(TextView(context).apply {
+            text = title
+            setTextColor(primaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        labels.addView(TextView(context).apply {
+            text = subtitle
+            setTextColor(secondaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+            setPadding(0, dp(2), dp(8), 0)
+        })
+        addView(labels, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        addView(
+            TextView(context).apply {
+                text = "›"
+                gravity = Gravity.CENTER
+                setTextColor(accentColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            },
+            LinearLayout.LayoutParams(dp(36), dp(GalleryGlazeContract.GENERAL_TARGET_DP)),
+        )
+        isClickable = true
+        isFocusable = true
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        contentDescription = "$title. $subtitle. Move selected media here."
+        setOnClickListener { onClick() }
+    }
+
+    private fun requestMediaMove(items: List<MediaItem>, destination: GalleryMoveDestination) {
+        if (items.isEmpty() || pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
+        if (!AndroidMediaMoveRequests.isSupported()) {
+            Toast.makeText(this, "Move requires Android 11 or newer in this Development build.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val request = try {
+            AndroidMediaMoveRequests.create(
+                contentResolver = contentResolver,
+                contentUris = items.map { it.contentUri },
+                destinationRelativePath = destination.relativePath,
+            )
+        } catch (_: IllegalArgumentException) {
+            Toast.makeText(this, "Gallery refused an invalid move request.", Toast.LENGTH_SHORT).show()
+            return
+        } catch (_: IllegalStateException) {
+            Toast.makeText(this, "Android-authorized media move is unavailable on this device.", Toast.LENGTH_SHORT).show()
+            return
+        } catch (_: SecurityException) {
+            Toast.makeText(this, "Android denied the move authorization request.", Toast.LENGTH_SHORT).show()
+            return
+        } catch (_: RuntimeException) {
+            Toast.makeText(this, "The Android media provider could not prepare this move.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        pendingMediaMove = AndroidMediaMoveRequests.capture(request)
+        try {
+            startIntentSenderForResult(
+                request.pendingIntent.intentSender,
+                MEDIA_MOVE_REQUEST,
+                null,
+                0,
+                0,
+                0,
+            )
+        } catch (_: IntentSender.SendIntentException) {
+            pendingMediaMove = null
+            Toast.makeText(this, "Android could not open move authorization.", Toast.LENGTH_SHORT).show()
+        } catch (_: RuntimeException) {
+            pendingMediaMove = null
+            Toast.makeText(this, "Android could not open move authorization.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun completeConfirmedMediaMove(move: AndroidMediaMovePendingState) {
+        mediaMoveExecutionInProgress = true
+        thread(name = "goreecloud-gallery-mediastore-move") {
+            val result = try {
+                AndroidMediaMoveRequests.execute(contentResolver, move)
+            } catch (_: IllegalArgumentException) {
+                null
+            } catch (_: IllegalStateException) {
+                null
+            } catch (_: RuntimeException) {
+                null
+            }
+
+            runOnUiThread {
+                mediaMoveExecutionInProgress = false
+                clearSelection(render = false)
+                thumbnailCache.evictAll()
+
+                val message = when {
+                    result == null -> "Move could not be completed"
+                    result.failedCount == 0 && result.movedCount == 1 -> "Moved 1 item"
+                    result.failedCount == 0 -> "Moved ${result.movedCount} items"
+                    result.movedCount == 0 && result.failedCount == 1 -> "Move failed for 1 item"
+                    result.movedCount == 0 -> "Move failed for ${result.failedCount} items"
+                    else -> "Moved ${result.movedCount} items · ${result.failedCount} failed"
+                }
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+
+                val accessScope = currentMediaAccessScope()
+                if (GalleryMediaAccessPolicy.canRead(accessScope)) {
+                    loadLocalLibrary(accessScope)
+                } else {
+                    renderPermissionState()
+                }
+            }
+        }
+    }
+
     private fun requestMediaDeletion(items: List<MediaItem>) {
-        if (items.isEmpty() || pendingMediaMutation != null) return
+        if (items.isEmpty() || pendingMediaMutation != null || pendingMediaMove != null || mediaMoveExecutionInProgress) return
         if (!AndroidMediaMutationRequests.isSupported()) {
             Toast.makeText(
                 this,
@@ -2961,12 +3252,15 @@ class GalleryActivity : Activity() {
     private companion object {
         const val MEDIA_PERMISSION_REQUEST = 4101
         const val MEDIA_MUTATION_REQUEST = 4102
+        const val MEDIA_MOVE_REQUEST = 4103
         const val EXPORT_FAVORITES_REQUEST = 4201
         const val IMPORT_FAVORITES_REQUEST = 4202
         const val EXPORT_SETTINGS_REQUEST = 4203
         const val IMPORT_SETTINGS_REQUEST = 4204
         const val STATE_PENDING_MEDIA_MUTATION_MODE = "pending_media_mutation_mode"
         const val STATE_PENDING_MEDIA_MUTATION_URIS = "pending_media_mutation_uris"
+        const val STATE_PENDING_MEDIA_MOVE_URIS = "pending_media_move_uris"
+        const val STATE_PENDING_MEDIA_MOVE_DESTINATION = "pending_media_move_destination"
 
         const val GRID_GAP_DP = 3
         const val GRID_CORNER_DP = 8
