@@ -50,6 +50,10 @@ object GalleryUiRefinement {
         "Refresh Recycle Bin",
     )
 
+    private val primaryPersistentControlDescriptions = setOf(
+        "Gallery media access action",
+    )
+
     private val recycleBinActionDescriptions = setOf(
         "Select all currently loaded trashed media",
         "Restore selected media through Android confirmation",
@@ -65,6 +69,9 @@ object GalleryUiRefinement {
         "Permanently delete this media through Android confirmation",
         "Show details for this trashed media",
     )
+
+    private val albumTileDescription = Regex("^.+, (?:1 item|[0-9]+ items)$")
+    private val collectionSubtitle = Regex("^[0-9]+ collections?(?: · (?:Newest|Oldest) first)?$")
 
     fun install(activity: Activity) {
         if (
@@ -97,7 +104,10 @@ object GalleryUiRefinement {
         }
 
         when (activity) {
-            is GalleryActivity -> findNavigationCapsule(root)?.let { refineNavigation(activity, it) }
+            is GalleryActivity -> {
+                findNavigationCapsule(root)?.let { refineNavigation(activity, it) }
+                refineAlbumCollectionSubtitle(root)
+            }
             is RecycleBinActivity -> refineRecycleBinChrome(activity, root)
         }
     }
@@ -106,27 +116,50 @@ object GalleryUiRefinement {
         walk(root) { view ->
             val description = view.contentDescription?.toString() ?: return@walk
             if (description !in persistentControlDescriptions) return@walk
-            styleControl(activity, view, "control:$description")
+            val primary = description in primaryPersistentControlDescriptions
+            styleControl(
+                activity = activity,
+                view = view,
+                marker = "control:$description:${if (primary) "primary" else "quiet"}",
+                role = if (primary) GalleryGlazeSurfaces.Role.CONTROL else GalleryGlazeSurfaces.Role.RAISED,
+                elevationDp = if (primary) 2 else 1,
+            )
         }
     }
 
     private fun refineNavigation(activity: GalleryActivity, capsule: LinearLayout) {
+        val capsuleMarker = "navigation-capsule-v2"
+        if (capsule.getTag(R.id.gallery_navigation_surface_tag) != capsuleMarker) {
+            // Keep the outer bar optically quieter than the selected item so state is not conveyed
+            // by color alone and the active CONTROL surface remains the strongest navigation cue.
+            capsule.background = GalleryGlazeSurfaces.drawable(
+                activity,
+                GalleryGlazeSurfaces.Role.OVERLAY,
+                GalleryGlazeContract.NAVIGATION_RADIUS_DP,
+            )
+            capsule.elevation = dp(activity, GalleryGlazeContract.NAVIGATION_ELEVATION_DP).toFloat()
+            capsule.setTag(R.id.gallery_navigation_surface_tag, capsuleMarker)
+        }
+
         for (index in 0 until capsule.childCount) {
             val item = capsule.getChildAt(index) as? TextView ?: continue
             val label = item.text?.toString() ?: continue
             val icon = navigationIcons[label] ?: continue
             val selected = item.isSelected
-            val marker = "navigation:$label:$selected"
+            val marker = "navigation:$label:$selected:v2"
             if (item.getTag(R.id.gallery_ui_refinement_tag) == marker) continue
 
             val foreground = if (selected) activityAccent(activity) else activityPrimaryText(activity)
             item.setTextSize(TypedValue.COMPLEX_UNIT_SP, GalleryGlazeContract.NAVIGATION_LABEL_SP)
             item.setTextColor(foreground)
             item.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
-            item.setCompoundDrawablesWithIntrinsicBounds(0, icon, 0, 0)
+            val drawable = activity.getDrawable(icon)?.mutate()
+            val iconPx = dp(activity, GalleryGlazeContract.NAVIGATION_ICON_DP)
+            drawable?.setBounds(0, 0, iconPx, iconPx)
+            item.setCompoundDrawables(null, drawable, null, null)
             item.compoundDrawableTintList = ColorStateList.valueOf(foreground)
-            item.compoundDrawablePadding = dp(activity, 1)
-            item.setPadding(dp(activity, 4), dp(activity, 3), dp(activity, 4), dp(activity, 3))
+            item.compoundDrawablePadding = dp(activity, 2)
+            item.setPadding(dp(activity, 4), dp(activity, 2), dp(activity, 4), dp(activity, 2))
             item.background = if (selected) {
                 GalleryGlazeSurfaces.drawable(
                     activity,
@@ -142,6 +175,39 @@ object GalleryUiRefinement {
             }
             item.setTag(R.id.gallery_ui_refinement_tag, marker)
         }
+    }
+
+    /**
+     * The Recovery row is intentionally separate from Collections. GalleryActivity historically
+     * counted the Recycle Bin capability in the Albums subtitle even though it renders under the
+     * Recovery heading. Correct the rendered summary to match the collection tiles the user can see
+     * without changing MediaStore authority or album membership.
+     */
+    private fun refineAlbumCollectionSubtitle(root: FrameLayout) {
+        var collectionCount = 0
+        val subtitleCandidates = mutableListOf<TextView>()
+
+        walk(root) { view ->
+            if (
+                view is LinearLayout &&
+                view.orientation == LinearLayout.VERTICAL &&
+                view.isClickable &&
+                albumTileDescription.matches(view.contentDescription?.toString().orEmpty())
+            ) {
+                collectionCount += 1
+            }
+            if (view is TextView && collectionSubtitle.matches(view.text?.toString().orEmpty())) {
+                subtitleCandidates += view
+            }
+        }
+
+        if (subtitleCandidates.size != 1) return
+        val subtitle = subtitleCandidates.single()
+        val current = subtitle.text?.toString().orEmpty()
+        val sortSuffix = current.substringAfter(" · ", missingDelimiterValue = "")
+        val countLabel = if (collectionCount == 1) "1 collection" else "$collectionCount collections"
+        val corrected = if (sortSuffix.isBlank()) countLabel else "$countLabel · $sortSuffix"
+        if (current != corrected) subtitle.text = corrected
     }
 
     private fun findNavigationCapsule(root: FrameLayout): LinearLayout? {
@@ -232,14 +298,20 @@ object GalleryUiRefinement {
         return false
     }
 
-    private fun styleControl(activity: Activity, view: View, marker: String) {
+    private fun styleControl(
+        activity: Activity,
+        view: View,
+        marker: String,
+        role: GalleryGlazeSurfaces.Role = GalleryGlazeSurfaces.Role.CONTROL,
+        elevationDp: Int = 2,
+    ) {
         if (view.getTag(R.id.gallery_ui_refinement_tag) == marker) return
         view.background = GalleryGlazeSurfaces.drawable(
             activity,
-            GalleryGlazeSurfaces.Role.CONTROL,
+            role,
             GalleryGlazeContract.SHAPE_CONTROL_DP,
         )
-        view.elevation = dp(activity, 2).toFloat()
+        view.elevation = dp(activity, elevationDp).toFloat()
         view.setTag(R.id.gallery_ui_refinement_tag, marker)
     }
 
@@ -275,6 +347,6 @@ object GalleryUiRefinement {
     private fun dp(activity: Activity, value: Int): Int =
         (value * activity.resources.displayMetrics.density).toInt()
 
-    private const val ROOT_REFINED_MARKER = "gallery-ui-refinement-root-v2"
+    private const val ROOT_REFINED_MARKER = "gallery-ui-refinement-root-v3"
     private const val RECYCLE_BIN_ACTION_COUNT = 4
 }
