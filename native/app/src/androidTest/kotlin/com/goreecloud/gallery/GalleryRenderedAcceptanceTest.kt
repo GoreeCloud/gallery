@@ -53,6 +53,40 @@ class GalleryRenderedAcceptanceTest {
     }
 
     @Test
+    fun selectedNavigationSurfaceIsContainedByOuterCapsule() {
+        activityRule.scenario.onActivity { activity ->
+            val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
+            val root = androidContent.getChildAt(0) as FrameLayout
+            val capsule = (0 until root.childCount)
+                .map(root::getChildAt)
+                .filterIsInstance<LinearLayout>()
+                .first { candidate ->
+                    val labels = (0 until candidate.childCount).mapNotNull { index ->
+                        (candidate.getChildAt(index) as? TextView)?.text?.toString()
+                    }
+                    labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
+                }
+
+            assertTrue("Navigation capsule must clip child material to its rounded outline", capsule.clipToOutline)
+
+            val selected = (0 until capsule.childCount)
+                .map(capsule::getChildAt)
+                .filterIsInstance<TextView>()
+                .single { it.isSelected }
+            val capsuleRect = Rect().also { capsule.getGlobalVisibleRect(it) }
+            val selectedRect = Rect().also { selected.getGlobalVisibleRect(it) }
+
+            assertTrue(
+                "Selected navigation material must remain inside the outer capsule bounds",
+                selectedRect.left >= capsuleRect.left &&
+                    selectedRect.top >= capsuleRect.top &&
+                    selectedRect.right <= capsuleRect.right &&
+                    selectedRect.bottom <= capsuleRect.bottom,
+            )
+        }
+    }
+
+    @Test
     fun destinationNavigationUpdatesRenderedSelectionState() {
         repeat(2) {
             onView(withContentDescription("Albums"))
