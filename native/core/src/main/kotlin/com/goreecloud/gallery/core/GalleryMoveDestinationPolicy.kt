@@ -48,7 +48,7 @@ object GalleryMoveDestinationPolicy {
                 )
             }
             .sortedWith(
-                compareBy<GalleryMoveDestination>(String.CASE_INSENSITIVE_ORDER) { it.displayName }
+                compareBy<GalleryMoveDestination> { it.displayName.lowercase() }
                     .thenBy { it.albumId },
             )
     }
