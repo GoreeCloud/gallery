@@ -2,7 +2,7 @@
 
 ## Status
 
-This manual describes the **current first-party native `0.8.1-dev` Development candidate**. It includes the previously tested Android Trash/Recycle Bin foundation, first-party viewer/editor work, the current GLAZE UI V1.3 Adaptive Resonance revamp, long-press + drag selection, Android-authorized existing-folder Move, and the bounded New Folder Move candidate.
+This manual describes the **current first-party native `0.8.1-dev` Development candidate**. It includes the previously tested Android Trash/Recycle Bin foundation, first-party viewer/editor work, the current GLAZE UI V1.4 Optical Intelligence revamp, long-press + drag selection, Android-authorized existing-folder Move, and the bounded New Folder Move candidate.
 
 It does **not** describe a Stable or production-approved release. Use **disposable copied photos and videos** when testing Move, Restore, permanent deletion, editor output, or other unfinished write/destructive workflows. Do not use irreplaceable personal media as Development test input.
 
@@ -59,7 +59,7 @@ On Android 11+ the current candidate can move selected authorized media to an **
 
 1. Select one or more disposable test photos/videos.
 2. Choose **Move** from the selection action surface.
-3. Gallery shows a GLAZE UI V1.3 Move surface containing eligible existing authorized folders and, when allowed, a New folder action.
+3. Gallery shows a GLAZE UI V1.4 Move surface containing eligible existing authorized folders and, when allowed, a New folder action.
 4. Choose an existing destination folder.
 5. Android should display its system-owned write authorization surface for the exact selected media items.
 6. Approve only when you intend to move the disposable test media.
@@ -196,9 +196,9 @@ Protected Photos/password protection is not simulated with insecure app-local cr
 
 ## Current design-system authority
 
-The canonical Glaze repository currently publishes **GLAZE UI V1.3 / 1.3.0 — Adaptive Resonance** at exact Stable authority revision `ff34f232f295c9dcb07e4c681f66d4104d0b9323`.
+The authoritative Glaze lifecycle registry identifies **GLAZE UI V1.4 / 1.4.0 — Optical Intelligence** as the current Official Stable, consumer-eligible release at exact authority revision `ee057ce9e729296aeaeda182d01db89f52bd66f3`.
 
-The current Gallery candidate maps that authority through native Android semantic roles and a bounded Adaptive Resonance chrome pass. GLAZE UI V1.4/V1.4.1 material remains Proposed and is not treated as current Stable authority.
+The current Gallery candidate maps that authority through native Android semantic/optical roles and a bounded Optical Intelligence chrome pass. Environmental-memory tint is capped, semantic states remain authoritative, and Reduced Transparency / Increased Contrast must retain readable fallbacks.
 
 The repository-local mapping does not independently establish whole-application conformance. Gallery still requires fresh rendered, interaction, TalkBack/switch-access/large-text/RTL, contrast, Reduced Transparency, Increased Contrast, adaptive/form-factor, representative-device/OEM/profile, performance, Human Visual Excellence, rollback, release, and production acceptance before Stable qualification.
 
@@ -206,7 +206,7 @@ The repository-local mapping does not independently establish whole-application 
 
 Major remaining capability areas include complete existing-folder/New Folder Move device acceptance; Copy organization; native video playback plus autoplay/loop behavior; animated GIF behavior; complete photo-editor fidelity/accessibility/device acceptance and future video editing where approved; metadata editing; richer album creation/rename/reorder/actions; richer grouping/timeline modes; view-density/layout controls; slideshow and other established local presentation actions; broader contextual/overflow/export workflows; secure Private/Protected Photos; fuller hidden/sensitive-media policy; automatic empty-folder cleanup; and additional established first-party Gallery capabilities verified by historical GoreeCloud Gallery evidence.
 
-Separate release gates include GLAZE UI V1.3 application acceptance, accessibility/adaptive/OEM/profile testing, the unresolved central Platform Contract Glaze-version mismatch, Privacy Shield/Wardveil/Everkeep/Identity/Mesh/Manager integration where applicable, long-lived signing/provenance, upgrade/recovery/rollback validation, Release Candidate qualification, production approval, and Stable qualification.
+Separate release gates include GLAZE UI V1.4 application acceptance, accessibility/adaptive/OEM/profile testing, Privacy Shield/Wardveil/Everkeep/Identity/Mesh/Manager integration where applicable, long-lived signing/provenance, upgrade/recovery/rollback validation, Release Candidate qualification, production approval, and Stable qualification.
 
 ## Troubleshooting
 
