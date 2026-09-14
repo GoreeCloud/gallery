@@ -55,14 +55,21 @@ GoreeCloud Gallery is being rebuilt as an original first-party Android applicati
 - Optical adaptation must remain bounded and must collapse safely to solid/readable surfaces for Reduced Transparency and Increased Contrast requirements.
 - The version/source mapping does not establish whole-application Glaze conformance, production eligibility, Release Candidate status, or Stable status.
 
+## GoreeCloud Platform Contract 0.3
+
+- Gallery declares all eight Integral Platform Systems through `goreecloud.platform.yaml` under Platform Contract `0.3`.
+- The exact central validation authority pinned by the Gallery workflow recognizes GLAZE UI `1.4.0` as the current Stable target.
+- A valid Platform Contract declaration is configuration/governance evidence only; it does not convert blocked integrations into accepted runtime integration.
+- Gallery remains globally `nonconformant` while required platform-system and lifecycle evidence remains incomplete.
+
 ## Platform boundaries
 
 - **Glaze UI / Design Center:** V1.4 source migration is present; whole-application rendered/accessibility/adaptive/device/performance/Human Visual Excellence/optical-fallback/release acceptance remains required.
 - **Privacy Shield / Privacy Center:** Android media authorization, data minimization, purpose-limited local operations, and fail-closed authority remain current source behavior; accepted production Privacy Shield integration is not established.
 - **Wardveil Security / Security Center:** bounded media/editor/mutation safeguards exist, but accepted Wardveil runtime integration and production validation are not established.
 - **Everkeep / Continuity Center:** Gallery-owned settings/Favorites portability and Android-owned Trash recovery exist; accepted complete Everkeep integration and recovery evidence are not established.
-- **Manager, Mesh, Identity:** applicable responsibilities remain blocked pending accepted integration evidence; local browsing does not require those systems to fabricate a positive status.
+- **Manager, Mesh, Identity, Sync:** applicable responsibilities remain blocked pending accepted integration evidence. Local browsing must not depend on those systems or fabricate a positive integration status. Any future cross-device Gallery-owned-state or Photos continuity path must receive separate Sync authority and acceptance.
 
 ## Stable blockers
 
-Stable qualification remains blocked on representative-device acceptance of Move and remaining destructive/recovery cases; New folder/Copy organization; native video playback; complete viewer/editor fidelity and failure-path acceptance; secure Protected Photos/hidden-media policy; whole-application GLAZE UI V1.4 accessibility/adaptive/optical/device acceptance; Android user/profile/OEM acceptance; accepted Privacy Shield/Wardveil/Everkeep/Manager/Mesh/Identity integration where applicable; protected signing/provenance; upgrade/recovery/rollback evidence; Release Candidate qualification; production approval; and final release evidence.
+Stable qualification remains blocked on representative-device acceptance of Move and remaining destructive/recovery cases; New folder/Copy organization; native video playback; complete viewer/editor fidelity and failure-path acceptance; secure Protected Photos/hidden-media policy; whole-application GLAZE UI V1.4 accessibility/adaptive/optical/device acceptance; Android user/profile/OEM acceptance; accepted Privacy Shield/Wardveil/Everkeep/Manager/Mesh/Identity/Sync integration where applicable; protected signing/provenance; upgrade/recovery/rollback evidence; Release Candidate qualification; production approval; and final release evidence.
