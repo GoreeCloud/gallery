@@ -14,9 +14,10 @@ import java.util.Collections
  *
  * Existing-folder destinations may come from provider-owned RELATIVE_PATH metadata already present
  * in the current authorized snapshot. A new-folder destination may instead be constructed by the
- * Gallery core only beneath one authoritative selected source path after strict folder-name/path
- * validation. In either case an album name is never filesystem authority, Android must approve write
- * access to the exact bounded item URIs, and this adapter independently validates the final path.
+ * Gallery core beneath a media-type-appropriate shared-media root after strict selected-scope,
+ * media-kind, folder-name, and path validation. In either case an album name is never filesystem
+ * authority, Android must approve write access to the exact bounded item URIs, and this adapter
+ * independently validates the final relative path before mutation.
  */
 class AndroidMediaMoveRequest internal constructor(
     contentUris: List<String>,
