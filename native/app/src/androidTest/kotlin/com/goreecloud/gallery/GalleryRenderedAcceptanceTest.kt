@@ -57,21 +57,21 @@ class GalleryRenderedAcceptanceTest {
         repeat(2) {
             onView(withContentDescription("Albums"))
                 .perform(click())
-            onView(withContentDescription("Albums, selected"))
+            onView(selectedNavigationLabel("Albums"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
                 .check(matches(hasTopCompoundDrawable()))
 
             onView(withContentDescription("Settings"))
                 .perform(click())
-            onView(withContentDescription("Settings, selected"))
+            onView(selectedNavigationLabel("Settings"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
                 .check(matches(hasTopCompoundDrawable()))
 
             onView(withContentDescription("Photos"))
                 .perform(click())
-            onView(withContentDescription("Photos, selected"))
+            onView(selectedNavigationLabel("Photos"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasTopCompoundDrawable()))
         }
@@ -154,6 +154,22 @@ class GalleryRenderedAcceptanceTest {
             maxOf(insets.systemWindowInsetRight, cutout?.safeInsetRight ?: 0),
             maxOf(insets.systemWindowInsetBottom, cutout?.safeInsetBottom ?: 0),
         )
+    }
+
+    private fun selectedNavigationLabel(expectedLabel: String) = object : TypeSafeMatcher<View>() {
+        override fun describeTo(description: Description) {
+            description.appendText(
+                "is the selected Gallery navigation label $expectedLabel with non-color selected semantics",
+            )
+        }
+
+        override fun matchesSafely(view: View): Boolean {
+            if (view !is TextView || view.text?.toString() != expectedLabel || !view.isSelected) return false
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && view.stateDescription?.toString() != "Selected") {
+                return false
+            }
+            return true
+        }
     }
 
     private fun hasMinimumTouchSizeDp(minimumDp: Float) = object : TypeSafeMatcher<View>() {
