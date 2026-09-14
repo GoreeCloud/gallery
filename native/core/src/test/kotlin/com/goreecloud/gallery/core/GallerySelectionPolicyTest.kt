@@ -30,6 +30,67 @@ class GallerySelectionPolicyTest {
     }
 
     @Test
+    fun `explicit selection state is idempotent for drag revisits`() {
+        val first = media("1")
+        val scope = listOf(first)
+
+        val selected = GallerySelectionPolicy.setSelected(emptySet(), first, scope, selected = true)
+        val revisited = GallerySelectionPolicy.setSelected(selected, first, scope, selected = true)
+
+        assertEquals(setOf(first.contentUri), revisited)
+
+        val cleared = GallerySelectionPolicy.setSelected(revisited, first, scope, selected = false)
+        val revisitedClear = GallerySelectionPolicy.setSelected(cleared, first, scope, selected = false)
+
+        assertTrue(revisitedClear.isEmpty())
+    }
+
+    @Test
+    fun `explicit selection state rejects foreign items`() {
+        val first = media("1")
+        val outside = media("2")
+
+        assertTrue(
+            GallerySelectionPolicy.setSelected(
+                selectedContentUris = emptySet(),
+                item = outside,
+                currentScope = listOf(first),
+                selected = true,
+            ).isEmpty(),
+        )
+    }
+
+    @Test
+    fun `range selection changes only items inside current scope`() {
+        val first = media("1")
+        val second = media("2")
+        val third = media("3")
+        val outside = media("4")
+        val scope = listOf(first, second, third)
+
+        val selected = GallerySelectionPolicy.setSelectedRange(
+            selectedContentUris = setOf(first.contentUri),
+            items = listOf(second, third, outside),
+            currentScope = scope,
+            selected = true,
+        )
+
+        assertEquals(
+            linkedSetOf(first.contentUri, second.contentUri, third.contentUri),
+            selected,
+        )
+
+        val deselected = GallerySelectionPolicy.setSelectedRange(
+            selectedContentUris = selected,
+            items = listOf(first, third, outside),
+            currentScope = scope,
+            selected = false,
+        )
+
+        assertEquals(setOf(second.contentUri), deselected)
+    }
+
+    @Test
     fun `prune removes stale selection when presentation scope changes`() {
         val first = media("1")
         val second = media("2")
