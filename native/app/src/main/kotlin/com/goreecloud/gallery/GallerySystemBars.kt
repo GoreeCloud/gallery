@@ -7,18 +7,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.FrameLayout
-import android.widget.LinearLayout
 import android.widget.ScrollView
 import java.util.WeakHashMap
 
 /**
- * Applies Android system-bar and display-cutout safe areas to the main Gallery chrome while keeping
- * full-screen overlays free to render edge-to-edge.
+ * Applies Android system-bar, display-cutout, and gesture-safe areas to first-party Gallery chrome.
  *
  * Android 15+ enforces edge-to-edge for current target SDKs. Gallery therefore cannot rely on the
- * decor view to keep application chrome out of status, navigation, gesture, or cutout regions.
- * Insets are applied to the persistent scroll surface and bottom-aligned Glaze capsules instead of
- * padding the root FrameLayout so the full-screen media viewer can still occupy the complete window.
+ * decor view to keep interactive chrome out of status, navigation, gesture, or cutout regions.
+ * Full-screen media/stage surfaces may remain edge-to-edge, while direct top/bottom chrome and
+ * scroll surfaces receive safe margins derived from the current WindowInsets snapshot.
  */
 object GallerySystemBars {
     private data class MarginBaseline(
@@ -31,8 +29,6 @@ object GallerySystemBars {
     private val marginBaselines = WeakHashMap<View, MarginBaseline>()
 
     fun install(activity: Activity) {
-        if (activity !is GalleryActivity) return
-
         val androidContent = activity.findViewById<ViewGroup>(android.R.id.content) ?: return
         val root = androidContent.getChildAt(0) as? FrameLayout ?: return
 
@@ -59,6 +55,7 @@ object GallerySystemBars {
         for (index in 0 until root.childCount) {
             val child = root.getChildAt(index)
             val params = child.layoutParams as? FrameLayout.LayoutParams ?: continue
+            val verticalGravity = resolvedVerticalGravity(params)
 
             when {
                 child is ScrollView -> applySafeMargins(
@@ -70,7 +67,16 @@ object GallerySystemBars {
                     layoutDirection = root.layoutDirection,
                 )
 
-                child is LinearLayout && isBottomAligned(params) -> applySafeMargins(
+                verticalGravity == Gravity.TOP -> applySafeMargins(
+                    view = child,
+                    params = params,
+                    safe = safe,
+                    includeTop = true,
+                    includeBottom = false,
+                    layoutDirection = root.layoutDirection,
+                )
+
+                verticalGravity == Gravity.BOTTOM -> applySafeMargins(
                     view = child,
                     params = params,
                     safe = safe,
@@ -110,20 +116,22 @@ object GallerySystemBars {
         view.layoutParams = params
     }
 
-    private fun isBottomAligned(params: FrameLayout.LayoutParams): Boolean =
-        params.gravity != -1 &&
-            (params.gravity and Gravity.VERTICAL_GRAVITY_MASK) == Gravity.BOTTOM
+    private fun resolvedVerticalGravity(params: FrameLayout.LayoutParams): Int {
+        if (params.gravity == -1) return -1
+        return params.gravity and Gravity.VERTICAL_GRAVITY_MASK
+    }
 
     private fun safeInsets(insets: WindowInsets): SafeInsets {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            val resolved = insets.getInsets(
+            val barsAndCutout = insets.getInsets(
                 WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout(),
             )
+            val gestures = insets.getInsets(WindowInsets.Type.mandatorySystemGestures())
             return SafeInsets(
-                left = resolved.left,
-                top = resolved.top,
-                right = resolved.right,
-                bottom = resolved.bottom,
+                left = maxOf(barsAndCutout.left, gestures.left),
+                top = maxOf(barsAndCutout.top, gestures.top),
+                right = maxOf(barsAndCutout.right, gestures.right),
+                bottom = maxOf(barsAndCutout.bottom, gestures.bottom),
             )
         }
 

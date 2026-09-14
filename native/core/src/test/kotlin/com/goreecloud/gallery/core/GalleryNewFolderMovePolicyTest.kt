@@ -8,7 +8,7 @@ import kotlin.test.assertNull
 
 class GalleryNewFolderMovePolicyTest {
     @Test
-    fun `new folder stays beneath the single authoritative selected source path`() {
+    fun `photo new folder uses Pictures instead of inheriting an unsupported source root`() {
         val first = media("1", "downloads", "Download", "Download/")
         val second = media("2", "downloads", "Download", "Download/")
 
@@ -19,8 +19,43 @@ class GalleryNewFolderMovePolicyTest {
         )
 
         assertEquals("Trip Photos", destination.displayName)
-        assertEquals("Download", destination.parentDisplayName)
-        assertEquals("Download/Trip Photos/", destination.relativePath)
+        assertEquals("Pictures", destination.parentDisplayName)
+        assertEquals("Pictures/Trip Photos/", destination.relativePath)
+    }
+
+    @Test
+    fun `video new folder uses Movies`() {
+        val video = media(
+            id = "1",
+            albumId = "downloads",
+            albumName = "Download",
+            relativePath = "Download/",
+            mimeType = "video/mp4",
+        )
+
+        val destination = GalleryNewFolderMovePolicy.destinationForSelection(
+            currentScope = listOf(video),
+            selectedContentUris = setOf(video.contentUri),
+            rawFolderName = "Clips",
+        )
+
+        assertEquals("Movies", destination.parentDisplayName)
+        assertEquals("Movies/Clips/", destination.relativePath)
+    }
+
+    @Test
+    fun `mixed photo and video selection uses DCIM when source authority is shared`() {
+        val photo = media("1", "camera", "Camera", "DCIM/Camera/")
+        val video = media("2", "camera", "Camera", "DCIM/Camera/", mimeType = "video/mp4")
+
+        val destination = GalleryNewFolderMovePolicy.destinationForSelection(
+            currentScope = listOf(photo, video),
+            selectedContentUris = setOf(photo.contentUri, video.contentUri),
+            rawFolderName = "Trip",
+        )
+
+        assertEquals("DCIM", destination.parentDisplayName)
+        assertEquals("DCIM/Trip/", destination.relativePath)
     }
 
     @Test
@@ -60,7 +95,7 @@ class GalleryNewFolderMovePolicyTest {
     @Test
     fun `known visible destination collision fails closed`() {
         val selected = media("1", "downloads", "Download", "Download/")
-        val existing = media("2", "trips", "Trip Photos", "Download/Trip Photos/")
+        val existing = media("2", "trips", "Trip Photos", "Pictures/Trip Photos/")
 
         assertFailsWith<IllegalArgumentException> {
             GalleryNewFolderMovePolicy.destinationForSelection(
@@ -76,16 +111,21 @@ class GalleryNewFolderMovePolicyTest {
         albumId: String,
         albumName: String,
         relativePath: String?,
+        mimeType: String = "image/jpeg",
     ): MediaItem = MediaItem(
         id = id,
-        contentUri = "content://media/external/images/media/$id",
-        displayName = "item-$id.jpg",
-        mimeType = "image/jpeg",
+        contentUri = if (mimeType.startsWith("video/")) {
+            "content://media/external/video/media/$id"
+        } else {
+            "content://media/external/images/media/$id"
+        },
+        displayName = if (mimeType.startsWith("video/")) "item-$id.mp4" else "item-$id.jpg",
+        mimeType = mimeType,
         capturedAt = Instant.parse("2026-09-14T08:00:00Z"),
         modifiedAt = Instant.parse("2026-09-14T08:00:00Z"),
         width = 1080,
         height = 1920,
-        durationMillis = null,
+        durationMillis = if (mimeType.startsWith("video/")) 1_000 else null,
         sizeBytes = 1024,
         albumId = albumId,
         albumName = albumName,
