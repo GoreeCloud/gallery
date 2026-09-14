@@ -7,13 +7,22 @@ import kotlin.test.assertTrue
 class GalleryGlazeContractTest {
     @Test
     fun `native shell maps current Gallery Glaze source contract at exact authority revision`() {
-        assertEquals("1.3.0", GalleryGlazeContract.VERSION)
+        assertEquals("1.4.0", GalleryGlazeContract.VERSION)
         assertEquals(
-            "8354308445da9ac35ced2b37a7f503a08a0aaf72",
+            "ee057ce9e729296aeaeda182d01db89f52bd66f3",
             GalleryGlazeContract.AUTHORITY_REVISION,
         )
         assertTrue(GalleryGlazeContract.GENERAL_TARGET_DP >= 48)
         assertTrue(GalleryGlazeContract.NAVIGATION_HEIGHT_DP >= GalleryGlazeContract.GENERAL_TARGET_DP)
+    }
+
+    @Test
+    fun `v1_4 optical intelligence boundaries remain bounded and accessibility safe`() {
+        assertTrue(GalleryGlazeContract.OPTICAL_CONTENT_AWARE_FROST_ENABLED)
+        assertTrue(GalleryGlazeContract.OPTICAL_SEMANTIC_BLUR_PROTECTION_ENABLED)
+        assertTrue(GalleryGlazeContract.OPTICAL_REDUCED_TRANSPARENCY_FALLBACK_REQUIRED)
+        assertTrue(GalleryGlazeContract.OPTICAL_INCREASED_CONTRAST_FALLBACK_REQUIRED)
+        assertTrue(GalleryGlazeContract.OPTICAL_MEMORY_TINT_MAX_FRACTION in 0f..0.08f)
     }
 
     @Test
@@ -91,11 +100,11 @@ class GalleryGlazeContractTest {
 
     @Test
     fun `navigation composition consumes semantic spacing and capsule roles`() {
-        assertEquals(54, GalleryGlazeContract.NAVIGATION_HEIGHT_DP)
+        assertEquals(58, GalleryGlazeContract.NAVIGATION_HEIGHT_DP)
         assertEquals(999, GalleryGlazeContract.NAVIGATION_RADIUS_DP)
-        assertEquals(24, GalleryGlazeContract.NAVIGATION_SIDE_MARGIN_DP)
+        assertEquals(16, GalleryGlazeContract.NAVIGATION_SIDE_MARGIN_DP)
         assertEquals(12, GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP)
-        assertEquals(4, GalleryGlazeContract.NAVIGATION_ELEVATION_DP)
+        assertEquals(6, GalleryGlazeContract.NAVIGATION_ELEVATION_DP)
         assertEquals(32, GalleryGlazeContract.CONTENT_BOTTOM_INSET_DP)
         assertTrue(
             GalleryGlazeContract.NAVIGATION_RESERVED_SPACE_DP >=
