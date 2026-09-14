@@ -128,7 +128,7 @@ object GalleryUiRefinement {
     }
 
     private fun refineNavigation(activity: GalleryActivity, capsule: LinearLayout) {
-        val capsuleMarker = "navigation-capsule-v2"
+        val capsuleMarker = "navigation-capsule-v3"
         if (capsule.getTag(R.id.gallery_navigation_surface_tag) != capsuleMarker) {
             // Keep the outer bar optically quieter than the selected item so state is not conveyed
             // by color alone and the active CONTROL surface remains the strongest navigation cue.
@@ -138,6 +138,10 @@ object GalleryUiRefinement {
                 GalleryGlazeContract.NAVIGATION_RADIUS_DP,
             )
             capsule.elevation = dp(activity, GalleryGlazeContract.NAVIGATION_ELEVATION_DP).toFloat()
+            // The active destination is a nested capsule. Clip child painting to the parent outline so
+            // its selected-state material can never spill through the rounded outer shell on-device.
+            capsule.clipChildren = true
+            capsule.clipToOutline = true
             capsule.setTag(R.id.gallery_navigation_surface_tag, capsuleMarker)
         }
 
@@ -149,7 +153,7 @@ object GalleryUiRefinement {
             // identity rather than replacing it from presentation-only refinement state.
             val activityDescription = item.contentDescription?.toString().orEmpty()
             val selected = activityDescription == "$label, selected" || item.isSelected
-            val marker = "navigation:$label:$selected:v3"
+            val marker = "navigation:$label:$selected:v4"
             if (item.getTag(R.id.gallery_ui_refinement_tag) == marker) continue
 
             val foreground = if (selected) activityAccent(activity) else activityPrimaryText(activity)
