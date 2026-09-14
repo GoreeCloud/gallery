@@ -6,7 +6,7 @@ GoreeCloud Gallery is an original GoreeCloud-owned native Android application wh
 
 Historical GoreeCloud Gallery screenshots, prior Gallery behavior, repository history, and applicable Samsung Gallery interaction references are migration and visual-comparison inputs. They are not authorization to copy Samsung proprietary source code, assets, trademarks, or implementation details.
 
-The target is to recover the established GoreeCloud Gallery information architecture, browsing model, album behavior, viewer interactions, contextual actions, organization patterns, and first-party feature breadth, then revamp GoreeCloud-controlled presentation under the currently published Stable **GLAZE UI V1.3 / 1.3.0 — Adaptive Resonance** authority. Gallery-specific rendered, accessibility, adaptive, representative-device, Human Visual Excellence, release, and production acceptance remain separate from source adoption. Proposed V1.4/V1.4.1 design work is not current Stable authority.
+The target is to recover the established GoreeCloud Gallery information architecture, browsing model, album behavior, viewer interactions, contextual actions, organization patterns, and first-party feature breadth, then revamp GoreeCloud-controlled presentation under the current Official Stable **GLAZE UI V1.4 / 1.4.0 — Optical Intelligence** authority. Gallery-specific rendered, accessibility, adaptive, representative-device, Human Visual Excellence, release, and production acceptance remain separate from source adoption.
 
 ## Implemented in the first-party Development line
 
@@ -25,7 +25,7 @@ The target is to recover the established GoreeCloud Gallery information architec
 - Viewer details for type, album, date, dimensions, duration, and size when available.
 - **Android system-safe layout:** persistent Gallery chrome consumes system-bar, display-cutout, and navigation/gesture insets while the full-screen media viewer remains intentionally edge-to-edge. Physical-device evidence has verified material improvement; broader form-factor/OEM acceptance remains open.
 - **Rendered long-press and drag selection:** long-pressing a visible media tile starts bounded selection and the user can drag across visible tiles to select or deselect additional items. Edge auto-scroll continues the same bounded drag-selection session without expanding the authorized scope. Taps continue to toggle items while selection is active.
-- **GLAZE UI V1.3 selection and chrome treatment:** selected media uses a restrained semantic outline/wash plus compact check state. Search/header controls, status surfaces, Settings rows, navigation/selection capsules, and organizational overlays now map through bounded Adaptive Resonance control/chrome/raised/overlay roles while keeping semantic action states independent from environmental tint.
+- **GLAZE UI V1.4 selection and chrome treatment:** selected media uses a restrained semantic outline/wash plus compact check state. Search/header controls, status surfaces, Settings rows, navigation/selection capsules, and organizational overlays map through bounded Optical Intelligence control/chrome/raised/overlay roles while keeping semantic action states independent from environmental-memory tint and preserving solid accessible fallbacks.
 - **Bulk Share:** selected authorized media can be shared using Android `ACTION_SEND` for one item or `ACTION_SEND_MULTIPLE` for multiple items, with read-only URI grants and MIME planning derived only from the bounded current selection.
 - **Bulk Favorite / Unfavorite:** selection mode adds all selected authorized items to Favorites unless every selected item is already a Favorite, in which case it removes them. Favorites remain Gallery app-local state.
 - **Selection Details:** the contextual More action exposes media details when exactly one item is selected.
@@ -43,7 +43,7 @@ The target is to recover the established GoreeCloud Gallery information architec
 - Video items currently use authorized poster thumbnails; native playback is not yet implemented.
 - Permission and load-generation re-checks before viewer rendering.
 - Framework-independent album/trash/recovery/mutation foundations used by later native milestones.
-- GLAZE UI V1.3 repository-local source mapping at exact published Stable authority revision `ff34f232f295c9dcb07e4c681f66d4104d0b9323`, including bounded environmental-expression and accessibility fallback requirements. Source mapping alone does not establish application conformance.
+- GLAZE UI V1.4 repository-local source mapping at exact Stable authority revision `ee057ce9e729296aeaeda182d01db89f52bd66f3`, including bounded optical-memory expression and accessibility fallback requirements. Source mapping alone does not establish application conformance.
 
 ### Settings available in the current Development candidate
 
@@ -124,7 +124,7 @@ The historical screenshots supplied for the native migration establish the follo
 
 ### Navigation model
 
-- The historical product used clear top-level destinations for media, albums, and video-oriented browsing. The current native implementation may modernize exact labels and placement under the current Stable GLAZE UI V1.3 design system, but it must preserve similarly direct access to the major Gallery domains.
+- The historical product used clear top-level destinations for media, albums, and video-oriented browsing. The current native implementation may modernize exact labels and placement under the current Stable GLAZE UI V1.4 design system, but it must preserve similarly direct access to the major Gallery domains.
 - Search and contextual actions must be reachable from the relevant browsing surface without forcing users through debug-style filter controls.
 
 ## Established Gallery capabilities to restore in the native replacement
@@ -167,13 +167,12 @@ The exact migration set is governed by historical GoreeCloud Gallery behavior an
 - Complete secure Private/Protected Photos, hidden/excluded media policy, and password/device-credential protection through supported platform mechanisms.
 - Connect automatic empty-folder cleanup only after a safe, evidence-backed implementation exists.
 - Complete Privacy Shield, Wardveil, Everkeep, GoreeCloud Identity, and GoreeCloud Mesh integration where applicable and evidence-backed.
-- Complete GLAZE UI V1.3 whole-application conformance, including TalkBack, switch access, large-text, contrast, reduced-motion/transparency, adaptive-layout, tablet/foldable, representative-device, performance, Human Visual Excellence, rollback, and release acceptance.
-- Resolve the central Platform Contract 0.3 stale Glaze `1.4.0` compatibility constant against the canonical Glaze UI Stable release record before any Stable compatibility claim.
+- Complete GLAZE UI V1.4 whole-application conformance, including TalkBack, switch access, large-text, contrast, reduced-motion/transparency, adaptive-layout, tablet/foldable, representative-device, performance, Human Visual Excellence, optical-fallback, rollback, and release acceptance.
 - Complete signed release packaging, upgrade/recovery acceptance, Release Candidate governance, production approval, and Stable qualification.
 
-## GLAZE UI V1.3 modernization requirement
+## GLAZE UI V1.4 modernization requirement
 
-GLAZE UI V1.3 / Adaptive Resonance modernization must improve hierarchy, navigation, material, responsive behavior, motion, accessibility, transient surfaces, bounded environmental expression, and visual polish without deleting established Gallery capabilities merely to simplify the interface. Media remains dominant content; interaction chrome may use bounded Glaze material selectively and must preserve Android-native authority boundaries, performance, readability, accessibility, Increased Contrast behavior, and Reduced Transparency fallback behavior.
+GLAZE UI V1.4 / Optical Intelligence modernization must improve hierarchy, navigation, material, responsive behavior, motion, accessibility, transient surfaces, bounded environmental-memory expression, content-aware-frost/semantic-protection behavior, and visual polish without deleting established Gallery capabilities merely to simplify the interface. Media remains dominant content; interaction chrome may use bounded Glaze material selectively and must preserve Android-native authority boundaries, performance, readability, accessibility, Increased Contrast behavior, and Reduced Transparency fallback behavior.
 
 A visually polished replacement that omits mature Gallery capabilities is not a successful migration. A source version string or passing build is also not sufficient to claim whole-application Glaze conformance.
 
