@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
 import java.util.WeakHashMap
 
@@ -231,23 +232,25 @@ object GalleryUiRefinement {
     }
 
     private fun refineRecycleBinChrome(activity: RecycleBinActivity, root: FrameLayout) {
+        var actionBar: LinearLayout? = null
         for (index in 0 until root.childCount) {
             when (val child = root.getChildAt(index)) {
-                is LinearLayout -> refineRecycleBinActionBar(activity, child)
+                is LinearLayout -> if (refineRecycleBinActionBar(activity, child)) actionBar = child
                 is FrameLayout -> refineRecycleBinViewerOverlay(activity, child)
             }
         }
+        refineRecycleBinScrollReservation(activity, root, actionBar)
     }
 
-    private fun refineRecycleBinActionBar(activity: RecycleBinActivity, child: LinearLayout) {
-        val params = child.layoutParams as? FrameLayout.LayoutParams ?: return
+    private fun refineRecycleBinActionBar(activity: RecycleBinActivity, child: LinearLayout): Boolean {
+        val params = child.layoutParams as? FrameLayout.LayoutParams ?: return false
         if (
             params.gravity == -1 ||
             (params.gravity and Gravity.VERTICAL_GRAVITY_MASK) != Gravity.BOTTOM ||
             child.childCount != RECYCLE_BIN_ACTION_COUNT
-        ) return
+        ) return false
 
-        val barMarker = "recycle-action-bar:${child.childCount}"
+        val barMarker = "recycle-action-bar:${child.childCount}:v2"
         if (child.getTag(R.id.gallery_ui_refinement_tag) != barMarker) {
             child.background = GalleryGlazeSurfaces.drawable(
                 activity,
@@ -255,6 +258,8 @@ object GalleryUiRefinement {
                 GalleryGlazeContract.SHAPE_CAPSULE_DP,
             )
             child.elevation = dp(activity, GalleryGlazeContract.NAVIGATION_ELEVATION_DP).toFloat()
+            child.clipChildren = true
+            child.clipToOutline = true
             child.setTag(R.id.gallery_ui_refinement_tag, barMarker)
         }
 
@@ -262,8 +267,28 @@ object GalleryUiRefinement {
             val control = child.getChildAt(index)
             val description = control.contentDescription?.toString() ?: continue
             if (description !in recycleBinActionDescriptions) continue
-            styleControl(activity, control, "recycle-action:$description")
+            styleControl(activity, control, "recycle-action:$description:v2")
         }
+        return true
+    }
+
+    private fun refineRecycleBinScrollReservation(
+        activity: RecycleBinActivity,
+        root: FrameLayout,
+        actionBar: LinearLayout?,
+    ) {
+        val scroll = (0 until root.childCount)
+            .map(root::getChildAt)
+            .filterIsInstance<ScrollView>()
+            .singleOrNull() ?: return
+        val actionVisible = actionBar?.visibility == View.VISIBLE
+        val desiredBottomPadding = if (actionVisible) dp(activity, RECYCLE_BIN_ACTION_RESERVED_DP) else 0
+        if (scroll.paddingBottom == desiredBottomPadding && scroll.clipToPadding) return
+
+        // The selection-action capsule is intentionally persistent chrome. Reserve a real viewport
+        // lane for it instead of allowing media tiles to paint underneath the controls on-device.
+        scroll.setPadding(scroll.paddingLeft, scroll.paddingTop, scroll.paddingRight, desiredBottomPadding)
+        scroll.clipToPadding = true
     }
 
     private fun refineRecycleBinViewerOverlay(activity: RecycleBinActivity, overlay: FrameLayout) {
@@ -355,4 +380,5 @@ object GalleryUiRefinement {
 
     private const val ROOT_REFINED_MARKER = "gallery-ui-refinement-root-v3"
     private const val RECYCLE_BIN_ACTION_COUNT = 4
+    private const val RECYCLE_BIN_ACTION_RESERVED_DP = 86
 }
