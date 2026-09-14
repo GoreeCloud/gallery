@@ -69,9 +69,9 @@ After Android authorization, provider updates are attempted per item. The adapte
 
 The Development UI reports full success, full failure, or mixed success/failure and reloads MediaStore. A future refinement may preserve exact failed-item selection for retry, but that is not claimed here.
 
-## Glaze UI V1.3 presentation
+## Glaze UI V1.4 presentation
 
-The destination and New Folder naming surfaces are Gallery-owned GLAZE UI V1.3 Adaptive Resonance overlays. They use the repository-local overlay/raised/control roles and ordinary target-size floor while keeping Android's actual write-confirmation surface platform-owned.
+The destination and New Folder naming surfaces are Gallery-owned GLAZE UI V1.4 Optical Intelligence overlays. They use the repository-local overlay/raised/control roles, bounded environmental-memory tint, and ordinary target-size floor while keeping Android's actual write-confirmation surface platform-owned. Reduced Transparency and Increased Contrast must retain readable solid fallbacks.
 
 The New Folder action is shown only when the selection has a valid single source parent. Naming errors are surfaced on the input field rather than being converted into a generic filesystem request.
 
@@ -102,4 +102,4 @@ Before Move may be promoted beyond Development, representative-device testing wi
 - representative OEM/profile behavior;
 - TalkBack, large text, and interaction review of both destination surfaces.
 
-The application as a whole remains subject to current Stable GLAZE UI V1.3, accessibility, Privacy Shield, Wardveil Security, Everkeep, signing/provenance, Release Candidate, production, and Stable qualification gates.
+The application as a whole remains subject to current Official Stable GLAZE UI V1.4, accessibility, Privacy Shield, Wardveil Security, Everkeep, signing/provenance, Release Candidate, production, and Stable qualification gates.
