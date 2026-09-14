@@ -2,7 +2,7 @@
 
 ## Status
 
-This manual describes the **current first-party native `0.8.0-dev` Development candidate**. It includes the previously tested Android Trash/Recycle Bin foundation, first-party viewer/editor work, GLAZE UI V1.4 migration, long-press + drag selection, and the new Android-authorized existing-folder Move candidate.
+This manual describes the **current first-party native `0.8.1-dev` Development candidate**. It includes the previously tested Android Trash/Recycle Bin foundation, first-party viewer/editor work, the current GLAZE UI V1.3 Adaptive Resonance revamp, long-press + drag selection, Android-authorized existing-folder Move, and the bounded New Folder Move candidate.
 
 It does **not** describe a Stable or production-approved release. Use **disposable copied photos and videos** when testing Move, Restore, permanent deletion, editor output, or other unfinished write/destructive workflows. Do not use irreplaceable personal media as Development test input.
 
@@ -23,6 +23,7 @@ The native Development experience provides direct **Photos**, **Albums**, **Vide
 - **Albums** uses Android-authorized album/folder metadata, includes a device-local Favorites collection when Favorites exist, and on Android 11+ exposes **Recycle Bin** under **Recovery**.
 - Search and Newest/Oldest ordering operate only over the currently authorized local snapshot.
 - Long-press a visible media tile to enter bounded selection mode.
+- Persistent Gallery chrome is inset away from Android status, display-cutout, navigation, and gesture regions; the full-screen viewer remains intentionally edge-to-edge.
 
 ## Viewer
 
@@ -48,37 +49,55 @@ Long-press a visible photo or video to start selection mode. You can then:
 
 The drag session stays inside the same current authorized/presented media scope. Selection itself does not grant MediaStore write or filesystem authority.
 
-Current contextual actions include **Share**, **Favorite/Unfavorite**, **Move** when an eligible existing folder is available, Android-authorized **Delete** on supported Android versions, and **More/Details** when exactly one item is selected.
+Current contextual actions include **Share**, **Favorite/Unfavorite**, **Move** when an eligible existing folder or same-source New Folder path is available, Android-authorized **Delete** on supported Android versions, and **More/Details** when exactly one item is selected.
 
-## Move to an existing folder — 0.8.0-dev Development candidate
+## Move — `0.8.1-dev` Development candidate
 
-On Android 11+ the current candidate can move selected authorized media to an **existing local folder** derived from MediaStore metadata already present in the current authorized Gallery snapshot.
+On Android 11+ the current candidate can move selected authorized media to an **existing local folder** or, for an eligible single-source selection, to a **New folder** created beneath that source folder.
 
-### Moving selected media
+### Move to an existing folder
 
 1. Select one or more disposable test photos/videos.
 2. Choose **Move** from the selection action surface.
-3. Gallery shows a GLAZE UI V1.4 **Move to folder** surface containing eligible existing authorized folders.
-4. Choose the destination folder.
+3. Gallery shows a GLAZE UI V1.3 Move surface containing eligible existing authorized folders and, when allowed, a New folder action.
+4. Choose an existing destination folder.
 5. Android should display its system-owned write authorization surface for the exact selected media items.
 6. Approve only when you intend to move the disposable test media.
 7. Gallery updates the approved items through Android MediaStore and refreshes the current authorized library.
 
-Gallery does not treat album names or album IDs as filesystem paths. Eligible destinations require consistent provider-owned MediaStore `RELATIVE_PATH` metadata. Invalid, absolute, URI-shaped, traversal, or malformed destination paths are rejected.
+Gallery does not treat album names or album IDs as filesystem paths. Eligible existing destinations require consistent provider-owned MediaStore `RELATIVE_PATH` metadata. Invalid, absolute, URI-shaped, traversal, or malformed destination paths are rejected.
 
-The current candidate distinguishes full Move success, full failure, and partial provider-update failure. It does not silently report partial completion as complete success.
+### Move to a New folder
 
-### Move cancellation
+New Folder is deliberately narrower than general folder creation.
+
+It is available only when **every selected item belongs to the same current authoritative source folder**. For example, items selected from `Download/` may be moved into a new `Download/Trip Photos/` child folder.
+
+1. Select disposable media that all belongs to one current folder.
+2. Choose **Move**.
+3. Choose **New folder**. Gallery identifies the current source folder in the subtitle.
+4. Enter a folder name and choose **Create & move**.
+5. Gallery validates the name and destination before requesting Android authority.
+6. Android should display its write-authorization surface for the exact selected items.
+7. After approval, Gallery updates MediaStore and refreshes the library. The new child path should appear as an album/folder when Android exposes it in the refreshed authorized snapshot.
+
+Folder names are rejected when blank, path-like, traversal-like, too long, contain `/`, `\`, colon, NUL/control characters, end in a period/space, or collide with a child destination already visible in the current authorized snapshot. Validation errors remain in the naming surface and do not create a write request.
+
+If selected items come from different source folders, **New folder is intentionally unavailable** because Gallery will not silently choose one source folder as creation authority. Existing-folder Move may still remain available.
+
+### Android authorization and cancellation
+
+Existing-folder and New Folder Move use the same bounded Android authority path. Gallery requests `MediaStore.createWriteRequest(...)` only for the exact selected canonical media item URIs and updates only the validated destination `RELATIVE_PATH` after Android approval.
 
 If Android's authorization surface is denied or canceled, Gallery reports cancellation and does not execute the Move through its pending request.
 
-### Existing folders only
-
-**New folder is intentionally not enabled in this Development build.** New-folder path/naming/collision/rollback behavior must be separately designed and accepted. **Copy** is also separate work and must not inherit Move authority merely because Android authorized a Move request.
+The current candidate distinguishes full Move success, full failure, and partial provider-update failure. It does not silently report partial completion as complete success.
 
 ### Move acceptance boundary
 
-Representative-device testing is still required for single/multiple photos, videos, mixed photo/video selections, cancellation/denial, same-folder exclusion, permission/selected-media changes, Activity recreation while confirmation is open, post-move album refresh, Favorites continuity, OEM/profile behavior, accessibility, and provider failure/partial failure where reproducible.
+Representative-device testing is still required for single/multiple photos, videos, mixed photo/video selections, existing destinations, New Folder success, invalid/colliding names, mixed-source New Folder unavailability, cancellation/denial, same-folder exclusion, permission/selected-media changes, Activity recreation while confirmation is open, post-move album refresh, Favorites continuity, OEM/profile behavior, accessibility, and provider failure/partial failure where reproducible.
+
+**Copy** is separate work and must not inherit Move authority merely because Android authorized a Move request.
 
 ## Delete and Android Trash
 
@@ -171,20 +190,23 @@ Protected Photos/password protection is not simulated with insecure app-local cr
 - Trash, Restore, permanent-delete, and Move requests remain restricted to exact bounded MediaStore item URIs and Android owns the applicable authorization/confirmation surface.
 - Selection itself never grants filesystem or media-write authority.
 - Existing-folder Move does not create arbitrary path browsing or cross-profile/cloud authority.
+- New Folder Move creates only a validated child `RELATIVE_PATH` beneath the single authoritative current source folder shared by the selection; it does not provide arbitrary filesystem browsing.
 - Recycle Bin integration does not request `MANAGE_MEDIA`, `MANAGE_EXTERNAL_STORAGE`, network media authority, or cross-profile access.
 - Optional GoreeCloud Photos integration remains a future user-controlled adapter milestone, not a dependency of the local library.
 
 ## Current design-system authority
 
-The current native source maps **GLAZE UI V1.4 / 1.4.0 — Optical Intelligence** at exact authority revision `ee057ce9e729296aeaeda182d01db89f52bd66f3`.
+The canonical Glaze repository currently publishes **GLAZE UI V1.3 / 1.3.0 — Adaptive Resonance** at exact Stable authority revision `ff34f232f295c9dcb07e4c681f66d4104d0b9323`.
+
+The current Gallery candidate maps that authority through native Android semantic roles and a bounded Adaptive Resonance chrome pass. GLAZE UI V1.4/V1.4.1 material remains Proposed and is not treated as current Stable authority.
 
 The repository-local mapping does not independently establish whole-application conformance. Gallery still requires fresh rendered, interaction, TalkBack/switch-access/large-text/RTL, contrast, Reduced Transparency, Increased Contrast, adaptive/form-factor, representative-device/OEM/profile, performance, Human Visual Excellence, rollback, release, and production acceptance before Stable qualification.
 
 ## Major capability backlog
 
-Major remaining capability areas include complete Move device acceptance; New folder and Copy organization; native video playback plus autoplay/loop behavior; animated GIF behavior; complete photo-editor fidelity/accessibility/device acceptance and future video editing where approved; metadata editing; richer album creation/rename/reorder/actions; richer grouping/timeline modes; view-density/layout controls; slideshow and other established local presentation actions; broader contextual/overflow/export workflows; secure Private/Protected Photos; fuller hidden/sensitive-media policy; automatic empty-folder cleanup; and additional established first-party Gallery capabilities verified by historical GoreeCloud Gallery evidence.
+Major remaining capability areas include complete existing-folder/New Folder Move device acceptance; Copy organization; native video playback plus autoplay/loop behavior; animated GIF behavior; complete photo-editor fidelity/accessibility/device acceptance and future video editing where approved; metadata editing; richer album creation/rename/reorder/actions; richer grouping/timeline modes; view-density/layout controls; slideshow and other established local presentation actions; broader contextual/overflow/export workflows; secure Private/Protected Photos; fuller hidden/sensitive-media policy; automatic empty-folder cleanup; and additional established first-party Gallery capabilities verified by historical GoreeCloud Gallery evidence.
 
-Separate release gates include GLAZE UI V1.4 application acceptance, accessibility/adaptive/OEM/profile testing, Privacy Shield/Wardveil/Everkeep/Identity/Mesh/Manager integration where applicable, long-lived signing/provenance, upgrade/recovery/rollback validation, Release Candidate qualification, production approval, and Stable qualification.
+Separate release gates include GLAZE UI V1.3 application acceptance, accessibility/adaptive/OEM/profile testing, the unresolved central Platform Contract Glaze-version mismatch, Privacy Shield/Wardveil/Everkeep/Identity/Mesh/Manager integration where applicable, long-lived signing/provenance, upgrade/recovery/rollback validation, Release Candidate qualification, production approval, and Stable qualification.
 
 ## Troubleshooting
 
@@ -192,9 +214,11 @@ Separate release gates include GLAZE UI V1.4 application acceptance, accessibili
 
 **Only some media appears:** Android may have granted selected-media or media-type-limited access. Change Android media access if you want Gallery to see a different authorized subset.
 
-**Move is disabled:** Move currently requires Android 11+, a nonempty current authorized selection, and at least one eligible existing authorized destination folder different from the current folder.
+**Move is disabled:** Move requires Android 11+, a nonempty current authorized selection, and either an eligible existing authorized destination or a valid same-source New Folder parent.
 
-**New folder is unavailable in Move:** that is intentional in `0.8.0-dev`. New-folder semantics remain separately gated.
+**New folder does not appear in Move:** all selected items must resolve to the same current authorized source folder. Mixed-source selections intentionally do not get New Folder authority.
+
+**A folder name is rejected:** correct the validation error shown on the field. Do not enter a path; enter only a child folder name.
 
 **Delete is disabled:** the current Development path requires Android 11 or newer and a currently selected/presented authorized media item.
 
