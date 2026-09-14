@@ -7,7 +7,7 @@ component:
   repository: GoreeCloud/goreecloud-gallery
 
 lifecycle: development
-version: "0.7.1-dev"
+version: "0.8.0-dev"
 
 supported_platforms:
   - android
@@ -32,7 +32,8 @@ platform_systems:
       - SPECIFICATIONS.md
       - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryMediaAccessPolicy.kt
       - native/app/src/main/AndroidManifest.xml
-    notes: Current source keeps local media access behind Android authorization and remains offline-first, but accepted Privacy Shield integration and production privacy validation are not established.
+      - docs/development/media-move.md
+    notes: Current source keeps local media reads and Move/Delete/Trash organization behind Android authorization and remains offline-first, but accepted Privacy Shield integration and production privacy validation are not established.
   wardveil_security:
     result: applicable-blocked
     version: null
@@ -41,7 +42,8 @@ platform_systems:
       - SPECIFICATIONS.md
       - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryPhotoEditPolicy.kt
       - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryEditedMediaStore.kt
-    notes: Gallery has bounded local media and editing safeguards, but accepted Wardveil Security integration and validation are not established.
+      - docs/development/media-move.md
+    notes: Gallery has bounded local media, editing, mutation, and Move safeguards, but accepted Wardveil Security integration and validation are not established.
   everkeep:
     result: applicable-blocked
     version: null
@@ -51,12 +53,12 @@ platform_systems:
     notes: Gallery has local settings and Favorites portability plus Android-authorized Trash and Restore behavior, but accepted Everkeep integration and complete Gallery-owned recovery acceptance are not established.
   glaze_ui:
     result: applicable-migration-required
-    version: "1.3.0"
+    version: "1.4.0"
     evidence:
       - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt
       - native/app/src/test/kotlin/com/goreecloud/gallery/GalleryGlazeContractTest.kt
       - docs/GLAZE-UI.md
-    notes: Gallery's Development source now maps its repository-local native contract to GLAZE UI V1.3 / 1.3.0 Adaptive Resonance at exact authoritative Glaze revision 8354308445da9ac35ced2b37a7f503a08a0aaf72. The mapping consumes governed semantic spacing, shape, motion, target-size, and adaptive-gutter values while retaining Gallery-specific media-density decisions. This source mapping does not establish application conformance. Gallery remains migration-required until residual Gallery-controlled presentation is reconciled and fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, rollback, release, and production acceptance is completed.
+    notes: Gallery's Development source maps its repository-local native contract to GLAZE UI V1.4 / 1.4.0 Optical Intelligence at exact authoritative Glaze revision ee057ce9e729296aeaeda182d01db89f52bd66f3. The mapping preserves governed semantic spacing, shape, motion, target-size, and adaptive-gutter values while adding bounded optical adaptation and required Reduced Transparency / Increased Contrast fallbacks. This source mapping does not establish application conformance. Gallery remains migration-required until residual Gallery-controlled presentation is reconciled and fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, optical-fallback, rollback, release, and production acceptance is completed.
   mesh:
     result: applicable-blocked
     version: null
@@ -100,16 +102,16 @@ continuity:
 
 external_dependencies:
   - name: Android platform
-    purpose: Application lifecycle, MediaStore access and mutation authorization, media permissions, Storage Access Framework where used, accessibility, and device execution environment.
+    purpose: Application lifecycle, MediaStore access and mutation/write authorization, media permissions, Storage Access Framework where used, accessibility, and device execution environment.
     required: true
     version_constraint: ">=29"
 
 compatibility:
   platform_contract: "0.2"
-  glaze_ui_required: "1.3.0"
+  glaze_ui_required: "1.4.0"
   requires:
     - goreecloud-platform-contract==0.2
-    - glaze-ui==1.3.0
+    - glaze-ui==1.4.0
     - android-api>=29
   provides: []
 
@@ -125,6 +127,8 @@ conformance:
     - SPECIFICATIONS.md
     - SECURITY.md
     - USER-MANUAL.md
+    - FEATURES.md
+    - FEATURE-ROADMAP.md
     - native/app/src/main/AndroidManifest.xml
     - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt
     - native/app/src/test/kotlin/com/goreecloud/gallery/GalleryGlazeContractTest.kt
@@ -132,8 +136,10 @@ conformance:
     - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryPhotoEditPolicy.kt
     - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryEditedMediaStore.kt
     - docs/GLAZE-UI.md
+    - docs/development/media-move.md
   blockers:
-    - GLAZE UI V1.3 / 1.3.0 repository-local source mapping now exists at exact Glaze authority 8354308445da9ac35ced2b37a7f503a08a0aaf72, but residual Gallery-controlled presentation reconciliation plus fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, rollback, release, and production acceptance remain incomplete.
+    - GLAZE UI V1.4 / 1.4.0 repository-local source mapping exists at exact Glaze authority ee057ce9e729296aeaeda182d01db89f52bd66f3, but residual Gallery-controlled presentation reconciliation plus fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, optical-fallback, rollback, release, and production acceptance remain incomplete.
+    - Android-authorized existing-folder Move is a Development candidate; representative-device cancellation, photo/video/mixed selection, permission/scope change, Activity recreation, refresh, OEM/profile, accessibility, and provider-failure acceptance remains incomplete. New folder and Copy remain separately gated.
     - Privacy Shield integration and acceptance are not established.
     - Wardveil Security integration and acceptance are not established.
     - Everkeep integration and complete Gallery-owned backup and recovery acceptance are not established.
