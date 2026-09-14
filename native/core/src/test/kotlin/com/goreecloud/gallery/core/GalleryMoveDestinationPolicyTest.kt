@@ -63,6 +63,19 @@ class GalleryMoveDestinationPolicyTest {
         )
     }
 
+    @Test
+    fun `mixed valid and foreign selections fail closed`() {
+        val camera = media("1", "camera", "Camera", "DCIM/Camera/")
+        val trips = media("2", "trips", "Trips", "Pictures/Trips/")
+
+        assertTrue(
+            GalleryMoveDestinationPolicy.existingDestinations(
+                currentScope = listOf(camera, trips),
+                selectedContentUris = setOf(camera.contentUri, "content://foreign/not-authorized"),
+            ).isEmpty(),
+        )
+    }
+
     private fun media(
         id: String,
         albumId: String,
