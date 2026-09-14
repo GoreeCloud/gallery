@@ -21,14 +21,13 @@ class GalleryRenderedAcceptanceTest {
     val activityRule = ActivityScenarioRule(GalleryActivity::class.java)
 
     @Test
-    fun primaryNavigationAndHeaderActionsAreRenderedAndTouchSized() {
+    fun primaryNavigationAndPermissionSurfaceAreRenderedAndTouchSized() {
         listOf(
             "Photos, selected",
             "Albums",
             "Videos",
             "Settings",
-            "Search the current Gallery destination",
-            "Change Gallery sort order",
+            "Gallery media access action",
         ).forEach { description ->
             onView(withContentDescription(description))
                 .check(matches(isDisplayed()))
