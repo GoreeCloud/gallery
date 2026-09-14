@@ -15,8 +15,9 @@ import java.util.WeakHashMap
  *
  * Android 15+ enforces edge-to-edge for current target SDKs. Gallery therefore cannot rely on the
  * decor view to keep interactive chrome out of status, navigation, gesture, or cutout regions.
- * Full-screen media/stage surfaces may remain edge-to-edge, while direct top/bottom chrome and
- * scroll surfaces receive safe margins derived from the current WindowInsets snapshot.
+ * Full-screen media/stage surfaces remain edge-to-edge, while scroll surfaces and top/bottom chrome
+ * receive safe margins derived from the current WindowInsets snapshot. Full-screen overlay
+ * FrameLayouts are traversed so viewer controls receive the same protection without shrinking media.
  */
 object GallerySystemBars {
     private data class MarginBaseline(
@@ -51,9 +52,9 @@ object GallerySystemBars {
         }
     }
 
-    private fun applyInsets(root: FrameLayout, safe: SafeInsets) {
-        for (index in 0 until root.childCount) {
-            val child = root.getChildAt(index)
+    private fun applyInsets(container: FrameLayout, safe: SafeInsets) {
+        for (index in 0 until container.childCount) {
+            val child = container.getChildAt(index)
             val params = child.layoutParams as? FrameLayout.LayoutParams ?: continue
             val verticalGravity = resolvedVerticalGravity(params)
 
@@ -64,7 +65,7 @@ object GallerySystemBars {
                     safe = safe,
                     includeTop = true,
                     includeBottom = true,
-                    layoutDirection = root.layoutDirection,
+                    layoutDirection = container.layoutDirection,
                 )
 
                 verticalGravity == Gravity.TOP -> applySafeMargins(
@@ -73,7 +74,7 @@ object GallerySystemBars {
                     safe = safe,
                     includeTop = true,
                     includeBottom = false,
-                    layoutDirection = root.layoutDirection,
+                    layoutDirection = container.layoutDirection,
                 )
 
                 verticalGravity == Gravity.BOTTOM -> applySafeMargins(
@@ -82,11 +83,13 @@ object GallerySystemBars {
                     safe = safe,
                     includeTop = false,
                     includeBottom = true,
-                    layoutDirection = root.layoutDirection,
+                    layoutDirection = container.layoutDirection,
                 )
+
+                child is FrameLayout -> applyInsets(child, safe)
             }
         }
-        root.requestLayout()
+        container.requestLayout()
     }
 
     private fun applySafeMargins(
