@@ -21,6 +21,7 @@ object MediaStoreProjection {
     const val SIZE = "_size"
     const val BUCKET_ID = "bucket_id"
     const val BUCKET_DISPLAY_NAME = "bucket_display_name"
+    const val RELATIVE_PATH = "relative_path"
 
     val columns: List<String> = listOf(
         ID,
@@ -34,6 +35,7 @@ object MediaStoreProjection {
         SIZE,
         BUCKET_ID,
         BUCKET_DISPLAY_NAME,
+        RELATIVE_PATH,
     )
 }
 
@@ -55,6 +57,7 @@ data class MediaStoreRow(
     val sizeBytes: Long,
     val bucketId: String?,
     val bucketDisplayName: String?,
+    val relativePath: String? = null,
 ) {
     init {
         val normalizedMimeType = mimeType.lowercase()
@@ -81,6 +84,11 @@ data class MediaStoreRow(
         val normalizedMimeType = mimeType.lowercase()
         val normalizedBucketId = bucketId?.trim()?.takeIf { it.isNotEmpty() }
         val normalizedBucketName = bucketDisplayName?.trim()?.takeIf { it.isNotEmpty() }
+        val normalizedRelativePath = relativePath
+            ?.trim()
+            ?.replace('\\', '/')
+            ?.takeIf { it.isNotEmpty() }
+            ?.let { if (it.endsWith('/')) it else "$it/" }
         val hasCompleteAlbum = normalizedBucketId != null && normalizedBucketName != null
 
         return MediaItem(
@@ -96,6 +104,7 @@ data class MediaStoreRow(
             sizeBytes = sizeBytes,
             albumId = if (hasCompleteAlbum) normalizedBucketId else null,
             albumName = if (hasCompleteAlbum) normalizedBucketName else null,
+            relativePath = normalizedRelativePath,
         )
     }
 }
