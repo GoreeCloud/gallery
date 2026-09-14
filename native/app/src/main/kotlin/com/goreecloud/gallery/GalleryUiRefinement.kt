@@ -71,6 +71,11 @@ object GalleryUiRefinement {
         "Show details for this trashed media",
     )
 
+    private val destructiveDescriptions = setOf(
+        "Permanently delete selected media through Android confirmation",
+        "Permanently delete this media through Android confirmation",
+    )
+
     private val albumTileDescription = Regex("^.+, (?:1 item|[0-9]+ items)$")
     private val collectionSubtitle = Regex("^[0-9]+ collections?(?: · (?:Newest|Oldest) first)?$")
 
@@ -267,7 +272,8 @@ object GalleryUiRefinement {
             val control = child.getChildAt(index)
             val description = control.contentDescription?.toString() ?: continue
             if (description !in recycleBinActionDescriptions) continue
-            styleControl(activity, control, "recycle-action:$description:v2")
+            styleControl(activity, control, "recycle-action:$description:v3")
+            applyDestructiveSemantics(activity, control, description)
         }
         return true
     }
@@ -316,7 +322,16 @@ object GalleryUiRefinement {
         walk(overlay) { view ->
             val description = view.contentDescription?.toString() ?: return@walk
             if (description !in recycleBinViewerDescriptions) return@walk
-            styleControl(activity, view, "recycle-viewer:$description")
+            styleControl(activity, view, "recycle-viewer:$description:v2")
+            applyDestructiveSemantics(activity, view, description)
+        }
+    }
+
+    private fun applyDestructiveSemantics(activity: Activity, view: View, description: String) {
+        if (description !in destructiveDescriptions) return
+        (view as? TextView)?.setTextColor(activityError(activity))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            view.stateDescription = "Destructive action"
         }
     }
 
@@ -358,6 +373,12 @@ object GalleryUiRefinement {
         activity,
         android.R.attr.colorAccent,
         0xff2e7d6f.toInt(),
+    )
+
+    private fun activityError(activity: Activity): Int = themeColor(
+        activity,
+        android.R.attr.colorError,
+        0xffb3261e.toInt(),
     )
 
     private fun activityPrimaryText(activity: Activity): Int = themeColor(
