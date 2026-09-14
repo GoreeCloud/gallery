@@ -37,6 +37,21 @@ class AndroidMediaMoveRequest internal constructor(
     val contentUris: List<String> = Collections.unmodifiableList(ArrayList(contentUris))
 }
 
+/** Persistable non-authority state describing the exact write request while Android owns consent UI. */
+class AndroidMediaMovePendingState(
+    contentUris: Collection<String>,
+    val destination: AndroidMediaMoveDestination,
+) {
+    val contentUris: List<String> = Collections.unmodifiableList(
+        ArrayList(AndroidMediaMutationRequests.normalizeMediaStoreUris(contentUris)),
+    )
+
+    init {
+        require(contentUris.isNotEmpty())
+        require(contentUris.size <= AndroidMediaMoveRequests.MAX_MOVE_ITEMS)
+    }
+}
+
 object AndroidMediaMoveRequests {
     const val MIN_SUPPORTED_API = Build.VERSION_CODES.R
     const val MAX_MOVE_ITEMS = AndroidMediaMutationRequests.MAX_MUTATION_ITEMS
@@ -112,13 +127,16 @@ object AndroidMediaMoveRequests {
         )
     }
 
+    fun capturePendingState(request: AndroidMediaMoveRequest): AndroidMediaMovePendingState =
+        AndroidMediaMovePendingState(request.contentUris, request.destination)
+
     /** Apply an already-authorized move. Call only after Android returns RESULT_OK for [create]. */
     fun applyAuthorizedMove(
         contentResolver: ContentResolver,
-        request: AndroidMediaMoveRequest,
+        pending: AndroidMediaMovePendingState,
     ) {
-        val destinationPath = normalizeRelativePath(request.destination.relativePath)
-        val operations = request.contentUris.map { rawUri ->
+        val destinationPath = normalizeRelativePath(pending.destination.relativePath)
+        val operations = pending.contentUris.map { rawUri ->
             ContentProviderOperation.newUpdate(Uri.parse(rawUri))
                 .withValue(MediaStore.MediaColumns.RELATIVE_PATH, destinationPath)
                 .withExpectedCount(1)
