@@ -20,7 +20,7 @@ GoreeCloud Gallery is intended to remain:
 - independently installable as `com.goreecloud.gallery`;
 - governed by Android user/profile isolation and platform-authorized media access and mutation/write consent;
 - free of advertising and unnecessary tracking;
-- governed by the latest formally published Stable Glaze UI contract;
+- governed by the current Official Stable Glaze UI contract;
 - integrated substantively with Privacy Shield, Wardveil Security, Everkeep, Manager, Mesh, Identity, and Sync where those platform responsibilities apply; and
 - honest about which capabilities are source foundations, packaged, device-accepted, released, or Stable.
 
@@ -38,13 +38,13 @@ The repository contains GoreeCloud-owned native foundations under `native/`.
 
 ## Current Glaze UI authority
 
-The canonical `GoreeCloud/goreecloud-glaze-ui` repository currently publishes **GLAZE UI V1.3 / 1.3.0 — Adaptive Resonance** as Stable. Gallery pins its repository-local native source mapping to exact Glaze authority:
+The authoritative `GoreeCloud/goreecloud-glaze-ui` lifecycle registry identifies **GLAZE UI V1.4 / 1.4.0 — Optical Intelligence** as the current Official Stable, consumer-eligible release. Gallery pins its repository-local native source mapping to exact Glaze authority:
 
-`ff34f232f295c9dcb07e4c681f66d4104d0b9323`
+`ee057ce9e729296aeaeda182d01db89f52bd66f3`
 
-The native Gallery shell now applies a bounded V1.3 Adaptive Resonance pass across search, header controls, permission/status surfaces, bottom navigation/selection chrome, Settings rows, and organizational dialogs while preserving semantic selection/destructive states and the corrected Android system-bar safe areas.
+The native Gallery shell applies a bounded V1.4 Optical Intelligence pass across search, header controls, permission/status surfaces, bottom navigation/selection chrome, Settings rows, and organizational dialogs while preserving semantic selection/destructive states and the corrected Android system-bar safe areas. Environmental-memory tint remains low influence and cannot override semantic state; Reduced Transparency and Increased Contrast require readable solid fallbacks.
 
-GLAZE UI V1.4 and V1.4.1 material remains proposed future work and is not represented here as the current Stable authority. This V1.3 source mapping is still **source-migration evidence, not Gallery application conformance**. Fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, fallback, rollback, platform-system, release, and production acceptance remains required. See [docs/GLAZE-UI.md](docs/GLAZE-UI.md).
+This V1.4 source mapping is still **source-migration evidence, not Gallery application conformance**. Fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, optical-fallback, rollback, platform-system, release, and production acceptance remains required. See [docs/GLAZE-UI.md](docs/GLAZE-UI.md).
 
 ## Android-authorized Move
 
@@ -70,13 +70,13 @@ The current first-party photo-editor candidate is Development evidence only. Rep
 
 `goreecloud.platform.yaml` declares Gallery against **GoreeCloud Platform Contract 0.3**, including all eight Integral Platform Systems. It deliberately separates:
 
-- the verified current Glaze V1.3 source mapping;
+- the verified current Glaze V1.4 source mapping;
 - incomplete whole-application design-system acceptance;
 - Development lifecycle state;
 - blocked/unaccepted Platform-System integrations; and
 - outstanding representative-device, accessibility, recovery, signing, release, and Stable gates.
 
-The pinned Platform Contract 0.3 validator currently contains a stale `1.4.0` Glaze compatibility constant even though the canonical Glaze repository's published Stable release is V1.3.0. Gallery records that mismatch as a blocker and remains Development/nonconformant; it does not use the stale evaluator constant to make a Stable design-system claim. A green manifest workflow is evidence of declaration validity, not acceptance of blocked integrations or release gates.
+The Platform Contract validator's `1.4.0` Glaze compatibility target is consistent with the current authoritative Glaze lifecycle registry. A green manifest workflow remains declaration/configuration evidence only; it does not establish Gallery Glaze conformance, acceptance of blocked integrations, production eligibility, or release status.
 
 ## Transitional reconstruction line
 
@@ -93,7 +93,7 @@ The prior `1.0.0` candidate and its acceptance evidence remain evidence for that
 
 Gallery must remain current with the applicable GoreeCloud platform systems:
 
-- **Glaze UI / Design Center** — interface, interaction, accessibility, responsiveness, material behavior, and design-system conformance.
+- **Glaze UI / Design Center** — interface, interaction, accessibility, responsiveness, optical adaptation, and design-system conformance.
 - **Privacy Shield / Privacy Center** — media permissions, data minimization, privacy controls, consent, and user control.
 - **Wardveil Security / Security Center** — protection, validation, safe file/media handling boundaries, diagnostics, and evidence-backed security states.
 - **Everkeep / Continuity Center** — recovery, preservation, portability, continuity, and applicable Gallery-owned state resilience.
@@ -122,7 +122,7 @@ The old Fossify-based acceptance candidate is not a shortcut around those native
 - [docs/NATIVE-MIGRATION.md](docs/NATIVE-MIGRATION.md) — native replacement and transitional-source boundary.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — architecture/security context; inherited-application sections remain transitional/historical unless superseded by native milestones.
 - [docs/PLATFORM_CONFORMANCE.md](docs/PLATFORM_CONFORMANCE.md) — platform conformance requirements.
-- [docs/GLAZE-UI.md](docs/GLAZE-UI.md) — current Gallery-specific V1.3 source mapping and application-acceptance boundary.
+- [docs/GLAZE-UI.md](docs/GLAZE-UI.md) — current Gallery-specific V1.4 source mapping and application-acceptance boundary.
 - [docs/development/media-move.md](docs/development/media-move.md) — current Android-authorized existing-folder and New Folder Move authority/acceptance boundary.
 - [SECURITY.md](SECURITY.md) — vulnerability and security boundary guidance.
 - [NOTICE.md](NOTICE.md) — inherited-work licensing and provenance notices.
