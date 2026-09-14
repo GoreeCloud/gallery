@@ -10,11 +10,13 @@ import java.util.Collections
 
 /**
  * Android-owned authorization and execution boundary for moving existing MediaStore items between
- * provider-known relative paths.
+ * validated relative paths.
  *
- * A Gallery album/bucket is not treated as filesystem authority. The destination must come from an
- * authoritative MediaStore RELATIVE_PATH already present in the current authorized snapshot, and
- * Android must approve write access to the exact bounded item URIs before Gallery updates metadata.
+ * Existing-folder destinations may come from provider-owned RELATIVE_PATH metadata already present
+ * in the current authorized snapshot. A new-folder destination may instead be constructed by the
+ * Gallery core only beneath one authoritative selected source path after strict folder-name/path
+ * validation. In either case an album name is never filesystem authority, Android must approve write
+ * access to the exact bounded item URIs, and this adapter independently validates the final path.
  */
 class AndroidMediaMoveRequest internal constructor(
     contentUris: List<String>,
