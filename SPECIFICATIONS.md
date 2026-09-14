@@ -12,7 +12,7 @@ GoreeCloud Gallery is being rebuilt as an original first-party Android applicati
 - Minimum Android API: 29; current compile/target API: 36.
 - `native/core`: framework-independent media, album, trash/recovery, selection/drag-selection, existing-folder Move, bounded same-source New Folder Move, filter, sort, mutation, and MediaStore-row domain behavior.
 - `native/android-adapter`: bounded Android `ContentResolver` / MediaStore read adapter plus exact Android-owned authorization bridges for destructive mutations and Move.
-- `native/app`: first-party Android application using Android-authorized media access, local thumbnail/viewer/editor behavior, Recycle Bin, drag selection, corrected system-bar safe areas, Glaze UI V1.3 native chrome, and current Android-authorized Move candidates.
+- `native/app`: first-party Android application using Android-authorized media access, local thumbnail/viewer/editor behavior, Recycle Bin, drag selection, corrected system-bar safe areas, Glaze UI V1.4 native chrome, and current Android-authorized Move candidates.
 - No `INTERNET` permission or network-delivered UI resource is required by the local Gallery path.
 
 ## Current local-library contract
@@ -61,27 +61,28 @@ The `0.8.1-dev` candidate adds a bounded **New folder** path without introducing
 - Restore preserves Gallery Favorite URI metadata; confirmed permanent deletion removes stale Favorite URI references.
 - Android 10 remains fail-closed for the current destructive/recovery mutation path; no legacy direct-delete workaround is claimed.
 
-## GLAZE UI V1.3 contract
+## GLAZE UI V1.4 contract
 
-- Current canonical published Stable source target: **GLAZE UI V1.3 / 1.3.0 — Adaptive Resonance**.
-- Exact Stable authority revision: `ff34f232f295c9dcb07e4c681f66d4104d0b9323` (`v1.3.0`).
-- GLAZE UI V1.4/V1.4.1 plans remain Proposed and are not represented as current Stable authority.
+- Current authoritative Official Stable source target: **GLAZE UI V1.4 / 1.4.0 — Optical Intelligence**.
+- Exact Stable authority revision: `ee057ce9e729296aeaeda182d01db89f52bd66f3`.
+- The live Glaze lifecycle registry records `currentOfficial: 1.4.0` and `currentStable: 1.4.0`; V1.3 is the direct rollback baseline.
 - The native mapping consumes governed semantic spacing, shape, motion, ordinary 48dp target-size, and adaptive-gutter roles while retaining Gallery-specific media-density composition.
-- Gallery's Adaptive Resonance material mapping uses bounded environmental color only for non-semantic control/chrome/raised/overlay expression. Environmental tint is capped and may not override selection, destructive, privacy, security, permission, warning, or other semantic states.
+- Gallery's Optical Intelligence material mapping uses bounded environmental-memory color only for non-semantic control/chrome/raised/overlay expression. Environmental tint is capped and may not override selection, destructive, privacy, security, permission, warning, or other semantic states.
 - Native surfaces remain near-opaque and must remain usable under Reduced Transparency and Increased Contrast conditions.
 - The current revamp applies these roles to search, header controls, permission/status surfaces, bottom navigation/selection chrome, Settings rows, Move/New Folder/File Priority overlays, and supporting rows while keeping the full-screen viewer media-first.
+- Shared V1.4 human/manual/physical-device qualification deferred to V1.4.1 is not represented as passed Gallery evidence.
 - The version/source mapping and current UI work do not establish whole-application Glaze conformance, production eligibility, Release Candidate status, or Stable status.
 
 ## GoreeCloud Platform Contract 0.3
 
 - Gallery declares all eight Integral Platform Systems through `goreecloud.platform.yaml` under Platform Contract `0.3`.
-- The canonical Glaze repository currently publishes Stable V1.3.0, while the exact central Platform Contract implementation pinned by Gallery still encodes a stale `1.4.0` compatibility constant.
-- Gallery records that mismatch as an unresolved governance blocker and remains Development/nonconformant; the stale evaluator constant does not override the canonical Glaze release record.
-- A valid Platform Contract declaration is configuration/governance evidence only; it does not convert blocked integrations into accepted runtime integration.
+- The exact central Platform Contract implementation pinned by Gallery requires Glaze UI `1.4.0`, which is consistent with the current authoritative Glaze lifecycle registry.
+- A valid Platform Contract declaration is configuration/governance evidence only; it does not convert blocked integrations into accepted runtime integration or establish whole-application Gallery conformance.
+- Gallery remains globally `nonconformant` while its required platform-system and lifecycle evidence remains incomplete.
 
 ## Platform boundaries
 
-- **Glaze UI / Design Center:** V1.3 source mapping and a substantive native visual pass are present; whole-application rendered/accessibility/adaptive/device/performance/Human Visual Excellence/fallback/release acceptance remains required.
+- **Glaze UI / Design Center:** V1.4 source mapping and a substantive native visual pass are present; whole-application rendered/accessibility/adaptive/device/performance/Human Visual Excellence/optical-fallback/release acceptance remains required.
 - **Privacy Shield / Privacy Center:** Android media authorization, data minimization, purpose-limited local operations, and fail-closed authority remain current source behavior; accepted production Privacy Shield integration is not established.
 - **Wardveil Security / Security Center:** bounded media/editor/mutation safeguards exist, but accepted Wardveil runtime integration and production validation are not established.
 - **Everkeep / Continuity Center:** Gallery-owned settings/Favorites portability and Android-owned Trash recovery exist; accepted complete Everkeep integration and recovery evidence are not established.
@@ -89,4 +90,4 @@ The `0.8.1-dev` candidate adds a bounded **New folder** path without introducing
 
 ## Stable blockers
 
-Stable qualification remains blocked on representative-device acceptance of existing-folder and New Folder Move and remaining destructive/recovery cases; Copy organization; native video playback; complete viewer/editor fidelity and failure-path acceptance; secure Protected Photos/hidden-media policy; whole-application GLAZE UI V1.3 accessibility/adaptive/device/visual-quality acceptance; Android user/profile/OEM acceptance; the unresolved central Platform Contract Glaze-version mismatch; accepted Privacy Shield/Wardveil/Everkeep/Manager/Mesh/Identity/Sync integration where applicable; protected signing/provenance; upgrade/recovery/rollback evidence; Release Candidate qualification; production approval; and final release evidence.
+Stable qualification remains blocked on representative-device acceptance of existing-folder and New Folder Move and remaining destructive/recovery cases; Copy organization; native video playback; complete viewer/editor fidelity and failure-path acceptance; secure Protected Photos/hidden-media policy; whole-application GLAZE UI V1.4 accessibility/adaptive/device/visual-quality/optical-fallback acceptance; Android user/profile/OEM acceptance; accepted Privacy Shield/Wardveil/Everkeep/Manager/Mesh/Identity/Sync integration where applicable; protected signing/provenance; upgrade/recovery/rollback evidence; Release Candidate qualification; production approval; and final release evidence.
