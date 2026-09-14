@@ -1,9 +1,9 @@
 package com.goreecloud.gallery.core
 
 /**
- * Builds move destinations only from authoritative folder metadata already present in the current
- * authorized Gallery snapshot. Album ids/names are presentation metadata; RELATIVE_PATH is the
- * Android MediaStore destination descriptor later revalidated by the Android adapter.
+ * Builds existing Move destinations only from authoritative folder metadata already present in the
+ * current authorized Gallery snapshot. Album ids/names are presentation metadata; RELATIVE_PATH is
+ * the Android MediaStore destination descriptor later revalidated by the Android adapter.
  */
 data class GalleryMoveDestination(
     val albumId: String,
@@ -27,7 +27,7 @@ object GalleryMoveDestinationPolicy {
         if (currentScope.isEmpty() || selectedContentUris.isEmpty()) return emptyList()
 
         val selectedItems = GallerySelectionPolicy.resolve(currentScope, selectedContentUris)
-        if (selectedItems.isEmpty()) return emptyList()
+        if (selectedItems.isEmpty() || selectedItems.size != selectedContentUris.size) return emptyList()
 
         return currentScope.asSequence()
             .filter { it.albumId != null && it.albumName != null && it.relativePath != null }
