@@ -2,6 +2,38 @@
 
 This changelog records material source, build, validation, release-engineering, and product-readiness changes in the dedicated `GoreeCloud/goreecloud-gallery` repository. Historical development that occurred in the temporary website-repository build carrier remains preserved in Git and in the GoreeCloud patch provenance records.
 
+## 0.8.0-dev — GLAZE UI V1.4, drag selection, and Android-authorized Move candidate
+
+### Added
+
+- repository-local GLAZE UI V1.4 / `1.4.0` — Optical Intelligence source mapping pinned to exact Glaze authority revision `ee057ce9e729296aeaeda182d01db89f52bd66f3`;
+- bounded drag-selection core policy with idempotent scope visits and fail-closed current-scope enforcement;
+- rendered long-press + drag-to-select behavior with edge auto-scroll and lighter V1.4 selection outline/check treatment;
+- provider-owned MediaStore `RELATIVE_PATH` projection so existing folder destinations are derived from Android metadata rather than album presentation labels alone;
+- `GalleryMoveDestinationPolicy` for deterministic existing-folder Move choices from the current authorized snapshot, including fail-closed conflicting/incomplete destination handling and same-folder exclusion;
+- Android-authorized Move backend using `MediaStore.createWriteRequest(...)`, exact bounded canonical image/video item URIs, validated canonical relative paths, recreation-safe pending state, per-item provider updates, and explicit partial-failure accounting;
+- Gallery-controlled GLAZE UI V1.4 **Move to folder** picker for existing authorized folders;
+- `docs/development/media-move.md` documenting authority, lifecycle, failure, and representative-device acceptance boundaries.
+
+### Changed
+
+- the native Development application line advances to `0.8.0-dev` / Android `versionCode 12`;
+- selection's Move action is no longer a disabled placeholder when Android 11+, a bounded selection, and at least one valid existing authorized destination are available;
+- ordinary Trash/Delete and Move pending operations are mutually excluded so concurrent pending mutation scopes are not manufactured;
+- Activity recreation preserves only the exact already-requested Move URI scope and canonical destination path; conflicting restored Move + destructive-mutation pending state is discarded fail-closed;
+- post-Move execution reloads the current authorized MediaStore snapshot and distinguishes full success, full failure, and partial failure rather than reporting a partial provider result as complete success;
+- `FEATURES.md` and `FEATURE-ROADMAP.md` now reflect the V1.4 source authority, current Move candidate, drag selection, `0.8.0-dev`, and remaining New folder / Copy / device-acceptance work.
+
+### Validated
+
+- exact head `840ab2be83a445216a630316eca5b7784f2166be`, which first connected the selection Move action and existing-folder picker to the Android-authorized backend, passed Native Core #98, Native Android Adapter #228, Native Android App #224, and Native Android Rendered Acceptance #18;
+- that exact-head Native Android App run assembled and retained the Development debug artifact `goreecloud-gallery-debug-840ab2be83a445216a630316eca5b7784f2166be`;
+- subsequent `0.8.0-dev` version/documentation commits require their own exact-head CI before they may be used as final candidate evidence.
+
+### Development boundary
+
+This milestone does **not** establish New folder creation, Copy, arbitrary filesystem browsing, cross-profile movement, cloud movement, complete representative-device Move correctness, whole-application V1.4 conformance, production acceptance, Release Candidate status, release, or Stable qualification. Representative-device testing with disposable copied media remains required for Move cancellation/denial, same-folder exclusion, photo/video/mixed selections, selected-media/permission changes, Activity recreation, post-move refresh, Favorites continuity, OEM/profile behavior, accessibility, and applicable provider-failure cases.
+
 ## 1.0.0 — Stable candidate
 
 ### Added
