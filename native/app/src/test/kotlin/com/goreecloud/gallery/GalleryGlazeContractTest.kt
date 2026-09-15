@@ -8,9 +8,9 @@ import kotlin.test.assertTrue
 class GalleryGlazeContractTest {
     @Test
     fun `native shell maps current Stable Gallery Glaze source contract at exact authority revision`() {
-        assertEquals("1.4.0", GalleryGlazeContract.VERSION)
+        assertEquals("1.4.1", GalleryGlazeContract.VERSION)
         assertEquals(
-            "ee057ce9e729296aeaeda182d01db89f52bd66f3",
+            "4fab9da0fad2e5c974e0e66ec88632c61745751c",
             GalleryGlazeContract.AUTHORITY_REVISION,
         )
         assertTrue(GalleryGlazeContract.GENERAL_TARGET_DP >= 48)
@@ -18,13 +18,20 @@ class GalleryGlazeContractTest {
     }
 
     @Test
-    fun `v1_4 optical intelligence remains bounded and accessibility safe`() {
+    fun `v1_4_1 optical intelligence remains bounded and accessibility safe`() {
         assertTrue(GalleryGlazeContract.OPTICAL_CONTENT_AWARE_FROST_ENABLED)
         assertTrue(GalleryGlazeContract.OPTICAL_SEMANTIC_BLUR_PROTECTION_ENABLED)
         assertTrue(GalleryGlazeContract.OPTICAL_REDUCED_TRANSPARENCY_FALLBACK_REQUIRED)
         assertTrue(GalleryGlazeContract.OPTICAL_INCREASED_CONTRAST_FALLBACK_REQUIRED)
         assertTrue(GalleryGlazeContract.OPTICAL_MEMORY_TINT_MAX_FRACTION in 0f..0.08f)
         assertFalse(GalleryGlazeContract.OPTICAL_ENVIRONMENT_TINT_MAY_OVERRIDE_SEMANTIC_STATE)
+    }
+
+    @Test
+    fun `shared v1_4_1 qualification does not fabricate Gallery acceptance`() {
+        assertFalse(GalleryGlazeContract.GALLERY_PHYSICAL_DEVICE_ACCEPTANCE_ESTABLISHED)
+        assertFalse(GalleryGlazeContract.GALLERY_MANUAL_ASSISTIVE_TECH_ACCEPTANCE_ESTABLISHED)
+        assertFalse(GalleryGlazeContract.GALLERY_HUMAN_VISUAL_EXCELLENCE_ACCEPTED)
     }
 
     @Test
@@ -62,22 +69,10 @@ class GalleryGlazeContractTest {
 
     @Test
     fun `adaptive gutters consume governed spatial roles without treating widths as Glaze device identities`() {
-        assertEquals(
-            GalleryGlazeContract.SPACE_STANDARD_CLUSTER_DP,
-            GalleryGlazeContract.horizontalGutterDp(390),
-        )
-        assertEquals(
-            GalleryGlazeContract.SPACE_CONTENT_DP,
-            GalleryGlazeContract.horizontalGutterDp(820),
-        )
-        assertEquals(
-            GalleryGlazeContract.SPACE_SECTION_DP,
-            GalleryGlazeContract.horizontalGutterDp(900),
-        )
-        assertEquals(
-            GalleryGlazeContract.SPACE_REGION_DP,
-            GalleryGlazeContract.horizontalGutterDp(1280),
-        )
+        assertEquals(GalleryGlazeContract.SPACE_STANDARD_CLUSTER_DP, GalleryGlazeContract.horizontalGutterDp(390))
+        assertEquals(GalleryGlazeContract.SPACE_CONTENT_DP, GalleryGlazeContract.horizontalGutterDp(820))
+        assertEquals(GalleryGlazeContract.SPACE_SECTION_DP, GalleryGlazeContract.horizontalGutterDp(900))
+        assertEquals(GalleryGlazeContract.SPACE_REGION_DP, GalleryGlazeContract.horizontalGutterDp(1280))
     }
 
     @Test
