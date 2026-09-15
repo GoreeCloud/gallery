@@ -1,10 +1,10 @@
-# GoreeCloud Gallery — GLAZE UI V1.4 Application Contract
+# GoreeCloud Gallery — GLAZE UI V1.4.1 Application Contract
 
 ## Status
 
 **Lifecycle:** Development  
-**Current Official Stable design system:** GLAZE UI V1.4 / 1.4.0 — Optical Intelligence  
-**Repository-local source mapping:** 1.4.0  
+**Current Official Stable design system:** GLAZE UI V1.4.1 / 1.4.1 — Optical Hardening  
+**Repository-local source mapping:** 1.4.1  
 **Application conformance:** Not established  
 **Production eligibility:** Not established
 
@@ -12,17 +12,17 @@ This document defines the Gallery-specific native Android mapping and acceptance
 
 ## Authoritative source anchor
 
-Gallery's current source mapping is pinned to the authoritative `GoreeCloud/goreecloud-glaze-ui` Stable V1.4 revision:
+Gallery's current source mapping is pinned to the authoritative `GoreeCloud/goreecloud-glaze-ui` signed Stable V1.4.1 revision:
 
-`ee057ce9e729296aeaeda182d01db89f52bd66f3`
+`4fab9da0fad2e5c974e0e66ec88632c61745751c`
 
-The live Glaze lifecycle registry identifies **GLAZE UI V1.4 / 1.4.0 — Optical Intelligence** as `currentOfficial` and `currentStable`, consumer eligible, with V1.3 retained as the direct rollback baseline. The V1.4 Stable acceptance decision is dated 2026-09-13. Gallery acceptance evidence must remain bound to exact Gallery and Glaze revisions rather than a moving branch.
+The live Glaze lifecycle registry identifies **GLAZE UI V1.4.1 / 1.4.1 — Optical Hardening** as `currentOfficial` and `currentStable` and consumer eligible. V1.4.1 retains V1.4.0 as its immediate shared rollback baseline. Gallery acceptance evidence must remain bound to exact Gallery and Glaze revisions rather than a moving branch.
 
-Human optical review, subjective polish review, manual assistive-technology qualification, representative physical-device qualification, and real-device performance validation remain V1.4.1 follow-up work in the shared Glaze authority. Their deferral does not convert those checks into passed Gallery evidence.
+Shared Glaze qualification does not automatically establish Gallery physical-device, subjective visual-quality, manual assistive-technology, performance, or workflow acceptance. Those remain Gallery-local evidence gates.
 
 ## Native Optical Intelligence mapping
 
-`native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt` records Gallery's exact design-system source anchor. `GalleryGlazeSurfaces.kt` maps V1.4 Optical Intelligence into bounded Android-native control, chrome, raised, and overlay surfaces.
+`native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt` records Gallery's exact design-system source anchor. `GalleryGlazeSurfaces.kt` preserves the V1.4 Optical Intelligence model through the current V1.4.1 hardening line using bounded Android-native control, chrome, raised, and overlay surfaces.
 
 The current mapping includes:
 
@@ -39,20 +39,21 @@ The current mapping includes:
 
 Gallery's media-grid and album-grid column counts remain product-specific composition decisions rather than shared Glaze layout-grid tokens.
 
-## Current V1.4 revamp tranche
+## Current V1.4.1 revamp tranche
 
 The current Development tranche makes substantive presentation changes rather than merely changing a version string:
 
-- maps Gallery to the verified current Official Stable V1.4 / 1.4.0 authority;
-- introduces native Optical Intelligence surface roles for search, header controls, permission/status surfaces, navigation chrome, settings rows, dialogs, and organizational sheets;
+- maps Gallery to the verified current Official Stable V1.4.1 / 1.4.1 authority;
+- preserves and hardens native Optical Intelligence surface roles for search, header controls, permission/status surfaces, navigation chrome, settings rows, dialogs, and organizational sheets;
 - preserves semantic teal selection and action states independently from environmental tint;
-- increases top/header breathing room while retaining the corrected Android system-bar safe areas;
+- preserves top/header breathing room and corrected Android system-bar safe areas;
 - keeps the full-screen media viewer media-first and black rather than applying decorative tint over content;
-- retains the bounded bottom navigation/selection capsule while strengthening surface hierarchy and elevation;
+- retains the bounded bottom navigation/selection capsule while preserving surface hierarchy and elevation;
 - preserves 48 dp control floors and the existing safe-area regression coverage;
-- extends the Move workflow with a bounded New Folder path while keeping Android-owned write authorization intact.
+- preserves the Move workflow's bounded New Folder path while keeping Android-owned write authorization intact;
+- explicitly records that shared V1.4.1 qualification cannot manufacture Gallery-local physical-device, assistive-technology, or Human Visual Excellence acceptance.
 
-These changes materially improve Gallery's V1.4 implementation, but they are not whole-application V1.4 acceptance.
+These changes materially improve Gallery's design-system alignment, but they are not whole-application V1.4.1 acceptance.
 
 ## Media-first hierarchy
 
@@ -83,7 +84,7 @@ Accessibility reflow may take precedence over density. Gallery must not shrink c
 
 ## Appearance and optical boundary
 
-V1.4 Optical Intelligence may use low-influence environmental color and contextual optical treatment for non-semantic atmosphere. Gallery's native mapping caps that contribution and keeps protected meanings—selection, destructive actions, privacy, security, permission, availability, warning, and other semantic states—under their own semantic authority.
+V1.4.1 preserves the bounded Optical Intelligence model for low-influence environmental color and contextual optical treatment used only for non-semantic atmosphere. Gallery's native mapping caps that contribution and keeps protected meanings—selection, destructive actions, privacy, security, permission, availability, warning, and other semantic states—under their own semantic authority.
 
 Gallery does not require remote fonts, remote icons, network-hosted style resources, analytics, advertising, or tracking for the local interface. A visual upgrade must not weaken the offline-first product boundary.
 
@@ -102,15 +103,18 @@ The revamp must preserve implemented Gallery behavior while improving presentati
 
 ## Automated evidence boundary
 
-Repository-local tests protect the exact V1.4 source anchor, semantic spacing/shape/motion values, bounded optical-memory tint, accessibility fallback flags, target-size floor, adaptive gutters, navigation reserved space, selection scope, New Folder naming/parent rules, and MediaStore Move path/pending-state validation.
+Repository-local tests protect the exact V1.4.1 source anchor, semantic spacing/shape/motion values, bounded optical-memory tint, accessibility fallback flags, target-size floor, adaptive gutters, navigation reserved space, selection scope, New Folder naming/parent rules, and MediaStore Move path/pending-state validation.
 
-Rendered acceptance additionally checks the main Gallery chrome against Android system-bar, navigation/gesture, and cutout safe areas. Passing CI proves only the executed checks on that exact Gallery revision; it does not establish final visual quality, accessibility, representative-device behavior, platform integration, signing, release approval, or Stable qualification.
+The current exact-head adapter and app workflows pass on the V1.4.1 child. Rendered-emulator acceptance remains failing during the rendered interaction step. The same rendered workflow already failed on parent PR #80 exact head `b9d86b23ae646acdc7180f20fe3f62c7588d8f87`, so the observed failure is an inherited unresolved acceptance blocker rather than evidence that the two-file V1.4.1 source-contract change created a new rendered regression.
+
+Passing CI proves only the executed checks on that exact Gallery revision. It does not establish final visual quality, accessibility, representative-device behavior, platform integration, signing, release approval, or Stable qualification.
 
 ## Remaining acceptance gates
 
 Gallery remains globally nonconformant until applicable evidence is complete. Important remaining gates include:
 
-- representative physical-device validation of the V1.4 visual revamp in light/dark and normal/large-text conditions;
+- resolve and re-run the inherited rendered-emulator interaction-acceptance failure on the current corrective stack;
+- representative physical-device validation of the V1.4.1 visual line in light/dark and normal/large-text conditions;
 - representative-device New Folder Move validation, including naming errors, cancellation, success, post-move refresh, and OEM/profile behavior;
 - existing-folder photo/video/mixed Move edge-case acceptance;
 - whole-application rendered review across browsing, Albums, Search, Favorites, viewer, editor, Settings, dialogs, selection, Move, and Recycle Bin;
