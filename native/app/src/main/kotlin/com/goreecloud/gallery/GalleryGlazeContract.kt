@@ -1,7 +1,7 @@
 package com.goreecloud.gallery
 
 /**
- * Repository-local GLAZE UI V1.4 source mapping for the first-party native Gallery shell.
+ * Repository-local GLAZE UI V1.4.1 source mapping for the first-party native Gallery shell.
  *
  * The current repository Development line maps shared Glaze semantics through native Android
  * primitives rather than copying web CSS or requiring a web runtime. VERSION records the source
@@ -9,10 +9,10 @@ package com.goreecloud.gallery
  * conformance, rendered acceptance, production eligibility, Release Candidate, or Stable status.
  */
 object GalleryGlazeContract {
-    const val VERSION = "1.4.0"
-    const val AUTHORITY_REVISION = "ee057ce9e729296aeaeda182d01db89f52bd66f3"
+    const val VERSION = "1.4.1"
+    const val AUTHORITY_REVISION = "4fab9da0fad2e5c974e0e66ec88632c61745751c"
 
-    // Shared spatial baseline used by the current Development mapping.
+    // Shared spatial baseline inherited by the current V1.4.1 Stable patch.
     const val SPACE_MICRO_DP = 2
     const val SPACE_HAIRLINE_DP = 4
     const val SPACE_CONTROL_DP = 8
@@ -45,6 +45,11 @@ object GalleryGlazeContract {
     const val OPTICAL_REDUCED_TRANSPARENCY_FALLBACK_REQUIRED = true
     const val OPTICAL_INCREASED_CONTRAST_FALLBACK_REQUIRED = true
     const val OPTICAL_ENVIRONMENT_TINT_MAY_OVERRIDE_SEMANTIC_STATE = false
+
+    // Shared V1.4.1 qualification does not automatically establish Gallery-local acceptance.
+    const val GALLERY_PHYSICAL_DEVICE_ACCEPTANCE_ESTABLISHED = false
+    const val GALLERY_MANUAL_ASSISTIVE_TECH_ACCEPTANCE_ESTABLISHED = false
+    const val GALLERY_HUMAN_VISUAL_EXCELLENCE_ACCEPTED = false
 
     const val GENERAL_TARGET_DP = 48
 
