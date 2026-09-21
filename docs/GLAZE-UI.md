@@ -8,11 +8,15 @@ GoreeCloud Gallery is a GoreeCloud-maintained Android fork. Every Gallery-contro
 
 ## Conformance target
 
-- Target design system: **Glaze UI 1.0.0**
+- Target design system: **Glaze UI 1.6.0**
 - Canonical repository: `GoreeCloud/glaze-ui`
-- Reviewed canonical reference revision: `d6e446fd8ef251259d16368d50aad90d9287a774`
+- Accepted Stable release source: `a7180679ea851389e0f3004515f9a25f420e716d`
+- Source qualification anchor: `c7509c79256b04b0aa67cb9dd0737d7588e0ae4a`
+- Stable runtime entrypoint: `js/glaze-v1.6.0.mjs`
+- Known-good shared rollback baseline: **1.5.1**
 - Native implementation model: Android platform-native semantic mapping rather than copied web CSS
-- Current Gallery implementation line: `gc.16`
+- Current first-party native source baseline: **V1.6**
+- Historical transitional implementation line: `gc.16`
 - Permanent Glaze UI exceptions: **none approved**
 
 ## Product identity
@@ -23,7 +27,7 @@ The application ID is `com.goreecloud.gallery`. GoreeCloud-owned branding, packa
 
 ## Native semantic mapping
 
-Gallery maps the Glaze UI 1.0 contract into Android resources and platform conventions. The mapping is semantic: it preserves the same roles, hierarchy, interaction intent, and accessibility boundaries without requiring Android to reproduce browser-only CSS effects.
+Gallery maps the Official Stable Glaze UI 1.6 contract into Android resources and platform conventions. The mapping is semantic and presentation-only: it preserves roles, hierarchy, interaction intent, accessibility boundaries, and authority separation without requiring Android to reproduce browser-only effects or allowing Glaze presentation to manufacture permission, authorization, privacy/security truth, or consequential execution.
 
 The `gc.11` foundation establishes native resources for Canvas and Canvas Accent colors, Surface and muted-surface roles, primary and secondary accents, semantic text/status roles, spacing, rounded geometry, 44dp minimum and 48dp comfortable actionable targets, 90/160/220/320ms motion semantics, light/dark palettes, and Compact-first Settings composition.
 
