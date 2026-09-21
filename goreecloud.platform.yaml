@@ -1,13 +1,13 @@
-schema_version: "0.3"
+schema_version: "0.4"
 
 component:
   type: application
   id: goreecloud-gallery
   product_name: GoreeCloud Gallery
-  repository: GoreeCloud/goreecloud-gallery
+  repository: GoreeCloud/gallery
 
 lifecycle: development
-version: "0.8.1-dev"
+version: "0.8.6-dev"
 
 supported_platforms:
   - android
@@ -53,13 +53,13 @@ platform_systems:
     notes: Gallery has local settings and Favorites portability plus Android-authorized Trash and Restore behavior, but accepted Everkeep integration and complete Gallery-owned recovery acceptance are not established.
   glaze_ui:
     result: applicable-migration-required
-    version: "1.4.0"
+    version: "1.6.0"
     evidence:
       - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeContract.kt
       - native/app/src/test/kotlin/com/goreecloud/gallery/GalleryGlazeContractTest.kt
       - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryGlazeSurfaces.kt
       - docs/GLAZE-UI.md
-    notes: Gallery's Development source maps its native contract to the authoritative current Official Stable GLAZE UI V1.4 / 1.4.0 Optical Intelligence lifecycle at exact Glaze revision ee057ce9e729296aeaeda182d01db89f52bd66f3 and applies a bounded native Optical Intelligence material/chrome mapping with required accessible solid fallbacks. This source mapping does not establish application conformance. Gallery remains migration-required until fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, optical-fallback, rollback, release, and production acceptance is completed.
+    notes: Current Official Stable GLAZE UI authority is V1.6 / 1.6.0 at exact release source a7180679ea851389e0f3004515f9a25f420e716d. Gallery's implemented native presentation contract still maps V1.4 / 1.4.0 source semantics at ee057ce9e729296aeaeda182d01db89f52bd66f3, so Gallery remains applicable-migration-required. This declaration does not relabel the existing V1.4 implementation as migrated or establish application conformance. Fresh V1.6 source adoption plus whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, rollback, release, and production acceptance remain required.
   mesh:
     result: applicable-blocked
     version: null
@@ -75,14 +75,22 @@ platform_systems:
     evidence:
       - SPECIFICATIONS.md
     notes: Device-local browsing does not require a GoreeCloud account, but accepted Identity integration for any future account, Photos, device, or delegated-authority behavior is not established.
-  sync:
+  policy:
     result: applicable-blocked
     version: null
     evidence:
-      - SPECIFICATIONS.md
       - README.md
-    notes: Device-local Gallery browsing and organization do not require GoreeCloud Sync, but accepted Sync integration for any future cross-device Gallery-owned state or GoreeCloud Photos continuity is not established.
-
+      - SPECIFICATIONS.md
+      - goreecloud.platform.yaml
+    notes: GoreeCloud Policy is applicable to Gallery policy representation, administrative restrictions, privacy/security decisions, media-operation constraints, and evidence boundaries, but no accepted Gallery runtime Policy evaluation, distribution, enforcement-coordination, explanation, freshness, exception, or production acceptance exists.
+  observability:
+    result: applicable-blocked
+    version: null
+    evidence:
+      - README.md
+      - SPECIFICATIONS.md
+      - goreecloud.platform.yaml
+    notes: Gallery has local Development behavior and CI evidence, but accepted GoreeCloud Observability health, metrics, diagnostics, performance, dependency-health, provenance/freshness, alerting, collection-gap, and representative-device runtime acceptance are not established.
 health:
   health_endpoint: null
   readiness_endpoint: null
@@ -115,11 +123,11 @@ external_dependencies:
     version_constraint: ">=29"
 
 compatibility:
-  platform_contract: "0.3"
-  glaze_ui_required: "1.4.0"
+  platform_contract: "0.4"
+  glaze_ui_required: "1.6.0"
   requires:
-    - goreecloud-platform-contract==0.3
-    - glaze-ui==1.4.0
+    - goreecloud-platform-contract==0.4
+    - glaze-ui==1.6.0
     - android-api>=29
   provides: []
 
@@ -148,14 +156,15 @@ conformance:
     - docs/GLAZE-UI.md
     - docs/development/media-move.md
   blockers:
-    - GLAZE UI V1.4 / 1.4.0 repository-local source mapping and a bounded native Optical Intelligence chrome pass exist at exact Glaze authority ee057ce9e729296aeaeda182d01db89f52bd66f3, but fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, optical-fallback, rollback, release, and production acceptance remain incomplete.
+    - Gallery still implements a repository-local GLAZE UI V1.4 / 1.4.0 native presentation mapping at exact historical authority ee057ce9e729296aeaeda182d01db89f52bd66f3 while current Official Stable authority is V1.6 / 1.6.0 at a7180679ea851389e0f3004515f9a25f420e716d. V1.6 source migration and fresh whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, rollback, release, and production acceptance remain incomplete.
     - Android-authorized existing-folder Move and same-source New Folder Move are Development candidates; representative-device cancellation, photo/video/mixed selection, new-folder naming/collision behavior, permission/scope change, Activity recreation, refresh, OEM/profile, accessibility, and provider-failure acceptance remains incomplete. Copy remains separately gated.
     - Privacy Shield integration and acceptance are not established.
     - Wardveil Security integration and acceptance are not established.
     - Everkeep integration and complete Gallery-owned backup and recovery acceptance are not established.
     - GoreeCloud Identity integration is not established for any future identity-aware or Photos-backed capability.
     - GoreeCloud Mesh registration, capability publication, and runtime acceptance are not established.
-    - GoreeCloud Sync integration and acceptance are not established for any future cross-device Gallery-owned state or Photos continuity behavior.
     - Manager platform visibility and administrative integration acceptance are not established.
+    - GoreeCloud Policy runtime evaluation, enforcement-coordination, explanation, freshness, exception, and evidence integration/acceptance are not established.
+    - GoreeCloud Observability health, metrics, diagnostics, performance, dependency-health, provenance/freshness, alerting, collection-gap, and representative-device runtime acceptance are not established.
     - Representative physical-device/OEM/profile photo-editor, accessibility, orientation, media-permission, and destructive-operation edge-case acceptance remains incomplete.
     - Production signing, distribution, release approval, Release Candidate qualification, and Stable qualification remain outstanding.
