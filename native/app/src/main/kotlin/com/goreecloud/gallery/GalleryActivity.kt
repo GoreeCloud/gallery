@@ -92,6 +92,7 @@ class GalleryActivity : Activity() {
     private val favoriteUris = linkedSetOf<String>()
     private val selectedUris = linkedSetOf<String>()
     private val renderedMediaTiles = linkedMapOf<String, FrameLayout>()
+    private val navigationItems = linkedMapOf<GalleryDestination, TextView>()
     private var selectionScopeItems: List<MediaItem> = emptyList()
     private var dragSelectionSession: GalleryDragSelectionSession? = null
     private var dragSelectionScope: List<MediaItem> = emptyList()
@@ -530,7 +531,53 @@ class GalleryActivity : Activity() {
         }
     }
 
-    private fun buildNavigationCapsule(): LinearLayout = bottomCapsuleSurface()
+    private fun buildNavigationCapsule(): LinearLayout = bottomCapsuleSurface().apply {
+        GalleryDestination.entries.forEachIndexed { index, item ->
+            val label = navigationLabel(item)
+            val view = TextView(this@GalleryActivity).apply {
+                text = label
+                gravity = Gravity.CENTER
+                minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+                setCompoundDrawablesWithIntrinsicBounds(0, navigationIcon(item), 0, 0)
+                compoundDrawablePadding = dp(2)
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    if (destination == item && openAlbumId == null && !showingFavorites) return@setOnClickListener
+                    clearSelection(render = false)
+                    destination = item
+                    openAlbumId = null
+                    showingFavorites = false
+                    searchQuery = ""
+                    if (::searchField.isInitialized) searchField.setText("")
+                    closeSearch(clearQuery = false)
+                    renderCurrentDestination()
+                }
+            }
+            navigationItems[item] = view
+            addView(
+                view,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                    if (index > 0) marginStart = dp(2)
+                },
+            )
+        }
+    }
+
+    private fun navigationLabel(item: GalleryDestination): String = when (item) {
+        GalleryDestination.PHOTOS -> "Photos"
+        GalleryDestination.ALBUMS -> "Albums"
+        GalleryDestination.VIDEOS -> "Videos"
+        GalleryDestination.SETTINGS -> "Settings"
+    }
+
+    private fun navigationIcon(item: GalleryDestination): Int = when (item) {
+        GalleryDestination.PHOTOS -> R.drawable.ic_gallery_nav_photos
+        GalleryDestination.ALBUMS -> R.drawable.ic_gallery_nav_albums
+        GalleryDestination.VIDEOS -> R.drawable.ic_gallery_nav_videos
+        GalleryDestination.SETTINGS -> R.drawable.ic_gallery_nav_settings
+    }
 
     private fun buildSelectionActionCapsule(): LinearLayout = bottomCapsuleSurface()
 
@@ -562,50 +609,21 @@ class GalleryActivity : Activity() {
 
         selectionActionCapsule.visibility = View.GONE
         navigationCapsule.visibility = View.VISIBLE
-        navigationCapsule.removeAllViews()
-        GalleryDestination.entries.forEachIndexed { index, item ->
+        GalleryDestination.entries.forEach { item ->
+            val view = navigationItems[item] ?: return@forEach
             val selected = destination == item
-            val label = when (item) {
-                GalleryDestination.PHOTOS -> "Photos"
-                GalleryDestination.ALBUMS -> "Albums"
-                GalleryDestination.VIDEOS -> "Videos"
-                GalleryDestination.SETTINGS -> "Settings"
-            }
-            navigationCapsule.addView(
-                TextView(this).apply {
-                    text = label
-                    gravity = Gravity.CENTER
-                    minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
-                    setTextColor(if (selected) accentColor() else primaryTextColor())
-                    if (selected) setTypeface(typeface, Typeface.BOLD)
-                    background = roundedSurface(
-                        if (selected) withAlpha(accentColor(), 0.13f) else Color.TRANSPARENT,
-                        18,
-                    )
-                    isClickable = true
-                    isFocusable = true
-                    isSelected = selected
-                    contentDescription = "$label${if (selected) ", selected" else ""}"
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        stateDescription = if (selected) "Selected" else null
-                    }
-                    setOnClickListener {
-                        if (destination == item && openAlbumId == null && !showingFavorites) return@setOnClickListener
-                        clearSelection(render = false)
-                        destination = item
-                        openAlbumId = null
-                        showingFavorites = false
-                        searchQuery = ""
-                        if (::searchField.isInitialized) searchField.setText("")
-                        closeSearch(clearQuery = false)
-                        renderCurrentDestination()
-                    }
-                },
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-                    if (index > 0) marginStart = dp(2)
-                },
+            val label = navigationLabel(item)
+            view.setTextColor(if (selected) accentColor() else primaryTextColor())
+            view.setTypeface(view.typeface, if (selected) Typeface.BOLD else Typeface.NORMAL)
+            view.background = roundedSurface(
+                if (selected) withAlpha(accentColor(), 0.13f) else Color.TRANSPARENT,
+                18,
             )
+            view.isSelected = selected
+            view.contentDescription = "$label${if (selected) ", selected" else ""}"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                view.stateDescription = if (selected) "Selected" else null
+            }
         }
     }
 
