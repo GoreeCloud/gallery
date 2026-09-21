@@ -916,7 +916,6 @@ class GalleryActivity : Activity() {
             if (searchContainer.visibility == View.VISIBLE) closeSearch(clearQuery = false)
             renderSettings()
             updateHeader()
-            renderNavigation()
             return
         }
 
