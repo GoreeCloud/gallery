@@ -19,3 +19,11 @@ Current Stable Glaze UI source migration and acceptance, physical process-recrea
 ## Documentation rule
 
 Do not use this notes file to promote Gallery lifecycle, editor durability, or platform conformance. Material changes must be reconciled through the repository/Drive roadmap pair, conformance evidence, governing records, and Tasks Management.
+
+
+## Persistent navigation-control stabilization — September 21, 2026
+
+- PR #80 exact head `aed13a8cbcd862a31137bb311ca18e27e9e42ccb` retained the PR #83 selected-state correction but its post-Platform-Contract rendered lane failed twice on the repeated Settings selection assertion while Contract/Core/Adapter/App remained green.
+- This bounded Development candidate stops destroying and rebuilding the four primary bottom-navigation controls on every destination render. The controls are created only when missing or structurally invalid, then label, selected state, content description, Android 11+ stateDescription, material, and typography are updated in place.
+- Destination authority, MediaStore permissions, Move/Trash/Delete behavior, settings behavior, Glaze migration status, and release state are unchanged.
+- The existing repeated Albums → Settings → Photos rendered interaction suite remains the acceptance gate; this note does not convert the prior failed run into passing evidence.
