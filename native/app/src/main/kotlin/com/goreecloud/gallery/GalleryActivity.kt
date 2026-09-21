@@ -296,23 +296,13 @@ class GalleryActivity : Activity() {
                 insets.systemWindowInsetBottom
             }
 
+            rootFrame.setPadding(0, topInset, 0, bottomInset)
             content.setPadding(
                 contentHorizontalGutter,
-                contentTopPadding + topInset,
+                contentTopPadding,
                 contentHorizontalGutter,
                 contentBottomPadding,
             )
-            listOf(navigationCapsule, selectionActionCapsule).forEach { capsule ->
-                val params = capsule.layoutParams as FrameLayout.LayoutParams
-                if (params.bottomMargin != dp(GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP) + bottomInset) {
-                    params.bottomMargin = dp(GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP) + bottomInset
-                    capsule.layoutParams = params
-                }
-            }
-            val scrollParams = scroll.layoutParams as FrameLayout.LayoutParams
-            scrollParams.bottomMargin =
-                dp(GalleryGlazeContract.NAVIGATION_RESERVED_SPACE_DP) + bottomInset
-            scroll.layoutParams = scrollParams
             insets
         }
 
