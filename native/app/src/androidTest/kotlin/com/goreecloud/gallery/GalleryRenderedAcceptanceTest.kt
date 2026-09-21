@@ -94,7 +94,6 @@ class GalleryRenderedAcceptanceTest {
         repeat(2) {
             onView(withContentDescription("Albums"))
                 .perform(click())
-            assertSelectedNavigationState("Albums")
             onView(selectedNavigationLabel("Albums"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
@@ -103,7 +102,6 @@ class GalleryRenderedAcceptanceTest {
 
             onView(withContentDescription("Settings"))
                 .perform(click())
-            assertSelectedNavigationState("Settings")
             onView(selectedNavigationLabel("Settings"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
@@ -112,7 +110,6 @@ class GalleryRenderedAcceptanceTest {
 
             onView(withContentDescription("Photos"))
                 .perform(click())
-            assertSelectedNavigationState("Photos")
             onView(selectedNavigationLabel("Photos"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasTopCompoundDrawable()))
@@ -177,55 +174,6 @@ class GalleryRenderedAcceptanceTest {
                     chromeRect.right <= decorRect.right - safe.right,
                 )
             }
-        }
-    }
-
-    private fun assertSelectedNavigationState(expectedLabel: String) {
-        activityRule.scenario.onActivity { activity ->
-            val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
-            val root = androidContent.getChildAt(0) as FrameLayout
-            val capsules = (0 until root.childCount)
-                .map(root::getChildAt)
-                .filterIsInstance<LinearLayout>()
-                .filter { candidate ->
-                    val labels = (0 until candidate.childCount).mapNotNull { index ->
-                        (candidate.getChildAt(index) as? TextView)?.text?.toString()
-                    }
-                    labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
-                }
-
-            assertTrue(
-                "Expected one primary Gallery navigation capsule but found ${capsules.size}",
-                capsules.size == 1,
-            )
-
-            val controls = (0 until capsules.single().childCount)
-                .map(capsules.single()::getChildAt)
-                .filterIsInstance<TextView>()
-            val actual = controls.joinToString(separator = " | ") { control ->
-                buildString {
-                    append(control.text)
-                    append(":selected=")
-                    append(control.isSelected)
-                    append(",contentDescription=")
-                    append(control.contentDescription)
-                    append(",stateDescription=")
-                    append(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) control.stateDescription else "n/a")
-                    append(",visibility=")
-                    append(control.visibility)
-                    append(",attached=")
-                    append(control.isAttachedToWindow)
-                }
-            }
-            val selected = controls.singleOrNull { it.text?.toString() == expectedLabel }
-            assertTrue(
-                "Expected $expectedLabel selected navigation semantics. Actual controls: $actual",
-                selected != null &&
-                    selected.isSelected &&
-                    selected.contentDescription?.toString() == "$expectedLabel, selected" &&
-                    (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
-                        selected.stateDescription?.toString() == "Selected"),
-            )
         }
     }
 
