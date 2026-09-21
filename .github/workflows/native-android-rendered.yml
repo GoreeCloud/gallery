@@ -1,0 +1,186 @@
+name: Native Android Rendered Acceptance
+
+on:
+  pull_request:
+    paths:
+      - "native/**"
+      - ".github/workflows/native-android-rendered.yml"
+  push:
+    branches: [main]
+    paths:
+      - "native/**"
+      - ".github/workflows/native-android-rendered.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gallery-native-rendered-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rendered-emulator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      SOURCE_REVISION: ${{ github.event.pull_request.head.sha || github.sha }}
+      ANDROID_IMAGE: system-images;android-36;google_apis;x86_64
+    defaults:
+      run:
+        working-directory: native
+
+    steps:
+      - name: Check out exact Gallery source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.SOURCE_REVISION }}
+          persist-credentials: false
+
+      - name: Verify exact source revision
+        run: test "$(git rev-parse HEAD)" = "$SOURCE_REVISION"
+
+      - name: Set up Java 17
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up verified Gradle
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4.4.3
+        with:
+          gradle-version: "8.14.3"
+
+      - name: Resolve Android SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          test -n "$SDK_ROOT"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$SDKMANAGER"
+          echo "SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
+          echo "$SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK_ROOT/emulator" >> "$GITHUB_PATH"
+
+      - name: Install Android 36 emulator dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          yes | "$SDKMANAGER" --licenses >/dev/null || true
+          "$SDKMANAGER" "platform-tools" "emulator" "platforms;android-36" "$ANDROID_IMAGE"
+          test -x "$SDK_ROOT/platform-tools/adb"
+          test -x "$SDK_ROOT/emulator/emulator"
+
+      - name: Build native Gallery app and instrumentation APKs
+        run: gradle :app:assembleDebug :app:assembleDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Create deterministic Gallery emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          AVD_NAME=goreecloud-gallery-rendered
+          AVD_ROOT="$HOME/.android/avd"
+          AVD_DIR="$AVD_ROOT/$AVD_NAME.avd"
+          IMAGE_RELATIVE="${ANDROID_IMAGE//;/\/}/"
+          IMAGE_DIR="$SDK_ROOT/$IMAGE_RELATIVE"
+          test -f "$IMAGE_DIR/system.img"
+          test -f "$IMAGE_DIR/kernel-ranchu"
+          mkdir -p "$AVD_DIR"
+          cat > "$AVD_ROOT/$AVD_NAME.ini" <<EOF
+          avd.ini.encoding=UTF-8
+          path=$AVD_DIR
+          path.rel=avd/$AVD_NAME.avd
+          target=android-36
+          EOF
+          cat > "$AVD_DIR/config.ini" <<EOF
+          AvdId=$AVD_NAME
+          PlayStore.enabled=false
+          abi.type=x86_64
+          avd.ini.displayname=GoreeCloud Gallery Rendered Runtime
+          avd.ini.encoding=UTF-8
+          disk.dataPartition.size=4G
+          fastboot.forceColdBoot=yes
+          fastboot.forceFastBoot=no
+          hw.audioInput=no
+          hw.camera.back=none
+          hw.camera.front=none
+          hw.cpu.arch=x86_64
+          hw.cpu.ncore=2
+          hw.device.manufacturer=GoreeCloud-CI
+          hw.device.name=goreecloud_gallery_rendered
+          hw.keyboard=yes
+          hw.lcd.density=420
+          hw.lcd.height=2400
+          hw.lcd.width=1080
+          hw.mainKeys=no
+          hw.ramSize=2048
+          hw.sdCard=no
+          image.sysdir.1=$IMAGE_RELATIVE
+          runtime.network.latency=none
+          runtime.network.speed=full
+          skin.dynamic=yes
+          tag.display=Google APIs
+          tag.id=google_apis
+          vm.heapSize=512
+          EOF
+          "$SDK_ROOT/emulator/emulator" -list-avds | grep -Fx "$AVD_NAME"
+          if test -e /dev/kvm; then sudo chmod 666 /dev/kvm; fi
+
+      - name: Boot deterministic Gallery emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          EMULATOR_LOG="$RUNNER_TEMP/goreecloud-gallery-rendered-emulator.log"
+          nohup "$SDK_ROOT/emulator/emulator" -avd goreecloud-gallery-rendered -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot -no-metrics -camera-back none -camera-front none >"$EMULATOR_LOG" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/goreecloud-gallery-rendered-emulator.pid"
+          adb wait-for-device
+          BOOTED=0
+          for _ in $(seq 1 150); do
+            if test "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1"; then
+              BOOTED=1
+              break
+            fi
+            sleep 2
+          done
+          test "$BOOTED" = "1"
+          adb shell settings put global window_animation_scale 0
+          adb shell settings put global transition_animation_scale 0
+          adb shell settings put global animator_duration_scale 0
+          adb shell wm size 390x844
+          adb shell wm density 160
+          adb shell settings put system font_scale 1.0
+          adb shell cmd uimode night no
+
+      - name: Run native Gallery rendered interaction acceptance
+        run: gradle :app:connectedDebugAndroidTest --no-daemon --stacktrace
+
+      - name: Upload rendered acceptance evidence
+        if: ${{ success() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: goreecloud-gallery-native-rendered-${{ env.SOURCE_REVISION }}
+          path: |
+            native/app/build/outputs/apk/debug/app-debug.apk
+            native/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            native/app/build/outputs/androidTest-results/connected/**
+            native/app/build/reports/androidTests/connected/**
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Preserve emulator diagnostics on failure
+        if: failure()
+        shell: bash
+        run: |
+          test ! -f "$RUNNER_TEMP/goreecloud-gallery-rendered-emulator.log" || tail -n 300 "$RUNNER_TEMP/goreecloud-gallery-rendered-emulator.log"
+          adb devices -l || true
+          adb shell dumpsys activity activities | tail -n 120 || true
+
+      - name: Stop Android emulator
+        if: always()
+        shell: bash
+        run: |
+          adb emu kill >/dev/null 2>&1 || true
+          if test -f "$RUNNER_TEMP/goreecloud-gallery-rendered-emulator.pid"; then
+            kill "$(cat "$RUNNER_TEMP/goreecloud-gallery-rendered-emulator.pid")" >/dev/null 2>&1 || true
+          fi
