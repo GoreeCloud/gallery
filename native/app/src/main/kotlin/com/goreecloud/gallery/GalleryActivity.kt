@@ -296,13 +296,27 @@ class GalleryActivity : Activity() {
                 insets.systemWindowInsetBottom
             }
 
-            rootFrame.setPadding(0, topInset, 0, bottomInset)
-            content.setPadding(
-                contentHorizontalGutter,
-                contentTopPadding,
-                contentHorizontalGutter,
-                contentBottomPadding,
-            )
+            if (
+                rootFrame.paddingLeft != 0 ||
+                rootFrame.paddingTop != topInset ||
+                rootFrame.paddingRight != 0 ||
+                rootFrame.paddingBottom != bottomInset
+            ) {
+                rootFrame.setPadding(0, topInset, 0, bottomInset)
+            }
+            if (
+                content.paddingLeft != contentHorizontalGutter ||
+                content.paddingTop != contentTopPadding ||
+                content.paddingRight != contentHorizontalGutter ||
+                content.paddingBottom != contentBottomPadding
+            ) {
+                content.setPadding(
+                    contentHorizontalGutter,
+                    contentTopPadding,
+                    contentHorizontalGutter,
+                    contentBottomPadding,
+                )
+            }
             insets
         }
 
