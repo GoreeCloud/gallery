@@ -199,10 +199,7 @@ class GalleryRenderedAcceptanceTest {
 
         override fun matchesSafely(view: View): Boolean {
             if (view !is TextView || view.text?.toString() != expectedLabel || !view.isSelected) return false
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && view.stateDescription?.toString() != "Selected") {
-                return false
-            }
-            return true
+            return view.contentDescription?.toString() == "$expectedLabel, selected"
         }
     }
 
