@@ -44,6 +44,7 @@ class GalleryRenderedAcceptanceTest {
                 .check(matches(isClickable()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
                 .check(matches(hasTopCompoundDrawable()))
+                .check(matches(hasSelectedStateDescription()))
         }
 
         onView(withContentDescription("Gallery media access action"))
@@ -95,6 +96,7 @@ class GalleryRenderedAcceptanceTest {
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
                 .check(matches(hasTopCompoundDrawable()))
+                .check(matches(hasSelectedStateDescription()))
 
             onView(withContentDescription("Settings"))
                 .perform(click())
@@ -102,12 +104,14 @@ class GalleryRenderedAcceptanceTest {
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
                 .check(matches(hasTopCompoundDrawable()))
+                .check(matches(hasSelectedStateDescription()))
 
             onView(withContentDescription("Photos"))
                 .perform(click())
             onView(selectedNavigationLabel("Photos"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasTopCompoundDrawable()))
+                .check(matches(hasSelectedStateDescription()))
         }
     }
 
@@ -201,6 +205,16 @@ class GalleryRenderedAcceptanceTest {
             if (view !is TextView || view.text?.toString() != expectedLabel || !view.isSelected) return false
             return view.contentDescription?.toString() == "$expectedLabel, selected"
         }
+    }
+
+    private fun hasSelectedStateDescription() = object : TypeSafeMatcher<View>() {
+        override fun describeTo(description: Description) {
+            description.appendText("exposes Android selected state description")
+        }
+
+        override fun matchesSafely(view: View): Boolean =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                view.stateDescription?.toString() == "Selected"
     }
 
     private fun hasMinimumTouchSizeDp(minimumDp: Float) = object : TypeSafeMatcher<View>() {
