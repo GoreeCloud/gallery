@@ -17,6 +17,7 @@ import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.Description
 import org.hamcrest.TypeSafeMatcher
@@ -64,21 +65,21 @@ class GalleryRenderedAcceptanceTest {
             onView(withContentDescription("Albums"))
                 .perform(click())
             assertSelectedNavigationState("Albums")
-            onView(withText("Albums"))
+            onView(allOf(withText("Albums"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
             onView(withContentDescription("Settings"))
                 .perform(click())
             assertSelectedNavigationState("Settings")
-            onView(withText("Settings"))
+            onView(allOf(withText("Settings"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
             onView(withContentDescription("Photos"))
                 .perform(click())
             assertSelectedNavigationState("Photos")
-            onView(withText("Photos"))
+            onView(allOf(withText("Photos"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
         }
