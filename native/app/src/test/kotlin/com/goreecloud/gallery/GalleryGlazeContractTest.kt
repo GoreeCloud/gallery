@@ -2,22 +2,49 @@ package com.goreecloud.gallery
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class GalleryGlazeContractTest {
     @Test
-    fun `native shell targets current Gallery Glaze contract and accessible target floor`() {
-        assertEquals("1.0.0", GalleryGlazeContract.VERSION)
-        assertTrue(GalleryGlazeContract.GENERAL_TARGET_DP >= 48)
-        assertTrue(GalleryGlazeContract.NAVIGATION_HEIGHT_DP >= GalleryGlazeContract.GENERAL_TARGET_DP)
+    fun `native shell pins exact current Stable Glaze V1_6 authority`() {
+        assertEquals("1.6.0", GalleryGlazeContract.VERSION)
+        assertEquals(
+            "a7180679ea851389e0f3004515f9a25f420e716d",
+            GalleryGlazeContract.ACCEPTED_RELEASE_SOURCE,
+        )
+        assertEquals(
+            "c7509c79256b04b0aa67cb9dd0737d7588e0ae4a",
+            GalleryGlazeContract.SOURCE_QUALIFICATION_ANCHOR,
+        )
+        assertEquals("js/glaze-v1.6.0.mjs", GalleryGlazeContract.STABLE_RUNTIME_ENTRYPOINT)
+        assertEquals("1.5.1", GalleryGlazeContract.ROLLBACK_BASELINE)
     }
 
     @Test
-    fun `adaptive gutters expand without shrinking phone composition`() {
+    fun `Glaze authority remains presentation only and fail closed`() {
+        assertTrue(GalleryGlazeContract.PRESENTATION_ONLY)
+        assertFalse(GalleryGlazeContract.PERMISSION_REQUEST_AUTOMATIC)
+        assertFalse(GalleryGlazeContract.AUTHORIZATION_INFERRED)
+        assertFalse(GalleryGlazeContract.CONSEQUENTIAL_EXECUTION_AUTOMATIC)
+        assertFalse(GalleryGlazeContract.DOWNSTREAM_CONSUMER_ACCEPTANCE_AUTOMATIC)
+    }
+
+    @Test
+    fun `native shell preserves accessible target floor and V1_6 material roles`() {
+        assertTrue(GalleryGlazeContract.GENERAL_TARGET_DP >= 48)
+        assertTrue(GalleryGlazeContract.NAVIGATION_HEIGHT_DP >= GalleryGlazeContract.GENERAL_TARGET_DP)
+        assertTrue(GalleryGlazeContract.MaterialRole.entries.contains(GalleryGlazeContract.MaterialRole.CANVAS))
+        assertTrue(GalleryGlazeContract.MaterialRole.entries.contains(GalleryGlazeContract.MaterialRole.FUNCTIONAL_GLASS))
+        assertTrue(GalleryGlazeContract.MaterialRole.entries.contains(GalleryGlazeContract.MaterialRole.SOLID))
+    }
+
+    @Test
+    fun `adaptive gutters follow the current Stable compact through large screen hierarchy`() {
         assertEquals(16, GalleryGlazeContract.horizontalGutterDp(390))
         assertEquals(24, GalleryGlazeContract.horizontalGutterDp(820))
         assertEquals(32, GalleryGlazeContract.horizontalGutterDp(900))
-        assertEquals(40, GalleryGlazeContract.horizontalGutterDp(1280))
+        assertEquals(48, GalleryGlazeContract.horizontalGutterDp(1280))
     }
 
     @Test
