@@ -599,7 +599,6 @@ class GalleryActivity : Activity() {
                         searchQuery = ""
                         if (::searchField.isInitialized) searchField.setText("")
                         closeSearch(clearQuery = false)
-                        renderNavigation()
                         renderCurrentDestination()
                     }
                 },
