@@ -21,20 +21,33 @@ class GalleryRenderedAcceptanceTest {
     val activityRule = ActivityScenarioRule(GalleryActivity::class.java)
 
     @Test
-    fun primaryNavigationAndHeaderActionsAreRenderedAndTouchSized() {
-        listOf(
-            "Photos, selected",
-            "Albums",
-            "Videos",
-            "Settings",
-            "Search the current Gallery destination",
-            "Change Gallery sort order",
-        ).forEach { description ->
-            onView(withContentDescription(description))
-                .check(matches(isDisplayed()))
-                .check(matches(isClickable()))
-                .check(matches(hasMinimumTouchSizeDp(48f)))
-        }
+    fun photosNavigationControlIsRenderedAndTouchSized() {
+        assertRenderedTouchControl("Photos, selected")
+    }
+
+    @Test
+    fun albumsNavigationControlIsRenderedAndTouchSized() {
+        assertRenderedTouchControl("Albums")
+    }
+
+    @Test
+    fun videosNavigationControlIsRenderedAndTouchSized() {
+        assertRenderedTouchControl("Videos")
+    }
+
+    @Test
+    fun settingsNavigationControlIsRenderedAndTouchSized() {
+        assertRenderedTouchControl("Settings")
+    }
+
+    @Test
+    fun searchHeaderControlIsRenderedAndTouchSized() {
+        assertRenderedTouchControl("Search the current Gallery destination")
+    }
+
+    @Test
+    fun sortHeaderControlIsRenderedAndTouchSized() {
+        assertRenderedTouchControl("Change Gallery sort order")
     }
 
     @Test
@@ -55,6 +68,13 @@ class GalleryRenderedAcceptanceTest {
             .perform(click())
         onView(withContentDescription("Photos, selected"))
             .check(matches(isDisplayed()))
+    }
+
+    private fun assertRenderedTouchControl(description: String) {
+        onView(withContentDescription(description))
+            .check(matches(isDisplayed()))
+            .check(matches(isClickable()))
+            .check(matches(hasMinimumTouchSizeDp(48f)))
     }
 
     private fun hasMinimumTouchSizeDp(minimumDp: Float) = object : TypeSafeMatcher<View>() {
