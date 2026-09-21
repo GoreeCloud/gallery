@@ -9,6 +9,7 @@ import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.TextView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -37,33 +38,83 @@ class GalleryRenderedAcceptanceTest {
             "Albums",
             "Videos",
             "Settings",
-            "Gallery media access action",
         ).forEach { description ->
             onView(withContentDescription(description))
                 .check(matches(isDisplayed()))
                 .check(matches(isClickable()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
+                .check(matches(hasTopCompoundDrawable()))
+        }
+
+        onView(withContentDescription("Photos, selected"))
+            .check(matches(hasSelectedStateDescription()))
+
+        onView(withContentDescription("Gallery media access action"))
+            .check(matches(isDisplayed()))
+            .check(matches(isClickable()))
+            .check(matches(hasMinimumTouchSizeDp(48f)))
+    }
+
+    @Test
+    fun selectedNavigationSurfaceIsContainedByOuterCapsule() {
+        activityRule.scenario.onActivity { activity ->
+            val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
+            val root = androidContent.getChildAt(0) as FrameLayout
+            val capsule = (0 until root.childCount)
+                .map(root::getChildAt)
+                .filterIsInstance<LinearLayout>()
+                .first { candidate ->
+                    val labels = (0 until candidate.childCount).mapNotNull { index ->
+                        (candidate.getChildAt(index) as? TextView)?.text?.toString()
+                    }
+                    labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
+                }
+
+            assertTrue("Navigation capsule must clip child material to its rounded outline", capsule.clipToOutline)
+
+            val selected = (0 until capsule.childCount)
+                .map(capsule::getChildAt)
+                .filterIsInstance<TextView>()
+                .single { it.isSelected }
+            val capsuleRect = Rect().also { capsule.getGlobalVisibleRect(it) }
+            val selectedRect = Rect().also { selected.getGlobalVisibleRect(it) }
+
+            assertTrue(
+                "Selected navigation material must remain inside the outer capsule bounds",
+                selectedRect.left >= capsuleRect.left &&
+                    selectedRect.top >= capsuleRect.top &&
+                    selectedRect.right <= capsuleRect.right &&
+                    selectedRect.bottom <= capsuleRect.bottom,
+            )
         }
     }
 
     @Test
     fun destinationNavigationUpdatesRenderedSelectionState() {
-        onView(withContentDescription("Albums"))
-            .perform(click())
-        onView(withContentDescription("Albums, selected"))
-            .check(matches(isDisplayed()))
-            .check(matches(hasMinimumTouchSizeDp(48f)))
+        repeat(2) {
+            onView(withContentDescription("Albums"))
+                .perform(click())
+            onView(selectedNavigationLabel("Albums"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasMinimumTouchSizeDp(48f)))
+                .check(matches(hasTopCompoundDrawable()))
+                .check(matches(hasSelectedStateDescription()))
 
-        onView(withContentDescription("Settings"))
-            .perform(click())
-        onView(withContentDescription("Settings, selected"))
-            .check(matches(isDisplayed()))
-            .check(matches(hasMinimumTouchSizeDp(48f)))
+            onView(withContentDescription("Settings"))
+                .perform(click())
+            onView(selectedNavigationLabel("Settings"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasMinimumTouchSizeDp(48f)))
+                .check(matches(hasTopCompoundDrawable()))
+                .check(matches(hasSelectedStateDescription()))
 
-        onView(withContentDescription("Photos"))
-            .perform(click())
-        onView(withContentDescription("Photos, selected"))
-            .check(matches(isDisplayed()))
+            onView(withContentDescription("Photos"))
+                .perform(click())
+            onView(selectedNavigationLabel("Photos"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasTopCompoundDrawable()))
+                .check(matches(hasSelectedStateDescription()))
+        }
     }
 
     @Test
@@ -145,6 +196,29 @@ class GalleryRenderedAcceptanceTest {
         )
     }
 
+    private fun selectedNavigationLabel(expectedLabel: String) = object : TypeSafeMatcher<View>() {
+        override fun describeTo(description: Description) {
+            description.appendText(
+                "is the selected Gallery navigation label $expectedLabel with non-color selected semantics",
+            )
+        }
+
+        override fun matchesSafely(view: View): Boolean {
+            if (view !is TextView || view.text?.toString() != expectedLabel || !view.isSelected) return false
+            return view.contentDescription?.toString() == "$expectedLabel, selected"
+        }
+    }
+
+    private fun hasSelectedStateDescription() = object : TypeSafeMatcher<View>() {
+        override fun describeTo(description: Description) {
+            description.appendText("exposes Android selected state description")
+        }
+
+        override fun matchesSafely(view: View): Boolean =
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                view.stateDescription?.toString() == "Selected"
+    }
+
     private fun hasMinimumTouchSizeDp(minimumDp: Float) = object : TypeSafeMatcher<View>() {
         override fun describeTo(description: Description) {
             description.appendText("has rendered width and height of at least $minimumDp dp")
@@ -161,5 +235,14 @@ class GalleryRenderedAcceptanceTest {
             val heightDp = view.height / density
             mismatchDescription.appendText("rendered ${widthDp}dp x ${heightDp}dp")
         }
+    }
+
+    private fun hasTopCompoundDrawable() = object : TypeSafeMatcher<View>() {
+        override fun describeTo(description: Description) {
+            description.appendText("is a Gallery navigation label with a rendered top icon")
+        }
+
+        override fun matchesSafely(view: View): Boolean =
+            view is TextView && view.compoundDrawables[1] != null
     }
 }

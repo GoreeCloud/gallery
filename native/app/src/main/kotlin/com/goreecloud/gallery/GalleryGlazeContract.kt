@@ -3,21 +3,16 @@ package com.goreecloud.gallery
 /**
  * Repository-local GLAZE UI V1.4 source mapping for the first-party native Gallery shell.
  *
- * The current authoritative GoreeCloud design-system lifecycle registry identifies GLAZE UI V1.4 /
- * 1.4.0 — Optical Intelligence as the current Official Stable, consumer-eligible release. Native
- * Android maps the shared semantics through platform primitives rather than copying web CSS or
- * requiring a web runtime.
- *
- * VERSION records the source contract mapped by this native implementation. It does not establish
- * Gallery application conformance, rendered acceptance, production eligibility, Release Candidate,
- * or Stable status. Gallery remains fail-closed on those claims until its application-specific V1.4
- * migration, accessibility, representative-device, and release gates are completed and accepted.
+ * The current repository Development line maps shared Glaze semantics through native Android
+ * primitives rather than copying web CSS or requiring a web runtime. VERSION records the source
+ * contract mapped by this native implementation; it does not establish Gallery application
+ * conformance, rendered acceptance, production eligibility, Release Candidate, or Stable status.
  */
 object GalleryGlazeContract {
     const val VERSION = "1.4.0"
     const val AUTHORITY_REVISION = "ee057ce9e729296aeaeda182d01db89f52bd66f3"
 
-    // GLAZE UI V1.4 inherits the governed V1.3/V1.2 spatial baseline.
+    // Shared spatial baseline used by the current Development mapping.
     const val SPACE_MICRO_DP = 2
     const val SPACE_HAIRLINE_DP = 4
     const val SPACE_CONTROL_DP = 8
@@ -27,7 +22,7 @@ object GalleryGlazeContract {
     const val SPACE_SECTION_DP = 32
     const val SPACE_REGION_DP = 48
 
-    // GLAZE UI V1.4 semantic shape roles.
+    // Semantic shape roles.
     const val SHAPE_QUIET_DP = 10
     const val SHAPE_CONTROL_DP = 12
     const val SHAPE_CONTAINER_DP = 20
@@ -35,7 +30,7 @@ object GalleryGlazeContract {
     const val SHAPE_OVERLAY_DP = 28
     const val SHAPE_CAPSULE_DP = 999
 
-    // GLAZE UI V1.4 semantic motion roles.
+    // Semantic motion roles.
     const val MOTION_MICRO_MS = 160L
     const val MOTION_STANDARD_MS = 240L
     const val MOTION_CONNECTED_MS = 360L
@@ -43,8 +38,7 @@ object GalleryGlazeContract {
     const val MOTION_REDUCED_STANDARD_MS = 180L
     const val MOTION_MINIMAL_MS = 0L
 
-    // Optical Intelligence boundaries used by native Gallery adapters.
-    // Gallery must remain fully functional when optical effects collapse to solid accessible surfaces.
+    // Optical boundaries used by native Gallery adapters.
     const val OPTICAL_MEMORY_TINT_MAX_FRACTION = 0.08f
     const val OPTICAL_CONTENT_AWARE_FROST_ENABLED = true
     const val OPTICAL_SEMANTIC_BLUR_PROTECTION_ENABLED = true
@@ -52,21 +46,26 @@ object GalleryGlazeContract {
     const val OPTICAL_INCREASED_CONTRAST_FALLBACK_REQUIRED = true
     const val OPTICAL_ENVIRONMENT_TINT_MAY_OVERRIDE_SEMANTIC_STATE = false
 
-    // Current Android interaction floor used by the V1.4 form-factor contract.
     const val GENERAL_TARGET_DP = 48
 
     const val MAX_RENDERED_MEDIA_ROWS = 100
     const val MIN_GRID_TILE_DP = 78
     const val MIN_ALBUM_TILE_DP = 132
 
-    // Gallery-specific bottom navigation composition mapped onto semantic V1.4 roles.
-    const val NAVIGATION_HEIGHT_DP = 60
+    // Compact floating bottom-navigation composition. Insets are added at runtime by GallerySystemBars.
+    const val NAVIGATION_HEIGHT_DP = 56
     const val NAVIGATION_RADIUS_DP = SHAPE_CAPSULE_DP
-    const val NAVIGATION_SIDE_MARGIN_DP = SPACE_STANDARD_CLUSTER_DP
-    const val NAVIGATION_BOTTOM_MARGIN_DP = SPACE_COMPACT_CLUSTER_DP
-    const val NAVIGATION_ELEVATION_DP = 8
-    const val NAVIGATION_RESERVED_SPACE_DP = 88
-    const val CONTENT_BOTTOM_INSET_DP = SPACE_SECTION_DP
+    const val NAVIGATION_SIDE_MARGIN_DP = 20
+    const val NAVIGATION_BOTTOM_MARGIN_DP = 10
+    const val NAVIGATION_ELEVATION_DP = 6
+    const val NAVIGATION_RESERVED_SPACE_DP = 82
+    const val CONTENT_BOTTOM_INSET_DP = SPACE_CONTENT_DP
+    const val NAVIGATION_ICON_DP = 20
+    const val NAVIGATION_LABEL_SP = 10.5f
+
+    // The active destination is a nested capsule, not a rounded rectangle. Matching the outer
+    // capsule geometry prevents the selected-state halo from protruding past the navigation shell.
+    const val NAVIGATION_ITEM_RADIUS_DP = SHAPE_CAPSULE_DP
 
     /**
      * Android Gallery capability adapter for current composition widths.

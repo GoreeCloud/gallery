@@ -1,8 +1,14 @@
 package com.goreecloud.gallery.core
 
 /**
- * A new-folder Move remains rooted in a provider-owned RELATIVE_PATH that belongs to the current
- * authorized and presented selection. Gallery never accepts an arbitrary filesystem path here.
+ * New-folder Move never accepts an arbitrary filesystem path.
+ *
+ * The selected rows must still belong to one provider-owned current source path so Gallery cannot
+ * manufacture move authority from a mixed/foreign selection. The new destination itself is rooted
+ * in Android's media-type-appropriate shared-media directory instead of blindly nesting beneath the
+ * source RELATIVE_PATH. This matters for rows discovered in places such as Download/: Android allows
+ * RELATIVE_PATH moves, but the destination top-level directory must remain relevant to the media
+ * type. Exact row mutation still requires Android-owned write confirmation in the adapter.
  */
 data class GalleryNewFolderMoveParent(
     val displayName: String,
@@ -29,10 +35,14 @@ data class GalleryNewFolderMoveDestination(
 object GalleryNewFolderMovePolicy {
     const val MAX_FOLDER_NAME_CHARACTERS = 96
 
+    private const val PICTURES_ROOT = "Pictures/"
+    private const val MOVIES_ROOT = "Movies/"
+    private const val DCIM_ROOT = "DCIM/"
+
     /**
-     * New-folder creation is intentionally narrower than existing-folder Move: every selected item
-     * must belong to exactly one currently authorized provider path. This prevents a mixed selection
-     * from silently choosing one source folder as creation authority.
+     * Every selected item must resolve inside the current authorized scope and come from exactly one
+     * current provider path. The destination parent is then chosen from the media kinds being moved:
+     * photos -> Pictures/, videos -> Movies/, mixed photo/video -> DCIM/.
      */
     fun parentForSelection(
         currentScope: List<MediaItem>,
@@ -43,17 +53,21 @@ object GalleryNewFolderMovePolicy {
         val selectedItems = GallerySelectionPolicy.resolve(currentScope, selectedContentUris)
         if (selectedItems.size != selectedContentUris.size || selectedItems.isEmpty()) return null
 
-        val paths = selectedItems.mapNotNull { canonicalProviderPath(it.relativePath) }.distinct()
-        if (paths.size != 1 || selectedItems.any { canonicalProviderPath(it.relativePath) == null }) return null
-        val parentPath = paths.single()
+        val sourcePaths = selectedItems.mapNotNull { canonicalProviderPath(it.relativePath) }.distinct()
+        if (sourcePaths.size != 1 || selectedItems.any { canonicalProviderPath(it.relativePath) == null }) return null
 
-        val albumNames = selectedItems.mapNotNull { it.albumName?.trim()?.takeIf(String::isNotBlank) }.distinct()
-        val displayName = albumNames.singleOrNull()
-            ?: parentPath.trimEnd('/').substringAfterLast('/').ifBlank { "Current folder" }
+        val hasImages = selectedItems.any { it.mimeType.startsWith("image/") }
+        val hasVideos = selectedItems.any { it.mimeType.startsWith("video/") }
+        val destinationRoot = when {
+            hasImages && hasVideos -> DCIM_ROOT
+            hasVideos -> MOVIES_ROOT
+            hasImages -> PICTURES_ROOT
+            else -> return null
+        }
 
         return GalleryNewFolderMoveParent(
-            displayName = displayName,
-            relativePath = parentPath,
+            displayName = destinationRoot.trimEnd('/'),
+            relativePath = destinationRoot,
         )
     }
 

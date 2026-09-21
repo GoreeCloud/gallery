@@ -102,12 +102,12 @@ class GalleryGlazeContractTest {
 
     @Test
     fun `navigation composition consumes semantic spacing and capsule roles`() {
-        assertEquals(60, GalleryGlazeContract.NAVIGATION_HEIGHT_DP)
+        assertEquals(56, GalleryGlazeContract.NAVIGATION_HEIGHT_DP)
         assertEquals(999, GalleryGlazeContract.NAVIGATION_RADIUS_DP)
-        assertEquals(16, GalleryGlazeContract.NAVIGATION_SIDE_MARGIN_DP)
-        assertEquals(12, GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP)
-        assertEquals(8, GalleryGlazeContract.NAVIGATION_ELEVATION_DP)
-        assertEquals(32, GalleryGlazeContract.CONTENT_BOTTOM_INSET_DP)
+        assertEquals(20, GalleryGlazeContract.NAVIGATION_SIDE_MARGIN_DP)
+        assertEquals(10, GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP)
+        assertEquals(6, GalleryGlazeContract.NAVIGATION_ELEVATION_DP)
+        assertEquals(24, GalleryGlazeContract.CONTENT_BOTTOM_INSET_DP)
         assertTrue(
             GalleryGlazeContract.NAVIGATION_RESERVED_SPACE_DP >=
                 GalleryGlazeContract.NAVIGATION_HEIGHT_DP + GalleryGlazeContract.NAVIGATION_BOTTOM_MARGIN_DP,

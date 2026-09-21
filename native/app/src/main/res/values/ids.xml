@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="gallery_ui_refinement_tag" type="id" />
+    <item name="gallery_navigation_surface_tag" type="id" />
+</resources>

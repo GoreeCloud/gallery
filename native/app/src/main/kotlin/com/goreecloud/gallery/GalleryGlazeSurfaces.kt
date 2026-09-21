@@ -6,13 +6,12 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 
 /**
- * Native Android material mapping for Gallery's GLAZE UI V1.4 Optical Intelligence pass.
+ * Native Android material mapping for Gallery's Glaze presentation layer.
  *
- * Environmental memory tint is deliberately low influence and non-semantic. Selection,
- * destructive, privacy, permission, and other protected states continue to use their semantic
- * authorities. These surfaces remain near-opaque so Reduced Transparency, Increased Contrast,
- * performance constraints, or lack of platform blur support can collapse them to readable solid
- * treatments without changing task hierarchy or authority.
+ * Environmental tint remains deliberately low influence and non-semantic. Selection, destructive,
+ * privacy, permission, and other protected states keep their own semantic authority. The material
+ * uses a restrained optical gradient, edge highlight, and readable near-opaque fallback instead of
+ * pretending that unsupported backdrop blur exists on every Android device.
  */
 object GalleryGlazeSurfaces {
     enum class Role {
@@ -35,30 +34,41 @@ object GalleryGlazeSurfaces {
         )
         val environment = context.getColor(R.color.gallery_environment_accent)
         val tintFraction = when (role) {
-            Role.CONTROL -> 0.055f
-            Role.CHROME -> 0.035f
+            Role.CONTROL -> 0.065f
+            Role.CHROME -> 0.055f
             Role.RAISED -> 0.045f
             Role.OVERLAY -> 0.025f
         }.coerceAtMost(GalleryGlazeContract.OPTICAL_MEMORY_TINT_MAX_FRACTION)
         val surface = mix(base, environment, tintFraction)
+        val highlightTarget = if (isNight) Color.WHITE else Color.WHITE
+        val highlightAmount = when (role) {
+            Role.CONTROL -> if (isNight) 0.035f else 0.060f
+            Role.CHROME -> if (isNight) 0.045f else 0.075f
+            Role.RAISED -> if (isNight) 0.025f else 0.045f
+            Role.OVERLAY -> if (isNight) 0.018f else 0.025f
+        }
+        val highlight = mix(surface, highlightTarget, highlightAmount)
         val alpha = when (role) {
-            Role.CONTROL -> if (isNight) 0.96f else 0.94f
-            Role.CHROME -> 0.98f
-            Role.RAISED -> 0.97f
+            Role.CONTROL -> if (isNight) 0.97f else 0.95f
+            Role.CHROME -> if (isNight) 0.985f else 0.965f
+            Role.RAISED -> 0.985f
             Role.OVERLAY -> 1f
         }
         val strokeAlpha = when (role) {
-            Role.CONTROL -> if (isNight) 0.18f else 0.13f
-            Role.CHROME -> if (isNight) 0.20f else 0.14f
-            Role.RAISED -> if (isNight) 0.17f else 0.12f
-            Role.OVERLAY -> if (isNight) 0.14f else 0.09f
+            Role.CONTROL -> if (isNight) 0.22f else 0.14f
+            Role.CHROME -> if (isNight) 0.24f else 0.16f
+            Role.RAISED -> if (isNight) 0.18f else 0.11f
+            Role.OVERLAY -> if (isNight) 0.16f else 0.09f
         }
+        val edge = mix(environment, if (isNight) Color.WHITE else Color.BLACK, if (isNight) 0.05f else 0.03f)
 
-        return GradientDrawable().apply {
+        return GradientDrawable(
+            GradientDrawable.Orientation.TOP_BOTTOM,
+            intArrayOf(withAlpha(highlight, alpha), withAlpha(surface, alpha)),
+        ).apply {
             shape = GradientDrawable.RECTANGLE
-            setColor(withAlpha(surface, alpha))
             cornerRadius = dp(context, radiusDp).toFloat()
-            setStroke(dp(context, 1), withAlpha(environment, strokeAlpha))
+            setStroke(dp(context, 1), withAlpha(edge, strokeAlpha))
         }
     }
 
