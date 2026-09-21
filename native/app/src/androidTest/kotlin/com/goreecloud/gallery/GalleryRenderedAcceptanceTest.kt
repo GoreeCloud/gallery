@@ -53,22 +53,25 @@ class GalleryRenderedAcceptanceTest {
 
     @Test
     fun destinationNavigationUpdatesRenderedSelectionState() {
-        onView(withContentDescription("Albums"))
-            .perform(click())
-        onView(withContentDescription("Albums, selected"))
-            .check(matches(isDisplayed()))
-            .check(matches(hasMinimumTouchSizeDp(48f)))
+        repeat(2) {
+            onView(withContentDescription("Albums"))
+                .perform(click())
+            onView(withContentDescription("Albums, selected"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasMinimumTouchSizeDp(48f)))
 
-        onView(withContentDescription("Settings"))
-            .perform(click())
-        onView(withContentDescription("Settings, selected"))
-            .check(matches(isDisplayed()))
-            .check(matches(hasMinimumTouchSizeDp(48f)))
+            onView(withContentDescription("Settings"))
+                .perform(click())
+            onView(withContentDescription("Settings, selected"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasMinimumTouchSizeDp(48f)))
 
-        onView(withContentDescription("Photos"))
-            .perform(click())
-        onView(withContentDescription("Photos, selected"))
-            .check(matches(isDisplayed()))
+            onView(withContentDescription("Photos"))
+                .perform(click())
+            onView(withContentDescription("Photos, selected"))
+                .check(matches(isDisplayed()))
+                .check(matches(hasMinimumTouchSizeDp(48f)))
+        }
     }
 
     private fun assertRenderedTouchControl(description: String) {
