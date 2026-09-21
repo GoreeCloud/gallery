@@ -6,7 +6,7 @@ GoreeCloud Gallery is an original GoreeCloud-owned native Android application wh
 
 Historical GoreeCloud Gallery screenshots, prior Gallery behavior, repository history, and applicable Samsung Gallery interaction references are migration and visual-comparison inputs. They are not authorization to copy Samsung proprietary source code, assets, trademarks, or implementation details.
 
-The target is to recover the established GoreeCloud Gallery information architecture, browsing model, album behavior, viewer interactions, contextual actions, organization patterns, and first-party feature breadth, then revamp GoreeCloud-controlled presentation under the official **GLAZE UI V1.0** authority. Gallery-specific production visual/accessibility acceptance remains separate from source adoption.
+The target is to recover the established GoreeCloud Gallery information architecture, browsing model, album behavior, viewer interactions, contextual actions, organization patterns, and first-party feature breadth, then revamp GoreeCloud-controlled presentation under the official **GLAZE UI V1.6** authority. Gallery-specific production visual/accessibility acceptance remains separate from source adoption.
 
 ## Implemented in the first-party Development line
 
@@ -40,7 +40,7 @@ The target is to recover the established GoreeCloud Gallery information architec
 - Video items currently use authorized poster thumbnails; native playback is not yet implemented.
 - Permission and load-generation re-checks before viewer rendering.
 - Framework-independent album/trash/recovery/mutation foundations used by later native milestones.
-- GLAZE UI V1.0 application-source mapping remains subject to full Gallery-specific visual, accessibility, adaptive-layout, and physical-device acceptance.
+- GLAZE UI V1.6 application-source mapping remains subject to full Gallery-specific visual, accessibility, adaptive-layout, and physical-device acceptance.
 
 ### Settings available in the current Development candidate
 
@@ -121,7 +121,7 @@ The historical screenshots supplied for the native migration establish the follo
 
 ### Navigation model
 
-- The historical product used clear top-level destinations for media, albums, and video-oriented browsing. The current native implementation may modernize exact labels and placement under GLAZE UI V1.0, but it must preserve similarly direct access to the major Gallery domains.
+- The historical product used clear top-level destinations for media, albums, and video-oriented browsing. The current native implementation may modernize exact labels and placement under GLAZE UI V1.6, but it must preserve similarly direct access to the major Gallery domains.
 - Search and contextual actions must be reachable from the relevant browsing surface without forcing users through debug-style filter controls.
 
 ## Established Gallery capabilities to restore in the native replacement
@@ -161,12 +161,12 @@ The exact migration set is governed by historical GoreeCloud Gallery behavior an
 - Complete secure Private/Protected Photos, hidden/excluded media policy, and password/device-credential protection through supported platform mechanisms.
 - Connect automatic empty-folder cleanup only after a safe, evidence-backed implementation exists.
 - Complete Privacy Shield, Wardveil, Everkeep, GoreeCloud Identity, and GoreeCloud Mesh integration where applicable and evidence-backed.
-- Complete GLAZE UI V1.0 conformance, TalkBack, switch access, large-text, contrast, reduced-motion/transparency, adaptive-layout, tablet/foldable, and representative-device acceptance.
+- Complete GLAZE UI V1.6 conformance, TalkBack, switch access, large-text, contrast, reduced-motion/transparency, adaptive-layout, tablet/foldable, and representative-device acceptance.
 - Complete signed release packaging, upgrade/recovery acceptance, and Stable qualification.
 
-## GLAZE UI V1.0 modernization requirement
+## GLAZE UI V1.6 modernization requirement
 
-GLAZE UI V1.0 modernization must improve hierarchy, navigation, material, responsive behavior, motion, accessibility, transient surfaces, and visual polish without deleting established Gallery capabilities merely to simplify the interface. Media remains dominant content; interaction chrome may use Glaze material selectively and must preserve Android-native behavior, performance, readability, and accessibility.
+GLAZE UI V1.6 modernization must improve hierarchy, navigation, material, responsive behavior, motion, accessibility, transient surfaces, and visual polish without deleting established Gallery capabilities merely to simplify the interface. Media remains dominant content; interaction chrome may use Glaze material selectively and must preserve Android-native behavior, performance, readability, and accessibility.
 
 A visually polished replacement that omits mature Gallery capabilities is not a successful migration.
 

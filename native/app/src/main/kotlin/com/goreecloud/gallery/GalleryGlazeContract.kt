@@ -1,17 +1,37 @@
 package com.goreecloud.gallery
 
 /**
- * Repository-local GLAZE UI V1.0 source contract consumed by the first-party native Gallery shell.
+ * Repository-local GLAZE UI V1.6 source baseline consumed by the first-party native Gallery shell.
  *
- * Gallery's authoritative project specification currently names GLAZE UI V1.0 / 1.0.0 as the only
- * current application target. Broader Glaze records contain a conflicting V1.1 policy statement;
- * that cross-project discrepancy must be resolved in the canonical Glaze records rather than
- * silently changing Gallery's product-specific authority here.
+ * The exact shared Stable release source and qualification anchor are pinned here. This contract
+ * governs presentation only; it cannot manufacture permission, authorization, privacy/security
+ * truth, automatic consequential execution, or downstream consumer acceptance.
  *
- * Rendered accessibility and representative-device acceptance remain separate release gates.
+ * Rendered accessibility, representative-device, performance, platform-system, release, and
+ * production acceptance remain separate Gallery gates.
  */
 object GalleryGlazeContract {
-    const val VERSION = "1.0.0"
+    const val VERSION = "1.6.0"
+    const val ACCEPTED_RELEASE_SOURCE = "a7180679ea851389e0f3004515f9a25f420e716d"
+    const val SOURCE_QUALIFICATION_ANCHOR = "c7509c79256b04b0aa67cb9dd0737d7588e0ae4a"
+    const val STABLE_RUNTIME_ENTRYPOINT = "js/glaze-v1.6.0.mjs"
+    const val ROLLBACK_BASELINE = "1.5.1"
+
+    const val PRESENTATION_ONLY = true
+    const val PERMISSION_REQUEST_AUTOMATIC = false
+    const val AUTHORIZATION_INFERRED = false
+    const val CONSEQUENTIAL_EXECUTION_AUTOMATIC = false
+    const val DOWNSTREAM_CONSUMER_ACCEPTANCE_AUTOMATIC = false
+
+    enum class MaterialRole {
+        CANVAS,
+        SOLID,
+        RAISED,
+        FUNCTIONAL_GLASS,
+        CLEAR_GLASS,
+        OVERLAY,
+    }
+
     const val GENERAL_TARGET_DP = 48
     const val MAX_RENDERED_MEDIA_ROWS = 100
     const val MIN_GRID_TILE_DP = 78
@@ -25,7 +45,7 @@ object GalleryGlazeContract {
     const val CONTENT_BOTTOM_INSET_DP = 28
 
     fun horizontalGutterDp(widthDp: Int): Int = when {
-        widthDp >= 1200 -> 40
+        widthDp >= 1200 -> 48
         widthDp >= 840 -> 32
         widthDp >= 600 -> 24
         else -> 16

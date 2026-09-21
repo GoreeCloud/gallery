@@ -89,6 +89,7 @@ class GalleryActivity : Activity() {
     private var openAlbumId: String? = null
     private var showingFavorites = false
     private var searchQuery = ""
+    private var suppressSearchRender = false
     private var viewerOverlay: View? = null
     private var viewerVideoSurface: GalleryVideoPlayerSurface? = null
     private var pendingMediaMutation: AndroidMediaMutationPendingState? = null
@@ -401,7 +402,9 @@ class GalleryActivity : Activity() {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                     searchQuery = s?.toString()?.trim().orEmpty()
-                    renderCurrentDestination()
+                    if (!suppressSearchRender) {
+                        renderCurrentDestination()
+                    }
                 }
                 override fun afterTextChanged(s: Editable?) = Unit
             })
@@ -519,8 +522,46 @@ class GalleryActivity : Activity() {
 
         selectionActionCapsule.visibility = View.GONE
         navigationCapsule.visibility = View.VISIBLE
-        navigationCapsule.removeAllViews()
-        GalleryDestination.entries.forEachIndexed { index, item ->
+
+        val destinations = GalleryDestination.entries
+        val needsControls =
+            navigationCapsule.childCount != destinations.size ||
+                (0 until navigationCapsule.childCount).any { index ->
+                    navigationCapsule.getChildAt(index) !is TextView
+                }
+
+        if (needsControls) {
+            navigationCapsule.removeAllViews()
+            destinations.forEachIndexed { index, item ->
+                navigationCapsule.addView(
+                    TextView(this).apply {
+                        gravity = Gravity.CENTER
+                        minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+                        isClickable = true
+                        isFocusable = true
+                        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+                        setOnClickListener {
+                            if (destination == item && openAlbumId == null && !showingFavorites) {
+                                return@setOnClickListener
+                            }
+                            clearSelection(render = false)
+                            destination = item
+                            openAlbumId = null
+                            showingFavorites = false
+                            clearSearchQueryWithoutRender()
+                            closeSearch(clearQuery = false)
+                            renderCurrentDestination()
+                        }
+                    },
+                    LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                        if (index > 0) marginStart = dp(2)
+                    },
+                )
+            }
+        }
+
+        destinations.forEachIndexed { index, item ->
             val selected = destination == item
             val label = when (item) {
                 GalleryDestination.PHOTOS -> "Photos"
@@ -528,39 +569,22 @@ class GalleryActivity : Activity() {
                 GalleryDestination.VIDEOS -> "Videos"
                 GalleryDestination.SETTINGS -> "Settings"
             }
-            navigationCapsule.addView(
-                TextView(this).apply {
-                    text = label
-                    gravity = Gravity.CENTER
-                    minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
-                    setTextColor(if (selected) accentColor() else primaryTextColor())
-                    if (selected) setTypeface(typeface, Typeface.BOLD)
-                    background = roundedSurface(
-                        if (selected) withAlpha(accentColor(), 0.13f) else Color.TRANSPARENT,
-                        18,
-                    )
-                    isClickable = true
-                    isFocusable = true
-                    isSelected = selected
-                    contentDescription = "$label${if (selected) ", selected" else ""}"
-                    setOnClickListener {
-                        if (destination == item && openAlbumId == null && !showingFavorites) return@setOnClickListener
-                        clearSelection(render = false)
-                        destination = item
-                        openAlbumId = null
-                        showingFavorites = false
-                        searchQuery = ""
-                        if (::searchField.isInitialized) searchField.setText("")
-                        closeSearch(clearQuery = false)
-                        renderNavigation()
-                        renderCurrentDestination()
-                    }
-                },
-                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-                    if (index > 0) marginStart = dp(2)
-                },
+            val control = navigationCapsule.getChildAt(index) as TextView
+            control.text = label
+            control.setTextColor(if (selected) accentColor() else primaryTextColor())
+            control.typeface = Typeface.create(
+                control.typeface,
+                if (selected) Typeface.BOLD else Typeface.NORMAL,
             )
+            control.background = roundedSurface(
+                if (selected) withAlpha(accentColor(), 0.13f) else Color.TRANSPARENT,
+                18,
+            )
+            control.isSelected = selected
+            control.contentDescription = "$label${if (selected) ", selected" else ""}"
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                control.stateDescription = if (selected) "Selected" else null
+            }
         }
     }
 
@@ -2570,9 +2594,20 @@ class GalleryActivity : Activity() {
         (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)
             ?.hideSoftInputFromWindow(searchField.windowToken, 0)
         if (clearQuery) {
-            searchQuery = ""
-            if (::searchField.isInitialized && searchField.text.isNotEmpty()) searchField.setText("")
+            clearSearchQueryWithoutRender()
             renderCurrentDestination()
+        }
+    }
+
+    private fun clearSearchQueryWithoutRender() {
+        searchQuery = ""
+        if (!::searchField.isInitialized || searchField.text.isEmpty()) return
+
+        suppressSearchRender = true
+        try {
+            searchField.setText("")
+        } finally {
+            suppressSearchRender = false
         }
     }
 

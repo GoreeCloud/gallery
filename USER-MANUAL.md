@@ -149,13 +149,13 @@ Protected Photos/password protection is not simulated with insecure app-local cr
 
 ## Current design-system authority
 
-The authoritative **Project Specification — Gallery** identifies **GLAZE UI V1.0 / 1.0.0** as Gallery's current application target. Gallery's repository-local source contract follows that product-specific authority. Broader GoreeCloud Glaze records currently contain a conflicting V1.1 statement; that discrepancy is not treated as permission to silently change Gallery's target. Complete rendered, accessibility, adaptive-device, Human Visual Excellence, and production conformance remain separate acceptance gates.
+The current shared authority identifies **GLAZE UI V1.6 / 1.6.0** as Official Stable, with accepted release source `a7180679ea851389e0f3004515f9a25f420e716d`. Gallery's first-party native source contract pins that authority, while complete rendered, accessibility, adaptive-device, Human Visual Excellence, and production conformance remain separate acceptance gates.
 
 ## Major capability backlog
 
 The native restoration still includes more work than the earlier rough "11 features" estimate implied. Distinct remaining capability areas include full physical Recycle Bin acceptance; full-resolution image viewing and physical orientation acceptance; native video playback plus autoplay/loop behavior; animated GIF behavior; approved photo/video editing; approved metadata editing; Move and Copy; broader selection tools where appropriate; album creation, rename, reorder and richer album actions; richer grouping/timeline modes; view-density/layout controls; slideshow and other established local presentation actions; broader contextual/overflow actions; broader export/share workflows where required; secure Private/Protected Photos; fuller hidden/sensitive-media policy; automatic empty-folder cleanup; and any additional established first-party Gallery capability verified by historical GoreeCloud Gallery evidence.
 
-Separate release gates include GLAZE UI V1.0 application acceptance, accessibility/adaptive/OEM/profile testing, Privacy Shield/Wardveil/Everkeep/Identity/Mesh integration where applicable, long-lived signing, upgrade/recovery validation, production approval, and Stable qualification.
+Separate release gates include GLAZE UI V1.6 application acceptance, accessibility/adaptive/OEM/profile testing, Privacy Shield/Wardveil/Everkeep/Identity/Mesh integration where applicable, long-lived signing, upgrade/recovery validation, production approval, and Stable qualification.
 
 ## Troubleshooting
 

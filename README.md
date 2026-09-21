@@ -36,7 +36,7 @@ The repository now contains GoreeCloud-owned native foundations under `native/`.
 
 The current native application-shell development line adds `native/app`, a first-party Android application target using package ID `com.goreecloud.gallery`. It requires Android media authorization before provider reads, consumes the MediaStore adapter directly, renders a bounded recent-media list with local thumbnails, supports All / Images / Videos filtering and Newest / Oldest sorting over the already-authorized in-memory snapshot, and provides bounded local preview navigation within that presented snapshot. Filter and sort actions do not issue another MediaStore listing request.
 
-The native shell maps the current Glaze UI 2.0.0 source contract through platform controls, a 48dp target floor, adaptive gutters, local light/dark presentation, and no network-delivered UI resources.
+The native shell now pins the current Official Stable Glaze UI 1.6.0 source contract at accepted release source `a7180679ea851389e0f3004515f9a25f420e716d`, maps its presentation-only authority through platform controls, preserves a 48dp target floor and adaptive gutters, and uses no network-delivered UI resources. Downstream rendered/accessibility/device acceptance remains separate.
 
 These foundations do **not** yet constitute a released or Stable Gallery application. Image previews remain bounded, video preview is poster-only, and full-resolution viewing, playback, editing, sharing, destructive-operation acceptance, and broader album UX remain separate milestones. See [docs/native-mediastore-adapter.md](docs/native-mediastore-adapter.md) and [docs/native-android-app-shell.md](docs/native-android-app-shell.md).
 

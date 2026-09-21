@@ -27,7 +27,7 @@ GoreeCloud Gallery is being rebuilt as an original first-party Android applicati
 
 ## Platform boundaries
 
-- **Glaze UI / Design Center:** current native shell targets the repository's Glaze UI source contract, adaptive gutters, platform light/dark presentation, and 48dp control target floor. Rendered acceptance remains required before Stable.
+- **Glaze UI / Design Center:** current native shell targets Official Stable Glaze UI V1.6 / `1.6.0` at accepted release source `a7180679ea851389e0f3004515f9a25f420e716d`, with presentation-only authority, adaptive gutters, platform light/dark presentation, and a 48dp control target floor. Rendered accessibility, device, performance, and product acceptance remain required before Gallery Stable qualification.
 - **Privacy Shield / Privacy Center:** Android media authorization and data minimization are authoritative. Cloud retrieval is not required for local browsing.
 - **Wardveil Security / Security Center:** future risky file/media operations must use authoritative Wardveil decisions where applicable; current local thumbnail browsing does not claim a production Wardveil acceptance milestone.
 - **Everkeep / Continuity Center:** recovery/preservation workflows remain separate acceptance milestones beyond the current local browse shell.
