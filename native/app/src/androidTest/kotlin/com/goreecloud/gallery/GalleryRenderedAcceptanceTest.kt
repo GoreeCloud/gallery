@@ -1,6 +1,11 @@
 package com.goreecloud.gallery
 
+import android.os.Build
 import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
@@ -8,12 +13,14 @@ import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import androidx.test.espresso.matcher.ViewMatchers.Visibility.GONE
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withContentDescription
+import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.Description
 import org.hamcrest.TypeSafeMatcher
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,21 +63,73 @@ class GalleryRenderedAcceptanceTest {
         repeat(2) {
             onView(withContentDescription("Albums"))
                 .perform(click())
-            onView(withContentDescription("Albums, selected"))
+            assertSelectedNavigationState("Albums")
+            onView(withText("Albums"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
             onView(withContentDescription("Settings"))
                 .perform(click())
-            onView(withContentDescription("Settings, selected"))
+            assertSelectedNavigationState("Settings")
+            onView(withText("Settings"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
             onView(withContentDescription("Photos"))
                 .perform(click())
-            onView(withContentDescription("Photos, selected"))
+            assertSelectedNavigationState("Photos")
+            onView(withText("Photos"))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
+        }
+    }
+
+    private fun assertSelectedNavigationState(expectedLabel: String) {
+        activityRule.scenario.onActivity { activity ->
+            val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
+            val root = androidContent.getChildAt(0) as FrameLayout
+            val capsules = (0 until root.childCount)
+                .map(root::getChildAt)
+                .filterIsInstance<LinearLayout>()
+                .filter { candidate ->
+                    val labels = (0 until candidate.childCount).mapNotNull { index ->
+                        (candidate.getChildAt(index) as? TextView)?.text?.toString()
+                    }
+                    labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
+                }
+
+            assertTrue(
+                "Expected one primary Gallery navigation capsule but found ${capsules.size}",
+                capsules.size == 1,
+            )
+
+            val controls = (0 until capsules.single().childCount)
+                .map(capsules.single()::getChildAt)
+                .filterIsInstance<TextView>()
+            val actual = controls.joinToString(separator = " | ") { control ->
+                buildString {
+                    append(control.text)
+                    append(":selected=")
+                    append(control.isSelected)
+                    append(",contentDescription=")
+                    append(control.contentDescription)
+                    append(",stateDescription=")
+                    append(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) control.stateDescription else "n/a")
+                    append(",visibility=")
+                    append(control.visibility)
+                    append(",attached=")
+                    append(control.isAttachedToWindow)
+                }
+            }
+            val selected = controls.singleOrNull { it.text?.toString() == expectedLabel }
+            assertTrue(
+                "Expected $expectedLabel selected navigation semantics. Actual controls: $actual",
+                selected != null &&
+                    selected.isSelected &&
+                    selected.contentDescription?.toString() == "$expectedLabel, selected" &&
+                    (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                        selected.stateDescription?.toString() == "Selected"),
+            )
         }
     }
 
