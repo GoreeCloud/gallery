@@ -587,6 +587,9 @@ class GalleryActivity : Activity() {
                     isFocusable = true
                     isSelected = selected
                     contentDescription = "$label${if (selected) ", selected" else ""}"
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        stateDescription = if (selected) "Selected" else null
+                    }
                     setOnClickListener {
                         if (destination == item && openAlbumId == null && !showingFavorites) return@setOnClickListener
                         clearSelection(render = false)
