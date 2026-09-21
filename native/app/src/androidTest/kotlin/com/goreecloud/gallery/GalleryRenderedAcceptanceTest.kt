@@ -3,6 +3,7 @@ package com.goreecloud.gallery
 import android.os.Build
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -61,6 +62,7 @@ class GalleryRenderedAcceptanceTest {
 
     @Test
     fun destinationNavigationUpdatesRenderedSelectionState() {
+        assertNavigationControlsRespectSystemBarSafeArea()
         repeat(2) {
             onView(withContentDescription("Albums"))
                 .perform(click())
@@ -85,6 +87,57 @@ class GalleryRenderedAcceptanceTest {
         }
     }
 
+    private fun assertNavigationControlsRespectSystemBarSafeArea() {
+        activityRule.scenario.onActivity { activity ->
+            val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
+            val root = androidContent.getChildAt(0) as FrameLayout
+            val capsule = (0 until root.childCount)
+                .map(root::getChildAt)
+                .filterIsInstance<LinearLayout>()
+                .single { candidate ->
+                    val labels = (0 until candidate.childCount).mapNotNull { index ->
+                        (candidate.getChildAt(index) as? TextView)?.text?.toString()
+                    }
+                    labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
+                }
+
+            val decor = activity.window.decorView
+            val decorLocation = IntArray(2)
+            decor.getLocationOnScreen(decorLocation)
+            val insets = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                decor.rootWindowInsets?.getInsets(WindowInsets.Type.systemBars())
+            } else {
+                null
+            }
+            val safeTop = decorLocation[1] + (insets?.top ?: 0)
+            val safeBottom = decorLocation[1] + decor.height - (insets?.bottom ?: 0)
+
+            val controls = (0 until capsule.childCount)
+                .map(capsule::getChildAt)
+                .filterIsInstance<TextView>()
+            val geometry = controls.joinToString(separator = " | ") { control ->
+                val location = IntArray(2)
+                control.getLocationOnScreen(location)
+                val top = location[1]
+                val bottom = top + control.height
+                "${control.text}:top=$top,bottom=$bottom,height=${control.height}"
+            }
+            val allControlsSafe = controls.all { control ->
+                val location = IntArray(2)
+                control.getLocationOnScreen(location)
+                val top = location[1]
+                val bottom = top + control.height
+                top >= safeTop && bottom <= safeBottom
+            }
+
+            assertTrue(
+                "Expected navigation controls inside system-bar safe bounds " +
+                    "[$safeTop,$safeBottom]. rootPadding=${root.paddingTop}/${root.paddingBottom}. " +
+                    "Controls: $geometry",
+                allControlsSafe,
+            )
+        }
+    }
     private fun assertSelectedNavigationState(expectedLabel: String) {
         activityRule.scenario.onActivity { activity ->
             val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
