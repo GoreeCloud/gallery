@@ -89,6 +89,7 @@ class GalleryActivity : Activity() {
     private var openAlbumId: String? = null
     private var showingFavorites = false
     private var searchQuery = ""
+    private var suppressSearchRender = false
     private var viewerOverlay: View? = null
     private var viewerVideoSurface: GalleryVideoPlayerSurface? = null
     private var pendingMediaMutation: AndroidMediaMutationPendingState? = null
@@ -401,7 +402,9 @@ class GalleryActivity : Activity() {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                     searchQuery = s?.toString()?.trim().orEmpty()
-                    renderCurrentDestination()
+                    if (!suppressSearchRender) {
+                        renderCurrentDestination()
+                    }
                 }
                 override fun afterTextChanged(s: Editable?) = Unit
             })
@@ -550,8 +553,7 @@ class GalleryActivity : Activity() {
                         destination = item
                         openAlbumId = null
                         showingFavorites = false
-                        searchQuery = ""
-                        if (::searchField.isInitialized) searchField.setText("")
+                        clearSearchQueryWithoutRender()
                         closeSearch(clearQuery = false)
                         renderNavigation()
                         renderCurrentDestination()
@@ -2570,9 +2572,20 @@ class GalleryActivity : Activity() {
         (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)
             ?.hideSoftInputFromWindow(searchField.windowToken, 0)
         if (clearQuery) {
-            searchQuery = ""
-            if (::searchField.isInitialized && searchField.text.isNotEmpty()) searchField.setText("")
+            clearSearchQueryWithoutRender()
             renderCurrentDestination()
+        }
+    }
+
+    private fun clearSearchQueryWithoutRender() {
+        searchQuery = ""
+        if (!::searchField.isInitialized || searchField.text.isEmpty()) return
+
+        suppressSearchRender = true
+        try {
+            searchField.setText("")
+        } finally {
+            suppressSearchRender = false
         }
     }
 
