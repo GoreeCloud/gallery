@@ -44,8 +44,10 @@ class GalleryRenderedAcceptanceTest {
                 .check(matches(isClickable()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
                 .check(matches(hasTopCompoundDrawable()))
-                .check(matches(hasSelectedStateDescription()))
         }
+
+        onView(withContentDescription("Photos, selected"))
+            .check(matches(hasSelectedStateDescription()))
 
         onView(withContentDescription("Gallery media access action"))
             .check(matches(isDisplayed()))
