@@ -23,6 +23,7 @@ import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.FrameLayout
@@ -218,13 +219,18 @@ class GalleryActivity : Activity() {
             setBackgroundColor(canvasColor())
         }
 
+        val contentHorizontalGutter = dp(
+            GalleryGlazeContract.horizontalGutterDp(resources.configuration.screenWidthDp),
+        )
+        val contentTopPadding = dp(12)
+        val contentBottomPadding = dp(GalleryGlazeContract.CONTENT_BOTTOM_INSET_DP)
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
-                dp(GalleryGlazeContract.horizontalGutterDp(resources.configuration.screenWidthDp)),
-                dp(12),
-                dp(GalleryGlazeContract.horizontalGutterDp(resources.configuration.screenWidthDp)),
-                dp(GalleryGlazeContract.CONTENT_BOTTOM_INSET_DP),
+                contentHorizontalGutter,
+                contentTopPadding,
+                contentHorizontalGutter,
+                contentBottomPadding,
             )
             setBackgroundColor(canvasColor())
         }
@@ -271,7 +277,51 @@ class GalleryActivity : Activity() {
             bottomCapsuleLayoutParams(),
         )
 
+        rootFrame.setOnApplyWindowInsetsListener { _, insets ->
+            val systemBars = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                insets.getInsets(WindowInsets.Type.systemBars())
+            } else {
+                null
+            }
+            val topInset = if (systemBars != null) {
+                systemBars.top
+            } else {
+                @Suppress("DEPRECATION")
+                insets.systemWindowInsetTop
+            }
+            val bottomInset = if (systemBars != null) {
+                systemBars.bottom
+            } else {
+                @Suppress("DEPRECATION")
+                insets.systemWindowInsetBottom
+            }
+
+            if (
+                rootFrame.paddingLeft != 0 ||
+                rootFrame.paddingTop != topInset ||
+                rootFrame.paddingRight != 0 ||
+                rootFrame.paddingBottom != bottomInset
+            ) {
+                rootFrame.setPadding(0, topInset, 0, bottomInset)
+            }
+            if (
+                content.paddingLeft != contentHorizontalGutter ||
+                content.paddingTop != contentTopPadding ||
+                content.paddingRight != contentHorizontalGutter ||
+                content.paddingBottom != contentBottomPadding
+            ) {
+                content.setPadding(
+                    contentHorizontalGutter,
+                    contentTopPadding,
+                    contentHorizontalGutter,
+                    contentBottomPadding,
+                )
+            }
+            insets
+        }
+
         setContentView(rootFrame)
+        rootFrame.requestApplyInsets()
         applySystemChrome()
         renderNavigation()
         updateHeader()
