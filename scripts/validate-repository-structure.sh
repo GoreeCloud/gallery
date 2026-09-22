@@ -8,7 +8,9 @@ fail() {
 
 required_files=(
   README.md
-  CHANGELOG.md
+  IMPLEMENTED-FEATURES.md
+  PLANNED-FEATURES.md
+  CHANGELOGS.md
   LICENSE
   SECURITY.md
   CONTRIBUTING.md
@@ -51,6 +53,9 @@ required_files=(
 for path in "${required_files[@]}"; do
   [ -s "$path" ] || fail "required file is missing or empty: $path"
 done
+
+[ ! -e FEATURE-ROADMAP.md ] || fail 'retired FEATURE-ROADMAP.md must not exist at repository root'
+[ ! -e CHANGELOG.md ] || fail 'retired singular CHANGELOG.md must not exist at repository root'
 
 for patch_line in gc1 gc2 gc3 gc4 gc5 gc6 gc7 gc8 gc9 gc10 gc11 gc12 gc13 gc14 gc15 gc16 gc17; do
   [ -d "patches/$patch_line" ] || fail "required patch directory is missing: patches/$patch_line"
