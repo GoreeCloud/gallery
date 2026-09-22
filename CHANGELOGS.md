@@ -1,4 +1,22 @@
-# GoreeCloud Gallery Changelog
+# GoreeCloud Gallery Changelogs
+
+This file is the authoritative repository change-history record under Standard — Repository Feature Tracking and Changelog Governance v1.0. It supersedes the retired singular `CHANGELOG.md` filename while preserving the existing Gallery history below.
+
+## 2026-09-22 — Repository feature/changelog governance migration
+
+### Changed
+
+- Established `IMPLEMENTED-FEATURES.md`, `PLANNED-FEATURES.md`, and `CHANGELOGS.md` as the repository-native feature/change authority.
+- Retired `FEATURE-ROADMAP.md` and the singular `CHANGELOG.md` filename from the active control model.
+- Removed the obsolete requirement to synchronize roadmap/changelog authority with Google Drive.
+
+### Lifecycle boundary
+
+This documentation/control-plane migration does not alter Gallery runtime behavior and does not establish Release Candidate, Production Acceptance, or Stable qualification.
+
+---
+
+## Preserved historical changelog
 
 This changelog records material source, build, validation, release-engineering, and product-readiness changes in the dedicated `GoreeCloud/goreecloud-gallery` repository. Historical development that occurred in the temporary website-repository build carrier remains preserved in Git and in the GoreeCloud patch provenance records.
 
