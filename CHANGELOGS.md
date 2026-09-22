@@ -9,6 +9,7 @@ This file is the authoritative repository change-history record under Standard â
 - Established `IMPLEMENTED-FEATURES.md`, `PLANNED-FEATURES.md`, and `CHANGELOGS.md` as the repository-native feature/change authority.
 - Retired `FEATURE-ROADMAP.md` and the singular `CHANGELOG.md` filename from the active control model.
 - Removed the obsolete requirement to synchronize roadmap/changelog authority with Google Drive.
+- Added an identifier-level migration ledger for legacy Drive roadmap records FR-001 through FR-009, preserving historical V1.3 Development provenance while reconciling open obligations to current V1.6 and nine-system governance.
 
 ### Lifecycle boundary
 
