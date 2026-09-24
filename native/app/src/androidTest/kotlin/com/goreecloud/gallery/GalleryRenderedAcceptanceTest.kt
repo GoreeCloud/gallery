@@ -64,24 +64,21 @@ class GalleryRenderedAcceptanceTest {
     @Test
     fun destinationNavigationUpdatesRenderedSelectionState() {
         assertNavigationControlsRespectSystemBarSafeArea()
-        repeat(2) {
-            onView(withContentDescription("Albums"))
-                .perform(click())
-            assertSelectedNavigationState("Albums")
+        repeat(2) { round ->
+            tapNavigationControl("Albums")
+            assertSelectedNavigationState("Albums", "round ${round + 1}: Photos -> Albums")
             onView(allOf(withText("Albums"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
-            onView(withContentDescription("Settings"))
-                .perform(click())
-            assertSelectedNavigationState("Settings")
+            tapNavigationControl("Settings")
+            assertSelectedNavigationState("Settings", "round ${round + 1}: Albums -> Settings")
             onView(allOf(withText("Settings"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
-            onView(withContentDescription("Photos"))
-                .perform(click())
-            assertSelectedNavigationState("Photos")
+            tapNavigationControl("Photos")
+            assertSelectedNavigationState("Photos", "round ${round + 1}: Settings -> Photos")
             onView(allOf(withText("Photos"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
@@ -139,7 +136,18 @@ class GalleryRenderedAcceptanceTest {
             )
         }
     }
-    private fun assertSelectedNavigationState(expectedLabel: String) {
+    private fun tapNavigationControl(label: String) {
+        onView(
+            allOf(
+                withText(label),
+                withContentDescription(label),
+                isDisplayed(),
+                isClickable(),
+            )
+        ).perform(click())
+    }
+
+    private fun assertSelectedNavigationState(expectedLabel: String, transition: String) {
         val deadline = SystemClock.uptimeMillis() + NAVIGATION_SETTLE_TIMEOUT_MILLIS
         var lastObservation = "navigation capsule not yet observed"
 
@@ -194,8 +202,8 @@ class GalleryRenderedAcceptanceTest {
 
             if (SystemClock.uptimeMillis() >= deadline) {
                 assertTrue(
-                    "Expected $expectedLabel selected navigation semantics after bounded UI settling. " +
-                        "Last observation: $lastObservation",
+                    "Expected $expectedLabel selected navigation semantics after bounded UI settling " +
+                        "($transition). Last observation: $lastObservation",
                     false,
                 )
             }
