@@ -22,13 +22,14 @@ class MediaStoreRowTest {
                 "_size",
                 "bucket_id",
                 "bucket_display_name",
+                "relative_path",
             ),
             MediaStoreProjection.columns,
         )
     }
 
     @Test
-    fun `row maps Android time units and complete bucket metadata into native item`() {
+    fun `row maps Android time units bucket metadata and relative path into native item`() {
         val item = MediaStoreRow(
             collectionUri = "content://media/external/images/media/",
             id = 42,
@@ -42,6 +43,7 @@ class MediaStoreRowTest {
             sizeBytes = 4_096,
             bucketId = "  camera  ",
             bucketDisplayName = "  Camera  ",
+            relativePath = " DCIM\\Camera ",
         ).toMediaItem()
 
         assertEquals("42", item.id)
@@ -52,6 +54,7 @@ class MediaStoreRowTest {
         assertEquals(Instant.ofEpochSecond(1_700_000_010), item.modifiedAt)
         assertEquals("camera", item.albumId)
         assertEquals("Camera", item.albumName)
+        assertEquals("DCIM/Camera/", item.relativePath)
         assertNull(item.durationMillis, "image rows must not leak a provider duration into the core model")
     }
 
@@ -71,6 +74,12 @@ class MediaStoreRowTest {
         assertNull(onlyId.albumName)
         assertNull(onlyName.albumId)
         assertNull(onlyName.albumName)
+    }
+
+    @Test
+    fun `missing relative path remains absent rather than fabricating a move destination`() {
+        assertNull(row(relativePath = null).toMediaItem().relativePath)
+        assertNull(row(relativePath = "  ").toMediaItem().relativePath)
     }
 
     @Test
@@ -96,6 +105,7 @@ class MediaStoreRowTest {
         sizeBytes: Long = 123,
         bucketId: String? = null,
         bucketDisplayName: String? = null,
+        relativePath: String? = null,
     ) = MediaStoreRow(
         collectionUri = collectionUri,
         id = id,
@@ -109,5 +119,6 @@ class MediaStoreRowTest {
         sizeBytes = sizeBytes,
         bucketId = bucketId,
         bucketDisplayName = bucketDisplayName,
+        relativePath = relativePath,
     )
 }
