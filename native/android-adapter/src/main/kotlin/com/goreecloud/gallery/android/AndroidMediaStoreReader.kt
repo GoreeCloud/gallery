@@ -25,6 +25,7 @@ object AndroidMediaStoreProjection {
         MediaStore.MediaColumns.SIZE,
         MediaStore.MediaColumns.BUCKET_ID,
         MediaStore.MediaColumns.BUCKET_DISPLAY_NAME,
+        MediaStore.MediaColumns.RELATIVE_PATH,
     )
 
     init {
@@ -137,6 +138,7 @@ class AndroidMediaStoreReader(
         val size: Int,
         val bucketId: Int,
         val bucketDisplayName: Int,
+        val relativePath: Int,
     ) {
         fun readRow(cursor: Cursor, collectionUri: String): MediaStoreRow = MediaStoreRow(
             collectionUri = collectionUri,
@@ -151,6 +153,7 @@ class AndroidMediaStoreReader(
             sizeBytes = cursor.getRequiredLong(size, MediaStoreProjection.SIZE),
             bucketId = cursor.getNullableString(bucketId),
             bucketDisplayName = cursor.getNullableString(bucketDisplayName),
+            relativePath = cursor.getNullableString(relativePath),
         )
 
         companion object {
@@ -166,6 +169,7 @@ class AndroidMediaStoreReader(
                 size = cursor.getColumnIndexOrThrow(MediaStoreProjection.SIZE),
                 bucketId = cursor.getColumnIndexOrThrow(MediaStoreProjection.BUCKET_ID),
                 bucketDisplayName = cursor.getColumnIndexOrThrow(MediaStoreProjection.BUCKET_DISPLAY_NAME),
+                relativePath = cursor.getColumnIndexOrThrow(MediaStoreProjection.RELATIVE_PATH),
             )
         }
     }
