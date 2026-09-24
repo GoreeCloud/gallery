@@ -47,6 +47,15 @@ This record describes capabilities present in the current first-party GoreeCloud
 - Rejection of non-MediaStore, file, network, blank, collection-only, malformed, stale, or foreign mutation targets.
 - Android 10 and earlier remain fail-closed for this mutation path rather than using an unapproved legacy direct-delete workaround.
 
+### Android-authorized Move foundation
+
+- Provider-owned Android MediaStore `RELATIVE_PATH` is represented as bounded metadata in the core model and read through the Android adapter; it is not treated as raw filesystem authority.
+- Existing-folder destination policy derives only from authoritative relative paths already visible in the current authorized Gallery scope.
+- New-folder destination policy requires one authorized source path, validates bounded folder names, and roots photo/video/mixed destinations in `Pictures/`, `Movies/`, or `DCIM/` respectively.
+- Android 11+ move authorization uses `MediaStore.createWriteRequest(...)` over canonical bounded MediaStore item URIs; the adapter independently validates the final destination before updating `MediaStore.MediaColumns.RELATIVE_PATH`.
+- Pending move state restores only exact canonical URI lists and exact canonical destination paths.
+- The Gallery UI Move action remains disabled until separate app-layer lifecycle/UI integration is implemented and validated. This foundation alone is not physical-device Move acceptance.
+
 ### Settings and portability
 
 - Slow/Fast local thumbnail loading priority.
