@@ -2,6 +2,21 @@
 
 This file is the authoritative repository change-history record under Standard — Repository Feature Tracking and Changelog Governance v1.0. It supersedes the retired singular `CHANGELOG.md` filename while preserving the existing Gallery history below.
 
+## 2026-09-24 — Android-authorized Move foundation
+
+### Added
+
+- Provider-owned MediaStore `RELATIVE_PATH` projection and normalization without creating filesystem authority.
+- Existing-folder and new-folder move destination policies constrained to the current authorized media scope.
+- Android 11+ exact-item write authorization through `MediaStore.createWriteRequest(...)`, canonical pending-state restoration, and bounded `RELATIVE_PATH` update execution.
+- JVM/adapter regression coverage for destination authority, unsafe paths/names, foreign selections, provider metadata conflicts, and canonical pending state.
+
+### Lifecycle boundary
+
+The user-facing Gallery Move action remains disabled in this foundation. App-layer lifecycle/UI integration, post-move refresh behavior, representative physical-device/OEM validation, GLAZE UI acceptance, Release Candidate, production, and Stable qualification remain open.
+
+---
+
 ## 2026-09-22 — Repository feature/changelog governance migration
 
 ### Changed
