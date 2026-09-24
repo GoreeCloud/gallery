@@ -1,6 +1,7 @@
 package com.goreecloud.gallery
 
 import android.os.Build
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -139,51 +140,66 @@ class GalleryRenderedAcceptanceTest {
         }
     }
     private fun assertSelectedNavigationState(expectedLabel: String) {
-        activityRule.scenario.onActivity { activity ->
-            val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
-            val root = androidContent.getChildAt(0) as FrameLayout
-            val capsules = (0 until root.childCount)
-                .map(root::getChildAt)
-                .filterIsInstance<LinearLayout>()
-                .filter { candidate ->
-                    val labels = (0 until candidate.childCount).mapNotNull { index ->
-                        (candidate.getChildAt(index) as? TextView)?.text?.toString()
+        val deadline = SystemClock.uptimeMillis() + NAVIGATION_SETTLE_TIMEOUT_MILLIS
+        var lastObservation = "navigation capsule not yet observed"
+
+        while (true) {
+            var settled = false
+            activityRule.scenario.onActivity { activity ->
+                val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
+                val root = androidContent.getChildAt(0) as FrameLayout
+                val capsules = (0 until root.childCount)
+                    .map(root::getChildAt)
+                    .filterIsInstance<LinearLayout>()
+                    .filter { candidate ->
+                        val labels = (0 until candidate.childCount).mapNotNull { index ->
+                            (candidate.getChildAt(index) as? TextView)?.text?.toString()
+                        }
+                        labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
                     }
-                    labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
+
+                if (capsules.size != 1) {
+                    lastObservation = "expected one primary Gallery navigation capsule but found ${capsules.size}"
+                    return@onActivity
                 }
 
-            assertTrue(
-                "Expected one primary Gallery navigation capsule but found ${capsules.size}",
-                capsules.size == 1,
-            )
-
-            val controls = (0 until capsules.single().childCount)
-                .map(capsules.single()::getChildAt)
-                .filterIsInstance<TextView>()
-            val actual = controls.joinToString(separator = " | ") { control ->
-                buildString {
-                    append(control.text)
-                    append(":selected=")
-                    append(control.isSelected)
-                    append(",contentDescription=")
-                    append(control.contentDescription)
-                    append(",stateDescription=")
-                    append(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) control.stateDescription else "n/a")
-                    append(",visibility=")
-                    append(control.visibility)
-                    append(",attached=")
-                    append(control.isAttachedToWindow)
+                val controls = (0 until capsules.single().childCount)
+                    .map(capsules.single()::getChildAt)
+                    .filterIsInstance<TextView>()
+                lastObservation = controls.joinToString(separator = " | ") { control ->
+                    buildString {
+                        append(control.text)
+                        append(":selected=")
+                        append(control.isSelected)
+                        append(",contentDescription=")
+                        append(control.contentDescription)
+                        append(",stateDescription=")
+                        append(if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) control.stateDescription else "n/a")
+                        append(",visibility=")
+                        append(control.visibility)
+                        append(",attached=")
+                        append(control.isAttachedToWindow)
+                    }
                 }
+                val selected = controls.singleOrNull { it.text?.toString() == expectedLabel }
+                settled =
+                    selected != null &&
+                        selected.isSelected &&
+                        selected.contentDescription?.toString() == "$expectedLabel, selected" &&
+                        (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                            selected.stateDescription?.toString() == "Selected")
             }
-            val selected = controls.singleOrNull { it.text?.toString() == expectedLabel }
-            assertTrue(
-                "Expected $expectedLabel selected navigation semantics. Actual controls: $actual",
-                selected != null &&
-                    selected.isSelected &&
-                    selected.contentDescription?.toString() == "$expectedLabel, selected" &&
-                    (Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
-                        selected.stateDescription?.toString() == "Selected"),
-            )
+
+            if (settled) return
+
+            if (SystemClock.uptimeMillis() >= deadline) {
+                assertTrue(
+                    "Expected $expectedLabel selected navigation semantics after bounded UI settling. " +
+                        "Last observation: $lastObservation",
+                    false,
+                )
+            }
+            SystemClock.sleep(NAVIGATION_SETTLE_POLL_MILLIS)
         }
     }
 
@@ -192,6 +208,11 @@ class GalleryRenderedAcceptanceTest {
             .check(matches(isDisplayed()))
             .check(matches(isClickable()))
             .check(matches(hasMinimumTouchSizeDp(48f)))
+    }
+
+    private companion object {
+        const val NAVIGATION_SETTLE_TIMEOUT_MILLIS = 2_000L
+        const val NAVIGATION_SETTLE_POLL_MILLIS = 25L
     }
 
     private fun hasMinimumTouchSizeDp(minimumDp: Float) = object : TypeSafeMatcher<View>() {
