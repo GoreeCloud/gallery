@@ -15,6 +15,14 @@ data class MediaItem(
     val sizeBytes: Long,
     val albumId: String? = null,
     val albumName: String? = null,
+    /**
+     * Android MediaStore RELATIVE_PATH when the provider exposes one.
+     *
+     * This value is provider-owned metadata, not filesystem authority. Gallery uses it only as an
+     * Android-authorized destination descriptor for move workflows and never turns it into a raw
+     * filesystem path.
+     */
+    val relativePath: String? = null,
 ) {
     init {
         require(id.isNotBlank())
@@ -28,6 +36,7 @@ data class MediaItem(
         require(albumId == null || albumId.isNotBlank())
         require(albumName == null || albumName.isNotBlank())
         require((albumId == null) == (albumName == null))
+        require(relativePath == null || relativePath.isNotBlank())
     }
 
     val kind: MediaKind
