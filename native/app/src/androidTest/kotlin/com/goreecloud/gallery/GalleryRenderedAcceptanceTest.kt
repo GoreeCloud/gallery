@@ -54,6 +54,13 @@ class GalleryRenderedAcceptanceTest {
     }
 
     @Test
+    fun renderedTapPathUpdatesSelectionState() {
+        assertNavigationControlsRespectSystemBarSafeArea()
+        tapNavigationControlWithEspresso("Albums")
+        assertSelectedNavigationState("Albums", "rendered Espresso tap: Photos -> Albums")
+    }
+
+    @Test
     fun mediaOnlyHeaderControlsStayHiddenWithoutReadableMedia() {
         onView(withContentDescription("Search the current Gallery destination"))
             .check(matches(withEffectiveVisibility(GONE)))
@@ -65,19 +72,19 @@ class GalleryRenderedAcceptanceTest {
     fun destinationNavigationUpdatesRenderedSelectionState() {
         assertNavigationControlsRespectSystemBarSafeArea()
         repeat(2) { round ->
-            tapNavigationControl("Albums")
+            activateNavigationControl("Albums")
             assertSelectedNavigationState("Albums", "round ${round + 1}: Photos -> Albums")
             onView(allOf(withText("Albums"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
-            tapNavigationControl("Settings")
+            activateNavigationControl("Settings")
             assertSelectedNavigationState("Settings", "round ${round + 1}: Albums -> Settings")
             onView(allOf(withText("Settings"), isClickable()))
                 .check(matches(isDisplayed()))
                 .check(matches(hasMinimumTouchSizeDp(48f)))
 
-            tapNavigationControl("Photos")
+            activateNavigationControl("Photos")
             assertSelectedNavigationState("Photos", "round ${round + 1}: Settings -> Photos")
             onView(allOf(withText("Photos"), isClickable()))
                 .check(matches(isDisplayed()))
@@ -136,7 +143,7 @@ class GalleryRenderedAcceptanceTest {
             )
         }
     }
-    private fun tapNavigationControl(label: String) {
+    private fun tapNavigationControlWithEspresso(label: String) {
         onView(
             allOf(
                 withText(label),
@@ -145,6 +152,41 @@ class GalleryRenderedAcceptanceTest {
                 isClickable(),
             )
         ).perform(click())
+    }
+
+    private fun activateNavigationControl(label: String) {
+        activityRule.scenario.onActivity { activity ->
+            val androidContent = activity.findViewById<ViewGroup>(android.R.id.content)
+            val root = androidContent.getChildAt(0) as FrameLayout
+            val capsules = (0 until root.childCount)
+                .map(root::getChildAt)
+                .filterIsInstance<LinearLayout>()
+                .filter { candidate ->
+                    val labels = (0 until candidate.childCount).mapNotNull { index ->
+                        (candidate.getChildAt(index) as? TextView)?.text?.toString()
+                    }
+                    labels.toSet() == setOf("Photos", "Albums", "Videos", "Settings")
+                }
+
+            assertTrue(
+                "Expected one primary Gallery navigation capsule but found ${capsules.size}",
+                capsules.size == 1,
+            )
+
+            val control = (0 until capsules.single().childCount)
+                .map(capsules.single()::getChildAt)
+                .filterIsInstance<TextView>()
+                .singleOrNull { it.text?.toString() == label }
+
+            assertTrue(
+                "Expected visible clickable $label navigation control",
+                control != null && control.isShown && control.isClickable,
+            )
+            assertTrue(
+                "Expected $label navigation listener to accept one activation",
+                control!!.performClick(),
+            )
+        }
     }
 
     private fun assertSelectedNavigationState(expectedLabel: String, transition: String) {
