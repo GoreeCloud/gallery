@@ -22,13 +22,13 @@ platform_systems:
     version: null
     evidence:
       - README.md
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
     notes: Gallery is a first-party GoreeCloud application, but accepted Manager visibility and administrative integration are not established.
   privacy_shield:
     result: applicable-blocked
     version: null
     evidence:
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
       - native/app/src/main/AndroidManifest.xml
       - native/app/src/main/kotlin/com/goreecloud/gallery/GalleryMediaAccessPolicy.kt
     notes: The first-party native app keeps local media reads behind Android authorization and has no INTERNET permission, but accepted Privacy Shield integration and production privacy validation are not established.
@@ -37,14 +37,14 @@ platform_systems:
     version: null
     evidence:
       - SECURITY.md
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
       - native/app/src/main/AndroidManifest.xml
     notes: Gallery has Android sandbox and permission boundaries plus repository security controls, but accepted Wardveil Security integration and production security validation are not established.
   everkeep:
     result: applicable-blocked
     version: null
     evidence:
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
       - USER-MANUAL.md
       - native/app/src/main/AndroidManifest.xml
     notes: Gallery is offline-first and Android backup is disabled in the current native app; accepted Everkeep backup, recovery, and continuity integration are not established.
@@ -56,7 +56,7 @@ platform_systems:
       - native/app/src/test/kotlin/com/goreecloud/gallery/GalleryGlazeContractTest.kt
       - docs/GLAZE-UI.md
       - README.md
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
     notes: Current Official Stable authority is GLAZE UI V1.6 / 1.6.0 at accepted release source a7180679ea851389e0f3004515f9a25f420e716d. The current candidate pins that exact source, qualification anchor, Stable runtime entrypoint, and presentation-only authority boundary in the first-party native Gallery contract. Whole-application rendered, interaction, accessibility, adaptive/form-factor, representative-device, performance, Human Visual Excellence, rollback, release, and production acceptance remain incomplete, so Gallery remains applicable-migration-required.
   mesh:
     result: applicable-blocked
@@ -72,14 +72,14 @@ platform_systems:
     version: null
     evidence:
       - README.md
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
     notes: Device-local browsing does not require a GoreeCloud account, but accepted Identity integration for any future account, Photos, device, or delegated-authority behavior is not established.
   policy:
     result: applicable-blocked
     version: null
     evidence:
       - README.md
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
       - goreecloud.platform.yaml
     notes: GoreeCloud Policy is applicable to Gallery policy representation and media-operation constraints, but no accepted runtime Policy evaluation, enforcement coordination, explanation, freshness, exception, or production acceptance exists.
   observability:
@@ -87,7 +87,7 @@ platform_systems:
     version: null
     evidence:
       - README.md
-      - SPECIFICATIONS.md
+      - PROJECT-SPECIFICATIONS.md
       - goreecloud.platform.yaml
     notes: Gallery has CI and local Development behavior, but accepted GoreeCloud Observability health, metrics, diagnostics, performance, dependency-health, provenance/freshness, alerting, collection-gap, and representative-device runtime acceptance are not established.
 
@@ -140,7 +140,7 @@ conformance:
   validated_at: null
   evidence:
     - README.md
-    - SPECIFICATIONS.md
+    - PROJECT-SPECIFICATIONS.md
     - SECURITY.md
     - USER-MANUAL.md
     - FEATURES.md
