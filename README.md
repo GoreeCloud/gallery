@@ -83,7 +83,4 @@ The old Fossify-based acceptance candidate is not a shortcut around those native
 - [SECURITY.md](SECURITY.md) — vulnerability and security boundary guidance.
 - [NOTICE.md](NOTICE.md) — inherited-work licensing and provenance notices.
 
-Canonical GoreeCloud application project specifications are maintained under `GoreeCloud/Projects`, and canonical GoreeCloud changelogs are maintained under `GoreeCloud/Changelogs`.
-
-
-Canonical project specifications and the significant project record are repository-native in `PROJECT-SPECIFICATIONS.md` and `PROJECT-RECORD.md`. Google Drive is not a parallel authority for those records.
+Canonical project specifications, the significant project record, feature-state records, and changelog authority are repository-native. `PROJECT-SPECIFICATIONS.md` and `PROJECT-RECORD.md` govern project requirements/history; `IMPLEMENTED-FEATURES.md`, `PLANNED-FEATURES.md`, and `CHANGELOGS.md` govern accepted feature/change state. Google Drive is not a parallel authority for these records.
