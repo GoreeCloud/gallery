@@ -1,1 +1,17 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title"><title>GoreeCloud Gallery</title><defs><linearGradient id="g" x1="8" y1="6" x2="56" y2="58"><stop stop-color="#F472B6"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><rect x="13" y="16" width="38" height="32" rx="5" fill="none" stroke="#fff" stroke-width="3.5"/><circle cx="39" cy="25" r="4" fill="#fff"/><path d="m17 43 10-11 7 7 5-5 8 9" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title id="title">GoreeCloud Gallery</title>
+  <defs>
+    <linearGradient id="bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4A90FF"/>
+      <stop offset="1" stop-color="#174EA6"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="16" y1="15" x2="48" y2="49" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity=".98"/>
+      <stop offset="1" stop-color="#D9EAFF" stop-opacity=".86"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="18" fill="url(#bg)"/>
+  <rect x="14" y="15" width="36" height="34" rx="9" fill="#fff" opacity=".10" stroke="#fff" stroke-opacity=".35"/>
+  <circle cx="40" cy="25" r="4" fill="#BFE1FF"/>
+  <path d="M18 43.5 27 33l6.5 7 5-5.5L46 43.5H18Z" fill="url(#glass)"/>
+</svg>

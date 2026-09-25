@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="gallery_canvas">#FF101412</color>
+    <color name="gallery_surface">#FF181D1B</color>
+    <color name="gallery_surface_strong">#FF202624</color>
+    <color name="gallery_text_primary">#FFF0F5F3</color>
+    <color name="gallery_text_secondary">#FFB2BDB9</color>
+    <color name="gallery_accent">#FF66D7C8</color>
+    <color name="gallery_environment_accent">#FF789A92</color>
+</resources>

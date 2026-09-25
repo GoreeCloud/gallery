@@ -31,6 +31,18 @@ class AndroidMediaMutationRequestsTest {
     }
 
     @Test
+    fun `normalization accepts the full Recycle Bin page scope`() {
+        val uris = (1..250).map { id ->
+            "content://media/external/images/media/$id"
+        }
+
+        assertEquals(
+            uris,
+            AndroidMediaMutationRequests.normalizeMediaStoreUris(uris),
+        )
+    }
+
+    @Test
     fun `normalization rejects whitespace altered and duplicate mutation authority`() {
         val first = "content://media/external/images/media/42"
 

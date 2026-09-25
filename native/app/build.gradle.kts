@@ -11,8 +11,8 @@ android {
         applicationId = "com.goreecloud.gallery"
         minSdk = 29
         targetSdk = 36
-        versionCode = 11
-        versionName = "0.7.1-dev"
+        versionCode = 18
+        versionName = "0.8.6-dev"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -26,6 +26,7 @@ android {
 dependencies {
     implementation(project(":core"))
     implementation(project(":android-adapter"))
+
     testImplementation(kotlin("test"))
 
     androidTestImplementation("androidx.test:runner:1.6.2")
