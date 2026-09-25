@@ -38,7 +38,9 @@ class AndroidMediaMutationRequest internal constructor(
 
 object AndroidMediaMutationRequests {
     const val MIN_SUPPORTED_API = Build.VERSION_CODES.R
-    const val MAX_MUTATION_ITEMS = 100
+    // Keep one Android-owned confirmation bounded to the largest Recycle Bin page Gallery exposes.
+    // Aggregate URI size remains independently capped below to protect saved-state/Binder scope.
+    const val MAX_MUTATION_ITEMS = 250
     const val MAX_CONTENT_URI_CHARACTERS = AndroidMediaStoreItemUriPolicy.MAX_CONTENT_URI_CHARACTERS
     const val MAX_TOTAL_CONTENT_URI_CHARACTERS = 64 * 1024
 

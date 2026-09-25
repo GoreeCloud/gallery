@@ -40,10 +40,18 @@ class GalleryApplication : Application(), Application.ActivityLifecycleCallbacks
 
     override fun onActivityDestroyed(activity: Activity) {
         recycleBinScopes.remove(activity)
+        GalleryUiRefinement.uninstall(activity)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
-    override fun onActivityStarted(activity: Activity) = Unit
+
+    override fun onActivityStarted(activity: Activity) {
+        // Install after Activity.onCreate() has completed so the main root hierarchy is available,
+        // but before the resumed frame is presented to the user.
+        GallerySystemBars.install(activity)
+        GalleryUiRefinement.install(activity)
+    }
+
     override fun onActivityPaused(activity: Activity) = Unit
     override fun onActivityStopped(activity: Activity) = Unit
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit

@@ -23,12 +23,12 @@ Items here are planned, incomplete, blocked, or still acceptance-gated. Their pr
 ## Product capability work still required
 
 - Richer grouping modes, view-density/layout controls, and timeline-oriented browsing.
-- Complete app-layer Move integration over the Android-authorized move foundation: lifecycle-safe pending-state persistence, existing/new-folder UI, post-move refresh/error handling, and representative physical-device/OEM acceptance. Move must remain disabled until this integration passes.
+- Complete acceptance for the implemented app-layer Move path: representative physical-device/OEM/profile testing of existing-folder and `Create & move` flows, Android confirmation approve/cancel/deny behavior, Activity recreation while authorization is pending, mixed-media destination roots, provider failure, partial/revoked media access, concurrent/stale selection handling, and post-move refresh/result behavior.
 - Album creation beyond the bounded Move-new-folder workflow, album rename/reorder, and approved Copy organization through Android-supported media boundaries.
 - Useful/full-resolution image viewing.
 - Native video playback and activation of the persisted autoplay/loop preferences only after acceptance.
 - Animated GIF thumbnail decoding before treating the persisted GIF preference as active behavior.
-- Approved first-party editing and metadata-editing workflows.
+- Complete acceptance and expansion of the bounded first-party photo editor beyond its current rotate/flip/crop/save-copy foundation, including representative-device accessibility, large-image/memory behavior, failure/recovery, and approved metadata-editing workflows.
 - Slideshow and other established local presentation actions supported by historical Gallery evidence.
 - Expanded contextual/overflow actions and broader Share/export acceptance where required.
 - Secure Private/Protected Photos and hidden/excluded-media policy using supported Android/GoreeCloud authentication, authorization, and protected-storage mechanisms.

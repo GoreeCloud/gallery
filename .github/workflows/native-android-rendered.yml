@@ -155,6 +155,87 @@ jobs:
       - name: Run native Gallery rendered interaction acceptance
         run: gradle :app:connectedDebugAndroidTest --no-daemon --stacktrace
 
+      - name: Capture reviewable rendered screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACKAGE=com.goreecloud.gallery
+          TEST_PACKAGE="$PACKAGE.test"
+          EVIDENCE_DIR="$PWD/app/build/rendered-evidence"
+          mkdir -p "$EVIDENCE_DIR"
+
+          # connectedDebugAndroidTest may clean up the exact app/test packages.
+          # Reinstall both APKs we just built so screenshot capture is bound to
+          # this source revision and never depends on Gradle's post-test state.
+          adb install -r -t app/build/outputs/apk/debug/app-debug.apk
+          adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+          adb shell pm path "$PACKAGE" | grep -F "package:"
+          adb shell pm path "$TEST_PACKAGE" | grep -F "package:"
+
+          capture_png() {
+            local name="$1"
+            adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
+            adb exec-out screencap -p > "$EVIDENCE_DIR/$name.png"
+            test -s "$EVIDENCE_DIR/$name.png"
+            test "$(head -c 8 "$EVIDENCE_DIR/$name.png" | xxd -p)" = "89504e470d0a1a0a"
+          }
+
+          start_main() {
+            adb shell am force-stop "$PACKAGE"
+            adb shell am start -W -n "$PACKAGE/.GalleryActivity" > "$RUNNER_TEMP/gallery-main-start.txt" 2>&1 || {
+              cat "$RUNNER_TEMP/gallery-main-start.txt"
+              return 1
+            }
+            grep -Eq 'Status: ok|Complete' "$RUNNER_TEMP/gallery-main-start.txt" || {
+              cat "$RUNNER_TEMP/gallery-main-start.txt"
+              return 1
+            }
+            sleep 1
+          }
+
+          capture_recycle_bin() {
+            local name="$1"
+            local capture_log="$RUNNER_TEMP/gallery-recycle-bin-capture-$name.txt"
+            adb shell am force-stop "$PACKAGE"
+            adb shell am instrument -w -r \
+              -e class com.goreecloud.gallery.GalleryRenderedScreenshotCaptureTest \
+              -e galleryRenderedCapture recycle-bin \
+              -e galleryScreenshotFile "$name.png" \
+              "$TEST_PACKAGE/androidx.test.runner.AndroidJUnitRunner" > "$capture_log" 2>&1 || {
+                cat "$capture_log"
+                return 1
+              }
+            grep -Eq '^OK \(' "$capture_log" || {
+              cat "$capture_log"
+              return 1
+            }
+            adb exec-out run-as "$PACKAGE" cat "files/$name.png" > "$EVIDENCE_DIR/$name.png"
+            test -s "$EVIDENCE_DIR/$name.png"
+            test "$(head -c 8 "$EVIDENCE_DIR/$name.png" | xxd -p)" = "89504e470d0a1a0a"
+          }
+
+          adb shell cmd uimode night no
+          start_main
+          capture_png gallery-main-light
+          capture_recycle_bin gallery-recycle-bin-light
+
+          adb shell cmd uimode night yes
+          start_main
+          capture_png gallery-main-dark
+          capture_recycle_bin gallery-recycle-bin-dark
+
+          {
+            echo "source_revision=$SOURCE_REVISION"
+            echo "android_image=$ANDROID_IMAGE"
+            echo "wm_size=$(adb shell wm size | tr -d '\r')"
+            echo "wm_density=$(adb shell wm density | tr -d '\r')"
+            echo "font_scale=$(adb shell settings get system font_scale | tr -d '\r')"
+            echo "screenshots=gallery-main-light.png,gallery-recycle-bin-light.png,gallery-main-dark.png,gallery-recycle-bin-dark.png"
+          } > "$EVIDENCE_DIR/metadata.txt"
+
+          test "$(find "$EVIDENCE_DIR" -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 4
+          adb shell cmd uimode night no
+
       - name: Upload rendered acceptance evidence
         if: ${{ success() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -165,6 +246,7 @@ jobs:
             native/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             native/app/build/outputs/androidTest-results/connected/**
             native/app/build/reports/androidTests/connected/**
+            native/app/build/rendered-evidence/**
           if-no-files-found: error
           retention-days: 14
 

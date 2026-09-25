@@ -2,21 +2,28 @@
 <resources>
     <style name="Theme.GoreeCloudGallery" parent="android:style/Theme.Material.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <item name="android:colorBackground">@color/gallery_canvas</item>
+        <item name="android:textColorPrimary">@color/gallery_text_primary</item>
+        <item name="android:textColorSecondary">@color/gallery_text_secondary</item>
+        <item name="android:colorAccent">@color/gallery_accent</item>
+        <item name="android:statusBarColor">@color/gallery_canvas</item>
+        <item name="android:navigationBarColor">@color/gallery_canvas</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
         <item name="android:alertDialogTheme">@style/Theme.GoreeCloudGallery.AlertDialog</item>
     </style>
 
     <style name="Theme.GoreeCloudGallery.AlertDialog" parent="android:style/Theme.Material.Dialog.Alert">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#5FC9BB</item>
-        <item name="android:textColorPrimary">#F5F5F7</item>
-        <item name="android:textColorSecondary">#B8B8BE</item>
+        <item name="android:colorAccent">@color/gallery_accent</item>
+        <item name="android:textColorPrimary">@color/gallery_text_primary</item>
+        <item name="android:textColorSecondary">@color/gallery_text_secondary</item>
         <item name="android:listChoiceIndicatorMultiple">@drawable/glaze_choice_checkbox</item>
         <item name="android:windowBackground">@drawable/glaze_dialog_background</item>
         <item name="android:windowElevation">16dp</item>
         <item name="android:backgroundDimEnabled">true</item>
-        <item name="android:backgroundDimAmount">0.52</item>
+        <item name="android:backgroundDimAmount">0.48</item>
     </style>
 </resources>

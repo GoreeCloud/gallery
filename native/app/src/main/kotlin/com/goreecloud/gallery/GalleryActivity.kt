@@ -3,12 +3,14 @@ package com.goreecloud.gallery
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.ClipData
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
@@ -21,6 +23,7 @@ import android.util.Size
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -33,6 +36,8 @@ import android.widget.ScrollView
 import android.widget.Space
 import android.widget.TextView
 import android.widget.Toast
+import com.goreecloud.gallery.android.AndroidMediaMovePendingState
+import com.goreecloud.gallery.android.AndroidMediaMoveRequests
 import com.goreecloud.gallery.android.AndroidMediaMutationMode
 import com.goreecloud.gallery.android.AndroidMediaMutationPendingState
 import com.goreecloud.gallery.android.AndroidMediaMutationPendingStates
@@ -40,7 +45,12 @@ import com.goreecloud.gallery.android.AndroidMediaMutationRequests
 import com.goreecloud.gallery.android.AndroidMediaStoreReader
 import com.goreecloud.gallery.android.AndroidTrashedMediaStoreReader
 import com.goreecloud.gallery.core.GalleryBulkActionPolicy
+import com.goreecloud.gallery.core.GalleryDragSelectionPolicy
+import com.goreecloud.gallery.core.GalleryDragSelectionSession
 import com.goreecloud.gallery.core.GalleryFavoriteBulkAction
+import com.goreecloud.gallery.core.GalleryMoveDestination
+import com.goreecloud.gallery.core.GalleryMoveDestinationPolicy
+import com.goreecloud.gallery.core.GalleryNewFolderMovePolicy
 import com.goreecloud.gallery.core.GallerySelectionPolicy
 import com.goreecloud.gallery.core.MediaItem
 import com.goreecloud.gallery.core.MediaSortOrder
@@ -70,6 +80,7 @@ class GalleryActivity : Activity() {
     private lateinit var status: TextView
     private lateinit var action: TextView
     private lateinit var library: LinearLayout
+    private lateinit var libraryScroll: ScrollView
     private lateinit var navigationCapsule: LinearLayout
     private lateinit var selectionActionCapsule: LinearLayout
 
@@ -82,7 +93,13 @@ class GalleryActivity : Activity() {
     private val favoriteUris = linkedSetOf<String>()
     private val selectedUris = linkedSetOf<String>()
     private val renderedMediaTiles = linkedMapOf<String, FrameLayout>()
+    private val navigationItems = linkedMapOf<GalleryDestination, TextView>()
     private var selectionScopeItems: List<MediaItem> = emptyList()
+    private var dragSelectionSession: GalleryDragSelectionSession? = null
+    private var dragSelectionScope: List<MediaItem> = emptyList()
+    private var dragSelectionRawX = 0f
+    private var dragSelectionRawY = 0f
+    private var dragSelectionAutoScrollPosted = false
     private var loadGeneration = 0
     private var authorizedItems: List<MediaItem> = emptyList()
     private var selectedSort = MediaSortOrder.NEWEST
@@ -94,9 +111,11 @@ class GalleryActivity : Activity() {
     private var viewerOverlay: View? = null
     private var viewerVideoSurface: GalleryVideoPlayerSurface? = null
     private var pendingMediaMutation: AndroidMediaMutationPendingState? = null
+    private var pendingMediaMove: AndroidMediaMovePendingState? = null
+    private var mediaMoveExecutionInProgress = false
 
     private val inSelectionMode: Boolean
-        get() = selectedUris.isNotEmpty()
+        get() = selectedUris.isNotEmpty() || dragSelectionSession != null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -104,6 +123,11 @@ class GalleryActivity : Activity() {
             .getStringSet(FAVORITES_KEY, emptySet())
             .orEmpty()
         pendingMediaMutation = restorePendingMediaMutation(savedInstanceState)
+        pendingMediaMove = restorePendingMediaMove(savedInstanceState)
+        if (pendingMediaMutation != null && pendingMediaMove != null) {
+            pendingMediaMutation = null
+            pendingMediaMove = null
+        }
         reconfigureThumbnailExecutor(currentUserSettings().fileLoadingPriority)
         buildSurface()
     }
@@ -117,6 +141,16 @@ class GalleryActivity : Activity() {
             outState.putStringArray(
                 STATE_PENDING_MEDIA_MUTATION_URIS,
                 AndroidMediaMutationPendingStates.contentUriValues(mutation),
+            )
+        }
+        pendingMediaMove?.let { move ->
+            outState.putStringArray(
+                STATE_PENDING_MEDIA_MOVE_URIS,
+                AndroidMediaMoveRequests.contentUriValues(move),
+            )
+            outState.putString(
+                STATE_PENDING_MEDIA_MOVE_DESTINATION,
+                move.destinationRelativePath,
             )
         }
         super.onSaveInstanceState(outState)
@@ -133,7 +167,11 @@ class GalleryActivity : Activity() {
             viewerVideoSurface?.resumeForHost()
             return
         }
-        if (pendingMediaMutation != null) return
+        if (
+            pendingMediaMutation != null ||
+            pendingMediaMove != null ||
+            mediaMoveExecutionInProgress
+        ) return
         if (destination == GalleryDestination.SETTINGS) {
             renderCurrentDestination()
         } else {
@@ -160,6 +198,17 @@ class GalleryActivity : Activity() {
             return
         }
 
+        if (requestCode == MEDIA_MOVE_REQUEST) {
+            val move = pendingMediaMove
+            pendingMediaMove = null
+            if (resultCode == RESULT_OK && move != null) {
+                completeConfirmedMediaMove(move)
+            } else if (move != null) {
+                Toast.makeText(this, "Move canceled", Toast.LENGTH_SHORT).show()
+            }
+            return
+        }
+
         if (resultCode != RESULT_OK) return
         val uri = data?.data ?: return
         when (requestCode) {
@@ -182,6 +231,12 @@ class GalleryActivity : Activity() {
         GalleryMediaMutationPendingPolicy.restore(
             modeName = savedInstanceState?.getString(STATE_PENDING_MEDIA_MUTATION_MODE),
             contentUris = savedInstanceState?.getStringArray(STATE_PENDING_MEDIA_MUTATION_URIS)?.asList(),
+        )
+
+    private fun restorePendingMediaMove(savedInstanceState: Bundle?): AndroidMediaMovePendingState? =
+        AndroidMediaMoveRequests.restore(
+            contentUris = savedInstanceState?.getStringArray(STATE_PENDING_MEDIA_MOVE_URIS)?.asList(),
+            destinationRelativePath = savedInstanceState?.getString(STATE_PENDING_MEDIA_MOVE_DESTINATION),
         )
 
     override fun onDestroy() {
@@ -227,10 +282,10 @@ class GalleryActivity : Activity() {
         content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(
-                contentHorizontalGutter,
-                contentTopPadding,
-                contentHorizontalGutter,
-                contentBottomPadding,
+                dp(GalleryGlazeContract.horizontalGutterDp(resources.configuration.screenWidthDp)),
+                dp(16),
+                dp(GalleryGlazeContract.horizontalGutterDp(resources.configuration.screenWidthDp)),
+                dp(GalleryGlazeContract.CONTENT_BOTTOM_INSET_DP),
             )
             setBackgroundColor(canvasColor())
         }
@@ -248,7 +303,7 @@ class GalleryActivity : Activity() {
             LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
         )
 
-        val scroll = ScrollView(this).apply {
+        libraryScroll = ScrollView(this).apply {
             isFillViewport = true
             clipToPadding = false
             addView(
@@ -257,7 +312,7 @@ class GalleryActivity : Activity() {
             )
         }
         rootFrame.addView(
-            scroll,
+            libraryScroll,
             FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT).apply {
                 bottomMargin = dp(GalleryGlazeContract.NAVIGATION_RESERVED_SPACE_DP)
             },
@@ -373,13 +428,13 @@ class GalleryActivity : Activity() {
         }
         headerTitle = TextView(this).apply {
             setTextColor(primaryTextColor)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 30f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 32f)
             setTypeface(typeface, Typeface.BOLD)
             importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         }
         headerSubtitle = TextView(this).apply {
             setTextColor(secondaryTextColor)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
             setPadding(0, dp(1), 0, 0)
         }
         titles.addView(headerTitle)
@@ -434,9 +489,10 @@ class GalleryActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             visibility = View.GONE
             setPadding(dp(14), dp(2), dp(4), dp(2))
-            background = roundedSurface(
-                withAlpha(primaryTextColor(), if (isNightMode()) 0.12f else 0.055f),
-                18,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.CONTROL,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
             )
         }
 
@@ -498,9 +554,10 @@ class GalleryActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             visibility = View.GONE
             setPadding(dp(12), dp(8), dp(6), dp(8))
-            background = roundedSurface(
-                withAlpha(primaryTextColor(), if (isNightMode()) 0.12f else 0.05f),
-                16,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
             )
         }
 
@@ -541,7 +598,53 @@ class GalleryActivity : Activity() {
         }
     }
 
-    private fun buildNavigationCapsule(): LinearLayout = bottomCapsuleSurface()
+    private fun buildNavigationCapsule(): LinearLayout = bottomCapsuleSurface().apply {
+        GalleryDestination.entries.forEachIndexed { index, item ->
+            val label = navigationLabel(item)
+            val view = TextView(this@GalleryActivity).apply {
+                text = label
+                gravity = Gravity.CENTER
+                minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+                setCompoundDrawablesWithIntrinsicBounds(0, navigationIcon(item), 0, 0)
+                compoundDrawablePadding = dp(2)
+                isClickable = true
+                isFocusable = true
+                setOnClickListener {
+                    if (destination == item && openAlbumId == null && !showingFavorites) return@setOnClickListener
+                    clearSelection(render = false)
+                    destination = item
+                    openAlbumId = null
+                    showingFavorites = false
+                    searchQuery = ""
+                    if (::searchField.isInitialized) searchField.setText("")
+                    closeSearch(clearQuery = false)
+                    renderCurrentDestination()
+                }
+            }
+            navigationItems[item] = view
+            addView(
+                view,
+                LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                    if (index > 0) marginStart = dp(2)
+                },
+            )
+        }
+    }
+
+    private fun navigationLabel(item: GalleryDestination): String = when (item) {
+        GalleryDestination.PHOTOS -> "Photos"
+        GalleryDestination.ALBUMS -> "Albums"
+        GalleryDestination.VIDEOS -> "Videos"
+        GalleryDestination.SETTINGS -> "Settings"
+    }
+
+    private fun navigationIcon(item: GalleryDestination): Int = when (item) {
+        GalleryDestination.PHOTOS -> R.drawable.ic_gallery_nav_photos
+        GalleryDestination.ALBUMS -> R.drawable.ic_gallery_nav_albums
+        GalleryDestination.VIDEOS -> R.drawable.ic_gallery_nav_videos
+        GalleryDestination.SETTINGS -> R.drawable.ic_gallery_nav_settings
+    }
 
     private fun buildSelectionActionCapsule(): LinearLayout = bottomCapsuleSurface()
 
@@ -549,8 +652,9 @@ class GalleryActivity : Activity() {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER
         setPadding(dp(3), dp(3), dp(3), dp(3))
-        background = roundedSurface(
-            if (isNightMode()) 0xf21d1d1f.toInt() else 0xf2ffffff.toInt(),
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.CHROME,
             GalleryGlazeContract.NAVIGATION_RADIUS_DP,
         )
         elevation = dp(GalleryGlazeContract.NAVIGATION_ELEVATION_DP).toFloat()
@@ -572,68 +676,20 @@ class GalleryActivity : Activity() {
 
         selectionActionCapsule.visibility = View.GONE
         navigationCapsule.visibility = View.VISIBLE
-
-        val destinations = GalleryDestination.entries
-        val needsControls =
-            navigationCapsule.childCount != destinations.size ||
-                (0 until navigationCapsule.childCount).any { index ->
-                    navigationCapsule.getChildAt(index) !is TextView
-                }
-
-        if (needsControls) {
-            navigationCapsule.removeAllViews()
-            destinations.forEachIndexed { index, item ->
-                navigationCapsule.addView(
-                    TextView(this).apply {
-                        gravity = Gravity.CENTER
-                        minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
-                        setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
-                        isClickable = true
-                        isFocusable = true
-                        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
-                        setOnClickListener {
-                            if (destination == item && openAlbumId == null && !showingFavorites) {
-                                return@setOnClickListener
-                            }
-                            clearSelection(render = false)
-                            destination = item
-                            openAlbumId = null
-                            showingFavorites = false
-                            clearSearchQueryWithoutRender()
-                            closeSearch(clearQuery = false)
-                            renderCurrentDestination()
-                        }
-                    },
-                    LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-                        if (index > 0) marginStart = dp(2)
-                    },
-                )
-            }
-        }
-
-        destinations.forEachIndexed { index, item ->
+        GalleryDestination.entries.forEach { item ->
+            val view = navigationItems[item] ?: return@forEach
             val selected = destination == item
-            val label = when (item) {
-                GalleryDestination.PHOTOS -> "Photos"
-                GalleryDestination.ALBUMS -> "Albums"
-                GalleryDestination.VIDEOS -> "Videos"
-                GalleryDestination.SETTINGS -> "Settings"
-            }
-            val control = navigationCapsule.getChildAt(index) as TextView
-            control.text = label
-            control.setTextColor(if (selected) accentColor() else primaryTextColor())
-            control.typeface = Typeface.create(
-                control.typeface,
-                if (selected) Typeface.BOLD else Typeface.NORMAL,
-            )
-            control.background = roundedSurface(
+            val label = navigationLabel(item)
+            view.setTextColor(if (selected) accentColor() else primaryTextColor())
+            view.setTypeface(view.typeface, if (selected) Typeface.BOLD else Typeface.NORMAL)
+            view.background = roundedSurface(
                 if (selected) withAlpha(accentColor(), 0.13f) else Color.TRANSPARENT,
                 18,
             )
-            control.isSelected = selected
-            control.contentDescription = "$label${if (selected) ", selected" else ""}"
+            view.isSelected = selected
+            view.contentDescription = "$label${if (selected) ", selected" else ""}"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                control.stateDescription = if (selected) "Selected" else null
+                view.stateDescription = if (selected) "Selected" else null
             }
         }
     }
@@ -653,6 +709,30 @@ class GalleryActivity : Activity() {
             currentUserSettings().moveDeletedItemsToRecycleBin -> "Move selected media to the Android Recycle Bin"
             else -> "Permanently delete selected media after Android confirmation"
         }
+        val moveSupported = AndroidMediaMoveRequests.isSupported()
+        val currentScope = visibleAuthorizedItems()
+        val moveDestinations = if (selectedItems.isEmpty()) {
+            emptyList()
+        } else {
+            GalleryMoveDestinationPolicy.existingDestinations(
+                currentScope = currentScope,
+                selectedContentUris = selectedUris,
+            )
+        }
+        val newFolderParent = if (selectedItems.isEmpty()) null else {
+            GalleryNewFolderMovePolicy.parentForSelection(
+                currentScope = currentScope,
+                selectedContentUris = selectedUris,
+            )
+        }
+        val moveDescription = when {
+            !moveSupported -> "Move requires Android 11 or newer in this Development build"
+            moveDestinations.isNotEmpty() && newFolderParent != null ->
+                "Move selected media to an existing authorized folder or create a new folder inside ${newFolderParent.displayName}"
+            moveDestinations.isNotEmpty() -> "Move selected media to an existing authorized folder"
+            newFolderParent != null -> "Create a new folder inside ${newFolderParent.displayName} and move selected media there"
+            else -> "No eligible move destination is available for this selection"
+        }
 
         val actions = listOf(
             selectionAction("Share", selectedItems.isNotEmpty(), "Share selected media") {
@@ -661,7 +741,16 @@ class GalleryActivity : Activity() {
             selectionAction(favoriteLabel, selectedItems.isNotEmpty(), "$favoriteLabel selected media") {
                 applySelectedFavoriteAction()
             },
-            selectionAction("Move", false, "Move is unavailable until media mutation is implemented") {},
+            selectionAction(
+                "Move",
+                selectedItems.isNotEmpty() &&
+                    moveSupported &&
+                    (moveDestinations.isNotEmpty() || newFolderParent != null) &&
+                    pendingMediaMove == null,
+                moveDescription,
+            ) {
+                showMoveDestinationDialog()
+            },
             selectionAction("Delete", selectedItems.isNotEmpty() && deleteSupported, deletionDescription) {
                 requestMediaDeletion(selectedItems)
             },
@@ -708,7 +797,11 @@ class GalleryActivity : Activity() {
 
         if (inSelectionMode) {
             headerTitle.text = if (selectedUris.size == 1) "1 selected" else "${selectedUris.size} selected"
-            headerSubtitle.text = "Tap items to add or remove"
+            headerSubtitle.text = if (dragSelectionSession != null) {
+                "Drag across photos and videos to select quickly"
+            } else {
+                "Tap items to add or remove"
+            }
             backControl.visibility = View.VISIBLE
             backControl.contentDescription = "Exit selection"
             sortControl.visibility = View.GONE
@@ -908,7 +1001,6 @@ class GalleryActivity : Activity() {
             if (searchContainer.visibility == View.VISIBLE) closeSearch(clearQuery = false)
             renderSettings()
             updateHeader()
-            renderNavigation()
             return
         }
 
@@ -1104,9 +1196,10 @@ class GalleryActivity : Activity() {
         gravity = Gravity.CENTER_VERTICAL
         minimumHeight = dp(76)
         setPadding(dp(14), dp(10), dp(12), dp(10))
-        background = roundedSurface(
-            withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
-            18,
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.RAISED,
+            GalleryGlazeContract.SHAPE_CONTAINER_DP,
         )
         isClickable = true
         isFocusable = true
@@ -1336,8 +1429,21 @@ class GalleryActivity : Activity() {
             }
             setOnLongClickListener {
                 performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                toggleSelection(item, items)
-                true
+                beginDragSelection(item, items)
+            }
+            setOnTouchListener { _, event ->
+                if (dragSelectionSession == null) return@setOnTouchListener false
+                when (event.actionMasked) {
+                    MotionEvent.ACTION_MOVE -> {
+                        updateDragSelectionPointer(event.rawX, event.rawY)
+                        true
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        finishDragSelection()
+                        true
+                    }
+                    else -> true
+                }
             }
             addView(
                 thumbnail,
@@ -1347,7 +1453,7 @@ class GalleryActivity : Activity() {
                 View(context).apply {
                     tag = SELECTION_OVERLAY_TAG
                     visibility = if (selected) View.VISIBLE else View.GONE
-                    background = roundedSurface(withAlpha(accentColor(), 0.20f), cornerDp)
+                    background = selectedTileSurface(cornerDp)
                     importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 },
                 FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),
@@ -1378,15 +1484,15 @@ class GalleryActivity : Activity() {
                     text = "✓"
                     gravity = Gravity.CENTER
                     setTextColor(Color.WHITE)
-                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+                    setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
                     setTypeface(typeface, Typeface.BOLD)
-                    background = roundedSurface(accentColor(), 14)
+                    background = roundedSurface(accentColor(), 12)
                     importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
                 },
-                FrameLayout.LayoutParams(dp(28), dp(28)).apply {
+                FrameLayout.LayoutParams(dp(24), dp(24)).apply {
                     gravity = Gravity.END or Gravity.TOP
-                    marginEnd = dp(5)
-                    topMargin = dp(5)
+                    marginEnd = dp(6)
+                    topMargin = dp(6)
                 },
             )
         }.also { tile ->
@@ -1398,7 +1504,7 @@ class GalleryActivity : Activity() {
         if (inSelectionMode) {
             "${item.displayName}. ${if (selected) "Selected" else "Not selected"}. Double tap to toggle selection."
         } else {
-            "${item.displayName}. ${mediaMetadata(item)}. Double tap to open viewer. Long press to select."
+            "${item.displayName}. ${mediaMetadata(item)}. Double tap to open viewer. Long press then drag to select multiple items."
         }
 
     private fun refreshRenderedSelectionState() {
@@ -1440,8 +1546,117 @@ class GalleryActivity : Activity() {
         renderNavigation()
     }
 
+    private fun beginDragSelection(item: MediaItem, currentScope: List<MediaItem>): Boolean {
+        val result = GalleryDragSelectionPolicy.begin(
+            selectedContentUris = selectedUris,
+            item = item,
+            currentScope = currentScope,
+        ) ?: return false
+
+        selectionScopeItems = currentScope
+        dragSelectionScope = currentScope
+        dragSelectionSession = result.session
+        selectedUris.clear()
+        selectedUris.addAll(result.selectedContentUris)
+        if (::libraryScroll.isInitialized) libraryScroll.requestDisallowInterceptTouchEvent(true)
+        refreshRenderedSelectionState()
+        updateHeader()
+        renderNavigation()
+        announceSelectionCount()
+        return true
+    }
+
+    private fun updateDragSelectionPointer(rawX: Float, rawY: Float) {
+        if (dragSelectionSession == null) return
+        dragSelectionRawX = rawX
+        dragSelectionRawY = rawY
+        applyDragSelectionAtRawPoint(rawX, rawY)
+        scheduleDragSelectionAutoScroll()
+    }
+
+    private fun applyDragSelectionAtRawPoint(rawX: Float, rawY: Float) {
+        val session = dragSelectionSession ?: return
+        val hitUri = renderedMediaTiles.entries.firstOrNull { (_, tile) ->
+            val bounds = Rect()
+            tile.getGlobalVisibleRect(bounds) && bounds.contains(rawX.toInt(), rawY.toInt())
+        }?.key ?: return
+        val item = dragSelectionScope.firstOrNull { it.contentUri == hitUri } ?: return
+        val result = GalleryDragSelectionPolicy.apply(
+            selectedContentUris = selectedUris,
+            session = session,
+            item = item,
+            currentScope = dragSelectionScope,
+        )
+        dragSelectionSession = result.session
+        selectedUris.clear()
+        selectedUris.addAll(result.selectedContentUris)
+        refreshRenderedSelectionState()
+        updateHeader()
+        renderNavigation()
+    }
+
+    private fun scheduleDragSelectionAutoScroll() {
+        if (dragSelectionSession == null || dragSelectionAutoScrollPosted || !::libraryScroll.isInitialized) return
+        dragSelectionAutoScrollPosted = true
+        libraryScroll.postOnAnimation(object : Runnable {
+            override fun run() {
+                if (dragSelectionSession == null) {
+                    dragSelectionAutoScrollPosted = false
+                    return
+                }
+                val viewport = Rect()
+                if (!libraryScroll.getGlobalVisibleRect(viewport)) {
+                    dragSelectionAutoScrollPosted = false
+                    return
+                }
+                val edgePx = dp(DRAG_SELECTION_EDGE_DP)
+                val delta = when {
+                    dragSelectionRawY < viewport.top + edgePx && libraryScroll.canScrollVertically(-1) ->
+                        -dp(DRAG_SELECTION_SCROLL_STEP_DP)
+                    dragSelectionRawY > viewport.bottom - edgePx && libraryScroll.canScrollVertically(1) ->
+                        dp(DRAG_SELECTION_SCROLL_STEP_DP)
+                    else -> 0
+                }
+                if (delta == 0) {
+                    dragSelectionAutoScrollPosted = false
+                    return
+                }
+                libraryScroll.scrollBy(0, delta)
+                applyDragSelectionAtRawPoint(dragSelectionRawX, dragSelectionRawY)
+                libraryScroll.postOnAnimation(this)
+            }
+        })
+    }
+
+    private fun finishDragSelection() {
+        if (dragSelectionSession == null) return
+        dragSelectionSession = null
+        dragSelectionScope = emptyList()
+        dragSelectionAutoScrollPosted = false
+        if (::libraryScroll.isInitialized) libraryScroll.requestDisallowInterceptTouchEvent(false)
+        if (selectedUris.isEmpty()) selectionScopeItems = emptyList()
+        refreshRenderedSelectionState()
+        updateHeader()
+        renderNavigation()
+        announceSelectionCount()
+    }
+
+    private fun announceSelectionCount() {
+        announceForAccessibility(
+            when (selectedUris.size) {
+                0 -> "Selection cleared"
+                1 -> "1 item selected"
+                else -> "${selectedUris.size} items selected"
+            },
+        )
+    }
+
     private fun clearSelection(render: Boolean = true) {
-        val hadSelection = selectedUris.isNotEmpty()
+        val hadSelection = selectedUris.isNotEmpty() || dragSelectionSession != null
+        dragSelectionSession = null
+        dragSelectionScope = emptyList()
+        dragSelectionAutoScrollPosted = false
+        if (::libraryScroll.isInitialized) libraryScroll.requestDisallowInterceptTouchEvent(false)
         selectedUris.clear()
         selectionScopeItems = emptyList()
         if (!::navigationCapsule.isInitialized) return
@@ -1501,8 +1716,388 @@ class GalleryActivity : Activity() {
         clearSelection()
     }
 
+    private fun showMoveDestinationDialog() {
+        if (!AndroidMediaMoveRequests.isSupported()) {
+            Toast.makeText(this, "Move requires Android 11 or newer in this Development build.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
+
+        val selectedItems = currentSelectedItems()
+        val currentScope = visibleAuthorizedItems()
+        val destinations = GalleryMoveDestinationPolicy.existingDestinations(
+            currentScope = currentScope,
+            selectedContentUris = selectedUris,
+        )
+        val newFolderParent = GalleryNewFolderMovePolicy.parentForSelection(
+            currentScope = currentScope,
+            selectedContentUris = selectedUris,
+        )
+        if (selectedItems.isEmpty() || (destinations.isEmpty() && newFolderParent == null)) {
+            Toast.makeText(this, "No eligible move destination is available for this selection.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        var dialog: AlertDialog? = null
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(20), dp(22), dp(14))
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.OVERLAY,
+                GalleryGlazeContract.SHAPE_OVERLAY_DP,
+            )
+        }
+        panel.addView(TextView(this).apply {
+            text = "Move"
+            setTextColor(primaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        panel.addView(TextView(this).apply {
+            text = if (newFolderParent != null) {
+                "Choose an existing local folder, or create a new folder inside ${newFolderParent.displayName}."
+            } else {
+                "Choose an existing local folder from media Android currently authorizes."
+            }
+            setTextColor(secondaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+            setLineSpacing(0f, 1.06f)
+            setPadding(0, dp(4), 0, dp(14))
+        })
+
+        if (newFolderParent != null) {
+            panel.addView(
+                glazeDialogActionRow(
+                    title = "New folder",
+                    subtitle = "Create inside ${newFolderParent.displayName}",
+                ) {
+                    dialog?.dismiss()
+                    showNewFolderDialog(selectedItems, newFolderParent.displayName)
+                },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    bottomMargin = dp(10)
+                },
+            )
+        } else {
+            panel.addView(TextView(this).apply {
+                text = "New folder requires selected items from one current folder."
+                setTextColor(secondaryTextColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+                setPadding(dp(4), dp(2), dp(4), dp(10))
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            })
+        }
+
+        destinations.forEach { moveDestination ->
+            panel.addView(
+                glazeDialogActionRow(
+                    title = moveDestination.displayName,
+                    subtitle = "${itemCountLabel(moveDestination.itemCount)} · Existing local folder",
+                ) {
+                    requestMediaMove(selectedItems, moveDestination)
+                    dialog?.dismiss()
+                },
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT).apply {
+                    bottomMargin = dp(7)
+                },
+            )
+        }
+
+        panel.addView(TextView(this).apply {
+            text = "Cancel"
+            gravity = Gravity.CENTER
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setTextColor(accentColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = roundedSurface(Color.TRANSPARENT, GalleryGlazeContract.SHAPE_CONTROL_DP)
+            isClickable = true
+            isFocusable = true
+            contentDescription = "Cancel move"
+            setOnClickListener { dialog?.dismiss() }
+        })
+
+        dialog = AlertDialog.Builder(this)
+            .setView(panel)
+            .create()
+        dialog?.setOnShowListener {
+            dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            dialog?.window?.setDimAmount(0.42f)
+            dialog?.window?.setLayout(
+                resources.displayMetrics.widthPixels - dp(32),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+        }
+        dialog?.show()
+        dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+        dialog?.window?.setDimAmount(0.42f)
+        dialog?.window?.setLayout(
+            resources.displayMetrics.widthPixels - dp(32),
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
+    private fun showNewFolderDialog(items: List<MediaItem>, parentDisplayName: String) {
+        if (items.isEmpty() || pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
+
+        var dialog: AlertDialog? = null
+        val folderNameField = EditText(this).apply {
+            hint = "Folder name"
+            setSingleLine(true)
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setPadding(dp(14), 0, dp(14), 0)
+            setTextColor(primaryTextColor())
+            setHintTextColor(secondaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 15f)
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.CONTROL,
+                GalleryGlazeContract.SHAPE_CONTROL_DP,
+            )
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+            contentDescription = "New folder name"
+        }
+        val createAction = TextView(this).apply {
+            text = "Create & move"
+            gravity = Gravity.CENTER
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setPadding(dp(14), 0, dp(14), 0)
+            setTextColor(accentColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTypeface(typeface, Typeface.BOLD)
+            background = roundedSurface(withAlpha(accentColor(), 0.12f), GalleryGlazeContract.SHAPE_CONTROL_DP)
+            isClickable = true
+            isFocusable = true
+            contentDescription = "Create new folder and move selected media"
+        }
+        val cancelAction = TextView(this).apply {
+            text = "Cancel"
+            gravity = Gravity.CENTER
+            minHeight = dp(GalleryGlazeContract.GENERAL_TARGET_DP)
+            setPadding(dp(14), 0, dp(14), 0)
+            setTextColor(primaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 13f)
+            setTypeface(typeface, Typeface.BOLD)
+            setBackgroundColor(Color.TRANSPARENT)
+            isClickable = true
+            isFocusable = true
+            contentDescription = "Cancel new folder"
+            setOnClickListener { dialog?.dismiss() }
+        }
+
+        createAction.setOnClickListener {
+            val destination = try {
+                GalleryNewFolderMovePolicy.destinationForSelection(
+                    currentScope = visibleAuthorizedItems(),
+                    selectedContentUris = selectedUris,
+                    rawFolderName = folderNameField.text?.toString().orEmpty(),
+                )
+            } catch (error: IllegalArgumentException) {
+                folderNameField.error = error.message ?: "Choose a valid folder name"
+                folderNameField.requestFocus()
+                return@setOnClickListener
+            }
+            dialog?.dismiss()
+            requestMediaMove(items, destination.relativePath)
+        }
+
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            setPadding(0, dp(14), 0, 0)
+            addView(cancelAction, LinearLayout.LayoutParams(0, dp(GalleryGlazeContract.GENERAL_TARGET_DP), 1f).apply {
+                marginEnd = dp(6)
+            })
+            addView(createAction, LinearLayout.LayoutParams(0, dp(GalleryGlazeContract.GENERAL_TARGET_DP), 1f))
+        }
+        val panel = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(20), dp(22), dp(18))
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.OVERLAY,
+                GalleryGlazeContract.SHAPE_OVERLAY_DP,
+            )
+            addView(TextView(context).apply {
+                text = "New folder"
+                setTextColor(primaryTextColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+                setTypeface(typeface, Typeface.BOLD)
+            })
+            addView(TextView(context).apply {
+                text = "Create inside $parentDisplayName and move ${itemCountLabel(items.size)} there after Android authorizes the selected media."
+                setTextColor(secondaryTextColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 12.5f)
+                setLineSpacing(0f, 1.06f)
+                setPadding(0, dp(4), 0, dp(14))
+            })
+            addView(folderNameField, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)))
+            addView(actions)
+        }
+
+        dialog = AlertDialog.Builder(this)
+            .setView(panel)
+            .create()
+        dialog?.setOnShowListener {
+            dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+            dialog?.window?.setDimAmount(0.42f)
+            dialog?.window?.setLayout(
+                resources.displayMetrics.widthPixels - dp(32),
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+            folderNameField.requestFocus()
+            folderNameField.post {
+                (getSystemService(INPUT_METHOD_SERVICE) as? InputMethodManager)
+                    ?.showSoftInput(folderNameField, InputMethodManager.SHOW_IMPLICIT)
+            }
+        }
+        dialog?.show()
+        dialog?.window?.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(Color.TRANSPARENT))
+        dialog?.window?.setDimAmount(0.42f)
+        dialog?.window?.setLayout(
+            resources.displayMetrics.widthPixels - dp(32),
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+    }
+
+    private fun glazeDialogActionRow(
+        title: String,
+        subtitle: String,
+        onClick: () -> Unit,
+    ): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        minimumHeight = dp(64)
+        setPadding(dp(14), dp(9), dp(10), dp(9))
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.RAISED,
+            GalleryGlazeContract.SHAPE_CONTAINER_DP,
+        )
+        val labels = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+        labels.addView(TextView(context).apply {
+            text = title
+            setTextColor(primaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+            setTypeface(typeface, Typeface.BOLD)
+        })
+        labels.addView(TextView(context).apply {
+            text = subtitle
+            setTextColor(secondaryTextColor())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 11.5f)
+            setPadding(0, dp(2), dp(8), 0)
+        })
+        addView(labels, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        addView(
+            TextView(context).apply {
+                text = "›"
+                gravity = Gravity.CENTER
+                setTextColor(accentColor())
+                setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
+                importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            },
+            LinearLayout.LayoutParams(dp(36), dp(GalleryGlazeContract.GENERAL_TARGET_DP)),
+        )
+        isClickable = true
+        isFocusable = true
+        importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
+        contentDescription = "$title. $subtitle. Move selected media here."
+        setOnClickListener { onClick() }
+    }
+
+    private fun requestMediaMove(items: List<MediaItem>, destination: GalleryMoveDestination) =
+        requestMediaMove(items, destination.relativePath)
+
+    private fun requestMediaMove(items: List<MediaItem>, destinationRelativePath: String) {
+        if (items.isEmpty() || pendingMediaMove != null || pendingMediaMutation != null || mediaMoveExecutionInProgress) return
+        if (!AndroidMediaMoveRequests.isSupported()) {
+            Toast.makeText(this, "Move requires Android 11 or newer in this Development build.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val request = try {
+            AndroidMediaMoveRequests.create(
+                contentResolver = contentResolver,
+                contentUris = items.map { it.contentUri },
+                destinationRelativePath = destinationRelativePath,
+            )
+        } catch (_: IllegalArgumentException) {
+            Toast.makeText(this, "Gallery refused an invalid move request.", Toast.LENGTH_SHORT).show()
+            return
+        } catch (_: IllegalStateException) {
+            Toast.makeText(this, "Android-authorized media move is unavailable on this device.", Toast.LENGTH_SHORT).show()
+            return
+        } catch (_: SecurityException) {
+            Toast.makeText(this, "Android denied the move authorization request.", Toast.LENGTH_SHORT).show()
+            return
+        } catch (_: RuntimeException) {
+            Toast.makeText(this, "The Android media provider could not prepare this move.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        pendingMediaMove = AndroidMediaMoveRequests.capture(request)
+        try {
+            startIntentSenderForResult(
+                request.pendingIntent.intentSender,
+                MEDIA_MOVE_REQUEST,
+                null,
+                0,
+                0,
+                0,
+            )
+        } catch (_: IntentSender.SendIntentException) {
+            pendingMediaMove = null
+            Toast.makeText(this, "Android could not open move authorization.", Toast.LENGTH_SHORT).show()
+        } catch (_: RuntimeException) {
+            pendingMediaMove = null
+            Toast.makeText(this, "Android could not open move authorization.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun completeConfirmedMediaMove(move: AndroidMediaMovePendingState) {
+        mediaMoveExecutionInProgress = true
+        thread(name = "goreecloud-gallery-mediastore-move") {
+            val result = try {
+                AndroidMediaMoveRequests.execute(contentResolver, move)
+            } catch (_: IllegalArgumentException) {
+                null
+            } catch (_: IllegalStateException) {
+                null
+            } catch (_: RuntimeException) {
+                null
+            }
+
+            runOnUiThread {
+                mediaMoveExecutionInProgress = false
+                clearSelection(render = false)
+                thumbnailCache.evictAll()
+
+                val message = when {
+                    result == null -> "Move could not be completed"
+                    result.failedCount == 0 && result.movedCount == 1 -> "Moved 1 item"
+                    result.failedCount == 0 -> "Moved ${result.movedCount} items"
+                    result.movedCount == 0 && result.failedCount == 1 -> "Move failed for 1 item"
+                    result.movedCount == 0 -> "Move failed for ${result.failedCount} items"
+                    else -> "Moved ${result.movedCount} items · ${result.failedCount} failed"
+                }
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+
+                val accessScope = currentMediaAccessScope()
+                if (GalleryMediaAccessPolicy.canRead(accessScope)) {
+                    loadLocalLibrary(accessScope)
+                } else {
+                    renderPermissionState()
+                }
+            }
+        }
+    }
+
     private fun requestMediaDeletion(items: List<MediaItem>) {
-        if (items.isEmpty() || pendingMediaMutation != null) return
+        if (items.isEmpty() || pendingMediaMutation != null || pendingMediaMove != null || mediaMoveExecutionInProgress) return
         if (!AndroidMediaMutationRequests.isSupported()) {
             Toast.makeText(
                 this,
@@ -1629,6 +2224,7 @@ class GalleryActivity : Activity() {
         val preview = ImageView(this).apply {
             scaleType = ImageView.ScaleType.FIT_CENTER
             setBackgroundColor(Color.BLACK)
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
         }
         mediaHost.addView(
             preview,
@@ -1719,7 +2315,7 @@ class GalleryActivity : Activity() {
 
         val share = viewerAction("Share", true, "Share this media") {}
         val favorite = viewerAction("Favorite", true, "Favorite this media") {}
-        val edit = viewerAction("Edit", false, "Edit is unavailable in this Development build") {}
+        val edit = viewerAction("Edit", true, "Edit this photo") {}
         val deleteSupported = AndroidMediaMutationRequests.isSupported()
         val delete = viewerAction(
             "Delete",
@@ -1790,7 +2386,7 @@ class GalleryActivity : Activity() {
             val viewerCacheKey = thumbnailCacheKey(VIEWER_THUMBNAIL_NAMESPACE, item.contentUri)
             preview.setImageDrawable(null)
             preview.tag = viewerCacheKey
-            preview.contentDescription = "Viewer for ${item.displayName}"
+            preview.contentDescription = "Viewer for ${item.displayName}. Swipe left or right to navigate the current collection."
             viewerTitle.text = item.displayName
             viewerSubtitle.text = mediaMetadata(item)
             previous.isEnabled = currentIndex > 0
@@ -1800,6 +2396,16 @@ class GalleryActivity : Activity() {
             val isFavorite = item.contentUri in favoriteUris
             favorite.text = if (isFavorite) "♥ Saved" else "♡ Favorite"
             favorite.contentDescription = if (isFavorite) "Remove from Favorites" else "Add to Favorites"
+            val photoEditable = item.mimeType.startsWith("image/")
+            edit.isEnabled = photoEditable
+            edit.isClickable = photoEditable
+            edit.isFocusable = photoEditable
+            edit.alpha = if (photoEditable) 1f else 0.35f
+            edit.contentDescription = if (photoEditable) {
+                "Edit this photo using an Android photo editor"
+            } else {
+                "Photo editing is unavailable for this media type"
+            }
             loadLocalThumbnail(item, preview, generation, VIEWER_THUMBNAIL_DP, VIEWER_THUMBNAIL_NAMESPACE)
 
             if (playbackPlan.presentation == GalleryViewerPresentation.VIDEO_PLAYBACK) {
@@ -1849,6 +2455,45 @@ class GalleryActivity : Activity() {
                 renderCurrentItem()
             }
         }
+
+        var swipeStartX = 0f
+        var swipeStartY = 0f
+        preview.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    swipeStartX = event.x
+                    swipeStartY = event.y
+                    true
+                }
+                MotionEvent.ACTION_UP -> {
+                    when (
+                        GalleryViewerSwipePolicy.resolve(
+                            deltaX = event.x - swipeStartX,
+                            deltaY = event.y - swipeStartY,
+                            minimumDistancePx = dp(VIEWER_SWIPE_DISTANCE_DP).toFloat(),
+                            canGoPrevious = currentIndex > 0,
+                            canGoNext = currentIndex < items.lastIndex,
+                        )
+                    ) {
+                        GalleryViewerSwipeAction.PREVIOUS -> {
+                            currentIndex -= 1
+                            renderCurrentItem()
+                            announceForAccessibility("Previous media")
+                        }
+                        GalleryViewerSwipeAction.NEXT -> {
+                            currentIndex += 1
+                            renderCurrentItem()
+                            announceForAccessibility("Next media")
+                        }
+                        GalleryViewerSwipeAction.NONE -> Unit
+                    }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> false
+                else -> true
+            }
+        }
+
         share.setOnClickListener {
             val item = items.getOrNull(currentIndex) ?: return@setOnClickListener
             shareAuthorizedItem(item)
@@ -1857,6 +2502,10 @@ class GalleryActivity : Activity() {
             val item = items.getOrNull(currentIndex) ?: return@setOnClickListener
             toggleFavorite(item)
             renderCurrentItem()
+        }
+        edit.setOnClickListener {
+            val item = items.getOrNull(currentIndex) ?: return@setOnClickListener
+            editAuthorizedPhoto(item)
         }
         if (deleteSupported) {
             delete.setOnClickListener {
@@ -1896,6 +2545,39 @@ class GalleryActivity : Activity() {
             startActivity(Intent.createChooser(shareIntent, "Share with"))
         } catch (_: RuntimeException) {
             Toast.makeText(this, "No compatible share destination is available.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun editAuthorizedPhoto(item: MediaItem) {
+        if (!GalleryPhotoEditorContract.isSupportedMimeType(item.mimeType)) {
+            Toast.makeText(this, "This photo format is not yet supported by the Gallery editor.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (
+            !GalleryMediaAccessPolicy.canRead(currentMediaAccessScope()) ||
+            authorizedItems.none { it.contentUri == item.contentUri }
+        ) {
+            Toast.makeText(this, "This photo is no longer authorized for editing.", Toast.LENGTH_SHORT).show()
+            closeAuthorizedViewer()
+            return
+        }
+
+        val uri = Uri.parse(item.contentUri)
+        if (uri.scheme != "content" || uri.authority != "media") {
+            Toast.makeText(this, "Gallery refused an unsupported photo source.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val editorIntent = Intent(this, PhotoEditorActivity::class.java).apply {
+            putExtra(GalleryPhotoEditorContract.EXTRA_CONTENT_URI, item.contentUri)
+            putExtra(GalleryPhotoEditorContract.EXTRA_DISPLAY_NAME, item.displayName)
+            putExtra(GalleryPhotoEditorContract.EXTRA_MIME_TYPE, item.mimeType)
+        }
+        try {
+            closeAuthorizedViewer()
+            startActivity(editorIntent)
+        } catch (_: RuntimeException) {
+            Toast.makeText(this, "The Gallery photo editor could not be opened.", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -2142,9 +2824,10 @@ class GalleryActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
             minimumHeight = dp(68)
             setPadding(dp(14), dp(10), dp(10), dp(10))
-            background = roundedSurface(
-                withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
-                17,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
             )
             alpha = if (enabled) 1f else 0.55f
 
@@ -2212,9 +2895,10 @@ class GalleryActivity : Activity() {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(22), dp(20), dp(22), dp(14))
-            background = roundedSurface(
-                if (isNightMode()) 0xff242426.toInt() else 0xffffffff.toInt(),
-                28,
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.OVERLAY,
+                GalleryGlazeContract.SHAPE_OVERLAY_DP,
             )
         }
         panel.addView(TextView(this).apply {
@@ -2297,11 +2981,15 @@ class GalleryActivity : Activity() {
         gravity = Gravity.CENTER_VERTICAL
         minimumHeight = dp(64)
         setPadding(dp(14), dp(9), dp(10), dp(9))
-        background = roundedSurface(
-            if (selected) withAlpha(accentColor(), 0.13f)
-            else withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f),
-            18,
-        )
+        background = if (selected) {
+            roundedSurface(withAlpha(accentColor(), 0.13f), GalleryGlazeContract.SHAPE_CONTAINER_DP)
+        } else {
+            GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
+            )
+        }
         val labels = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_VERTICAL
@@ -2611,7 +3299,11 @@ class GalleryActivity : Activity() {
         setColorFilter(primaryTextColor())
         setPadding(dp(13), dp(13), dp(13), dp(13))
         scaleType = ImageView.ScaleType.CENTER_INSIDE
-        background = roundedSurface(withAlpha(primaryTextColor(), if (isNightMode()) 0.12f else 0.05f), 16)
+        background = GalleryGlazeSurfaces.drawable(
+            context,
+            GalleryGlazeSurfaces.Role.CONTROL,
+            GalleryGlazeContract.SHAPE_CONTAINER_DP,
+        )
         isClickable = true
         isFocusable = true
         contentDescription = description
@@ -2828,7 +3520,11 @@ class GalleryActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setPadding(dp(18), dp(24), dp(18), dp(24))
-            background = roundedSurface(withAlpha(primaryTextColor(), if (isNightMode()) 0.10f else 0.045f), 20)
+            background = GalleryGlazeSurfaces.drawable(
+                context,
+                GalleryGlazeSurfaces.Role.RAISED,
+                GalleryGlazeContract.SHAPE_CONTAINER_DP,
+            )
             addView(TextView(context).apply {
                 text = title
                 gravity = Gravity.CENTER
@@ -2924,6 +3620,13 @@ class GalleryActivity : Activity() {
         cornerRadius = dp(radiusDp).toFloat()
     }
 
+    private fun selectedTileSurface(radiusDp: Int): GradientDrawable = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        setColor(withAlpha(accentColor(), 0.10f))
+        cornerRadius = dp(radiusDp).toFloat()
+        setStroke(dp(2), withAlpha(accentColor(), 0.95f))
+    }
+
     private fun withAlpha(color: Int, alpha: Float): Int = Color.argb(
         (255f * alpha.coerceIn(0f, 1f)).toInt(),
         Color.red(color),
@@ -2960,12 +3663,15 @@ class GalleryActivity : Activity() {
     private companion object {
         const val MEDIA_PERMISSION_REQUEST = 4101
         const val MEDIA_MUTATION_REQUEST = 4102
+        const val MEDIA_MOVE_REQUEST = 4103
         const val EXPORT_FAVORITES_REQUEST = 4201
         const val IMPORT_FAVORITES_REQUEST = 4202
         const val EXPORT_SETTINGS_REQUEST = 4203
         const val IMPORT_SETTINGS_REQUEST = 4204
         const val STATE_PENDING_MEDIA_MUTATION_MODE = "pending_media_mutation_mode"
         const val STATE_PENDING_MEDIA_MUTATION_URIS = "pending_media_mutation_uris"
+        const val STATE_PENDING_MEDIA_MOVE_URIS = "pending_media_move_uris"
+        const val STATE_PENDING_MEDIA_MOVE_DESTINATION = "pending_media_move_destination"
 
         const val GRID_GAP_DP = 3
         const val GRID_CORNER_DP = 8
@@ -2974,6 +3680,9 @@ class GalleryActivity : Activity() {
         const val ALBUM_CORNER_DP = 16
         const val ALBUM_THUMBNAIL_DP = 320
         const val VIEWER_THUMBNAIL_DP = 720
+        const val VIEWER_SWIPE_DISTANCE_DP = 56
+        const val DRAG_SELECTION_EDGE_DP = 72
+        const val DRAG_SELECTION_SCROLL_STEP_DP = 14
         const val THUMBNAIL_CACHE_KIB = 8 * 1024
         const val GRID_THUMBNAIL_NAMESPACE = "grid"
         const val ALBUM_THUMBNAIL_NAMESPACE = "album"

@@ -2,17 +2,24 @@
 <resources>
     <style name="Theme.GoreeCloudGallery" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
+        <item name="android:colorBackground">@color/gallery_canvas</item>
+        <item name="android:textColorPrimary">@color/gallery_text_primary</item>
+        <item name="android:textColorSecondary">@color/gallery_text_secondary</item>
+        <item name="android:colorAccent">@color/gallery_accent</item>
+        <item name="android:statusBarColor">@color/gallery_canvas</item>
+        <item name="android:navigationBarColor">@color/gallery_canvas</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
         <item name="android:alertDialogTheme">@style/Theme.GoreeCloudGallery.AlertDialog</item>
     </style>
 
     <style name="Theme.GoreeCloudGallery.AlertDialog" parent="android:style/Theme.Material.Light.Dialog.Alert">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#008F83</item>
-        <item name="android:textColorPrimary">#1D1D1F</item>
-        <item name="android:textColorSecondary">#666666</item>
+        <item name="android:colorAccent">@color/gallery_accent</item>
+        <item name="android:textColorPrimary">@color/gallery_text_primary</item>
+        <item name="android:textColorSecondary">@color/gallery_text_secondary</item>
         <item name="android:listChoiceIndicatorMultiple">@drawable/glaze_choice_checkbox</item>
         <item name="android:windowBackground">@drawable/glaze_dialog_background</item>
         <item name="android:windowElevation">16dp</item>
