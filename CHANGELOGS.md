@@ -2,6 +2,33 @@
 
 This file is the authoritative repository change-history record under Standard — Repository Feature Tracking and Changelog Governance v1.0. It supersedes the retired singular `CHANGELOG.md` filename while preserving the existing Gallery history below.
 
+## 2026-09-25 — Current-main physical-device source reconciliation
+
+### Added
+
+- Current-main app-layer Move integration over the bounded Android-authorized MediaStore foundation: eligible selection action, current-scope existing-folder choices, bounded new-folder `Create & move`, exact write-authorization handoff, Activity-state restoration of pending authorization, cancellation handling, confirmed background execution, refresh, and moved/failed result reporting.
+- A non-exported first-party photo editor for bounded MediaStore image sources with left/right 90° rotation, horizontal flip, custom/full and 1:1/4:3/16:9 crop controls, reset, Activity-state restoration, and save-as-new-copy behavior that preserves the original.
+- Exact-head rendered evidence for main Gallery and Recycle Bin surfaces in light and dark modes on the deterministic Android 36 emulator profile.
+
+### Changed
+
+- Reconciled the physical-device stabilization work onto current authoritative `main` ancestry rather than integrating the long-lived historical feature stack.
+- Updated the Gallery presentation source mapping to GLAZE UI V1.6 / 1.6.0 while treating retained Gallery-local optical/spatial values as adapter invariants rather than canonical V1.6 token claims.
+- Preserved `RecycleBinActivity` as non-exported while moving CI screenshot capture for that private surface into an instrumentation-only harness instead of weakening the production Activity boundary.
+- Retained safe-area/system-bar, navigation, launcher-icon, selection/drag, media-mutation, and photo-editor source/test corrections in the reconciled Development candidate.
+
+### Validated
+
+- Source revision `06804cb768714c57dd9656e6597b5265b2f541e7` passed Platform Contract #73, Native Core #191, Native Android Adapter #359, Native Android App #355, and Native Android Rendered Acceptance #146.
+- Rendered artifact `10854541717` is bound to that source revision with GitHub digest `sha256:68ccf0ae3bee1913bb20292deae6979d4b63df02dafb91c92887df0dce2a0e42`; the reviewed evidence contains main and Recycle Bin light/dark screenshots and the rendered instrumentation suite reports no failures.
+- The broader GoreeCloud Gallery acceptance workflow remains a separate exact-head gate and must be recorded from its final result before integration.
+
+### Lifecycle boundary
+
+This is Development evidence only. Representative physical-device/OEM/profile Move and editor acceptance, complete GLAZE UI V1.6 conformance, accessibility/form-factor/performance/Human Visual Excellence, recovery/rollback, platform-system runtime acceptance, branch protection/review, production signing/provenance, Release Candidate, production, and Anchor qualification remain open.
+
+---
+
 ## 2026-09-24 — Android-authorized Move foundation
 
 ### Added
