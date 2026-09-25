@@ -71,7 +71,8 @@ The old Fossify-based acceptance candidate is not a shortcut around those native
 ## Repository guidance
 
 - [USER-MANUAL.md](USER-MANUAL.md) — current first-party native Development user guidance.
-- [SPECIFICATIONS.md](SPECIFICATIONS.md) — current native architecture, authority, and acceptance boundaries.
+- [PROJECT-SPECIFICATIONS.md](PROJECT-SPECIFICATIONS.md) — authoritative project scope, native architecture, Android media authority, platform boundaries, and acceptance requirements.
+- [PROJECT-RECORD.md](PROJECT-RECORD.md) — significant Gallery history, native/transitional decisions, repository-rename provenance, and migration evidence.
 - [FEATURES.md](FEATURES.md) — implemented Development capabilities and incomplete work.
 - [BENEFITS.md](BENEFITS.md) — current and intended product benefits without Stable overclaiming.
 - [COMPETITIVE-OBJECTIVES.md](COMPETITIVE-OBJECTIVES.md) — current first-party product objectives.
@@ -83,3 +84,6 @@ The old Fossify-based acceptance candidate is not a shortcut around those native
 - [NOTICE.md](NOTICE.md) — inherited-work licensing and provenance notices.
 
 Canonical GoreeCloud application project specifications are maintained under `GoreeCloud/Projects`, and canonical GoreeCloud changelogs are maintained under `GoreeCloud/Changelogs`.
+
+
+Canonical project specifications and the significant project record are repository-native in `PROJECT-SPECIFICATIONS.md` and `PROJECT-RECORD.md`. Google Drive is not a parallel authority for those records.
