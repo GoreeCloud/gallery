@@ -161,11 +161,6 @@ class GalleryActivity : Activity() {
         super.onPause()
     }
 
-    override fun onPause() {
-        viewerVideoSurface?.pauseForHost()
-        super.onPause()
-    }
-
     override fun onResume() {
         super.onResume()
         if (viewerOverlay != null) {
