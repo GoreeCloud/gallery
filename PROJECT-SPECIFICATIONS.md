@@ -3,7 +3,7 @@
 **Repository:** `GoreeCloud/gallery`  
 **Former repository name recorded by the Drive source:** `GoreeCloud/goreecloud-gallery`  
 **Project type:** First-party native Android gallery application  
-**Lifecycle:** Development / non-Stable  
+**Repository lifecycle declaration (legacy Contract 0.4):** `development`; canonical Contract 2.0 lifecycle reclassification remains pending and must be evidence-backed  
 **Repository visibility:** Public  
 **Default branch:** `main`  
 **Migration baseline:** `1a241ddb23205f15f673b2968b56fd612014ca87`  
