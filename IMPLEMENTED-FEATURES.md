@@ -47,14 +47,25 @@ This record describes capabilities present in the current first-party GoreeCloud
 - Rejection of non-MediaStore, file, network, blank, collection-only, malformed, stale, or foreign mutation targets.
 - Android 10 and earlier remain fail-closed for this mutation path rather than using an unapproved legacy direct-delete workaround.
 
-### Android-authorized Move foundation
+### Android-authorized Move Development implementation
 
 - Provider-owned Android MediaStore `RELATIVE_PATH` is represented as bounded metadata in the core model and read through the Android adapter; it is not treated as raw filesystem authority.
 - Existing-folder destination policy derives only from authoritative relative paths already visible in the current authorized Gallery scope.
 - New-folder destination policy requires one authorized source path, validates bounded folder names, and roots photo/video/mixed destinations in `Pictures/`, `Movies/`, or `DCIM/` respectively.
 - Android 11+ move authorization uses `MediaStore.createWriteRequest(...)` over canonical bounded MediaStore item URIs; the adapter independently validates the final destination before updating `MediaStore.MediaColumns.RELATIVE_PATH`.
-- Pending move state restores only exact canonical URI lists and exact canonical destination paths.
-- The Gallery UI Move action remains disabled until separate app-layer lifecycle/UI integration is implemented and validated. This foundation alone is not physical-device Move acceptance.
+- Selection mode exposes Move only when the current authorized selection has a safe existing-folder or new-folder destination; new folders use the bounded `Create & move` path.
+- Pending move authorization state saves and restores only exact canonical URI lists and an exact canonical destination path across Activity state recreation.
+- Android remains write-authorization authority. Cancellation leaves the move unapplied; approved requests execute the bounded MediaStore update off the UI thread, clear selection and thumbnail cache state, refresh Gallery state, and report moved/failed counts.
+- This Development implementation is not representative physical-device/OEM/profile Move acceptance and does not establish production-safe media mutation.
+
+### First-party photo editing Development implementation
+
+- Viewer Edit accepts only bounded Android MediaStore `content://media` image sources with supported image MIME types and launches a non-exported Gallery editor Activity.
+- The editor provides 90° left/right rotation, horizontal flip, full/custom crop plus centered 1:1, 4:3, and 16:9 crop presets, and reset.
+- Rotation, flip, and normalized crop state survive ordinary Activity state recreation.
+- Save copy renders the current edit plan and publishes a new MediaStore image while preserving the original source item; PNG remains PNG and other supported output is encoded as JPEG, with source relative path/date-taken metadata retained when Android exposes it.
+- Failed save publication is cleaned up rather than knowingly leaving an unpublished partial MediaStore item.
+- This bounded editor is a Development foundation; representative-device, accessibility, large-image/memory, metadata, recovery, and broader editing acceptance remain open.
 
 ### Settings and portability
 
@@ -78,6 +89,8 @@ This record describes capabilities present in the current first-party GoreeCloud
 The following foundations exist but remain acceptance-gated and therefore also appear in `PLANNED-FEATURES.md`:
 
 - Android-authorized Delete/Trash and Recycle Bin behavior pending representative physical-device/OEM/profile validation.
+- Android-authorized Move UI/authorization/execution pending representative physical-device/OEM/profile, cancellation/approval, provider-failure, permission-revocation, and post-move acceptance.
+- First-party photo editing pending representative-device, accessibility, large-image/memory, save/recovery, and broader editing acceptance.
 - Multi-select and bulk actions pending broader device/accessibility acceptance.
 - GLAZE UI V1.6 source adoption pending full Gallery rendered/accessibility/adaptive-layout/performance/HVE acceptance.
 - Release-engineering foundations without completed production signing, recovery, Release Candidate, or Stable qualification.
