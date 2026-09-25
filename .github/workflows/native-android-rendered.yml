@@ -155,6 +155,60 @@ jobs:
       - name: Run native Gallery rendered interaction acceptance
         run: gradle :app:connectedDebugAndroidTest --no-daemon --stacktrace
 
+      - name: Capture reviewable rendered screenshots
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACKAGE=com.goreecloud.gallery
+          EVIDENCE_DIR="$PWD/app/build/rendered-evidence"
+          mkdir -p "$EVIDENCE_DIR"
+
+          capture_png() {
+            local name="$1"
+            adb shell input keyevent KEYCODE_WAKEUP >/dev/null 2>&1 || true
+            adb exec-out screencap -p > "$EVIDENCE_DIR/$name.png"
+            test -s "$EVIDENCE_DIR/$name.png"
+            test "$(head -c 8 "$EVIDENCE_DIR/$name.png" | xxd -p)" = "89504e470d0a1a0a"
+          }
+
+          start_main() {
+            adb shell am force-stop "$PACKAGE"
+            adb shell am start -W -n "$PACKAGE/.GalleryActivity" > "$RUNNER_TEMP/gallery-main-start.txt"
+            grep -Eq 'Status: ok|Complete' "$RUNNER_TEMP/gallery-main-start.txt"
+            sleep 1
+          }
+
+          start_recycle_bin() {
+            adb shell am force-stop "$PACKAGE"
+            adb shell run-as "$PACKAGE" am start -W -n "$PACKAGE/.RecycleBinActivity" > "$RUNNER_TEMP/gallery-recycle-bin-start.txt"
+            grep -Eq 'Status: ok|Complete' "$RUNNER_TEMP/gallery-recycle-bin-start.txt"
+            sleep 1
+          }
+
+          adb shell cmd uimode night no
+          start_main
+          capture_png gallery-main-light
+          start_recycle_bin
+          capture_png gallery-recycle-bin-light
+
+          adb shell cmd uimode night yes
+          start_main
+          capture_png gallery-main-dark
+          start_recycle_bin
+          capture_png gallery-recycle-bin-dark
+
+          {
+            echo "source_revision=$SOURCE_REVISION"
+            echo "android_image=$ANDROID_IMAGE"
+            echo "wm_size=$(adb shell wm size | tr -d '\r')"
+            echo "wm_density=$(adb shell wm density | tr -d '\r')"
+            echo "font_scale=$(adb shell settings get system font_scale | tr -d '\r')"
+            echo "screenshots=gallery-main-light.png,gallery-recycle-bin-light.png,gallery-main-dark.png,gallery-recycle-bin-dark.png"
+          } > "$EVIDENCE_DIR/metadata.txt"
+
+          test "$(find "$EVIDENCE_DIR" -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 4
+          adb shell cmd uimode night no
+
       - name: Upload rendered acceptance evidence
         if: ${{ success() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -165,6 +219,7 @@ jobs:
             native/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             native/app/build/outputs/androidTest-results/connected/**
             native/app/build/reports/androidTests/connected/**
+            native/app/build/rendered-evidence/**
           if-no-files-found: error
           retention-days: 14
 
