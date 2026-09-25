@@ -160,14 +160,17 @@ jobs:
         run: |
           set -euo pipefail
           PACKAGE=com.goreecloud.gallery
+          TEST_PACKAGE="$PACKAGE.test"
           EVIDENCE_DIR="$PWD/app/build/rendered-evidence"
           mkdir -p "$EVIDENCE_DIR"
 
-          # connectedDebugAndroidTest is allowed to clean up its installed test
-          # packages. Reinstall the exact APK we just built so screenshot
-          # capture never depends on Gradle's post-test device state.
+          # connectedDebugAndroidTest may clean up the exact app/test packages.
+          # Reinstall both APKs we just built so screenshot capture is bound to
+          # this source revision and never depends on Gradle's post-test state.
           adb install -r -t app/build/outputs/apk/debug/app-debug.apk
+          adb install -r -t app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
           adb shell pm path "$PACKAGE" | grep -F "package:"
+          adb shell pm path "$TEST_PACKAGE" | grep -F "package:"
 
           capture_png() {
             local name="$1"
@@ -190,30 +193,36 @@ jobs:
             sleep 1
           }
 
-          start_recycle_bin() {
+          capture_recycle_bin() {
+            local name="$1"
+            local capture_log="$RUNNER_TEMP/gallery-recycle-bin-capture-$name.txt"
             adb shell am force-stop "$PACKAGE"
-            adb shell run-as "$PACKAGE" am start -W -n "$PACKAGE/.RecycleBinActivity" > "$RUNNER_TEMP/gallery-recycle-bin-start.txt" 2>&1 || {
-              cat "$RUNNER_TEMP/gallery-recycle-bin-start.txt"
+            adb shell am instrument -w -r \
+              -e class com.goreecloud.gallery.GalleryRenderedScreenshotCaptureTest \
+              -e galleryRenderedCapture recycle-bin \
+              -e galleryScreenshotFile "$name.png" \
+              "$TEST_PACKAGE/androidx.test.runner.AndroidJUnitRunner" > "$capture_log" 2>&1 || {
+                cat "$capture_log"
+                return 1
+              }
+            grep -Eq '^OK \(' "$capture_log" || {
+              cat "$capture_log"
               return 1
             }
-            grep -Eq 'Status: ok|Complete' "$RUNNER_TEMP/gallery-recycle-bin-start.txt" || {
-              cat "$RUNNER_TEMP/gallery-recycle-bin-start.txt"
-              return 1
-            }
-            sleep 1
+            adb exec-out run-as "$PACKAGE" cat "files/$name.png" > "$EVIDENCE_DIR/$name.png"
+            test -s "$EVIDENCE_DIR/$name.png"
+            test "$(head -c 8 "$EVIDENCE_DIR/$name.png" | xxd -p)" = "89504e470d0a1a0a"
           }
 
           adb shell cmd uimode night no
           start_main
           capture_png gallery-main-light
-          start_recycle_bin
-          capture_png gallery-recycle-bin-light
+          capture_recycle_bin gallery-recycle-bin-light
 
           adb shell cmd uimode night yes
           start_main
           capture_png gallery-main-dark
-          start_recycle_bin
-          capture_png gallery-recycle-bin-dark
+          capture_recycle_bin gallery-recycle-bin-dark
 
           {
             echo "source_revision=$SOURCE_REVISION"
