@@ -180,17 +180,11 @@ class CloudAlbumCopyRequestStore @Inject constructor(
         check(directory.exists() || directory.mkdirs())
         val target = requestFile(request.id)
         val temporary = File(directory, ".${request.id}.tmp")
-        temporary.writeText(json.encodeToString(request))
-        runCatching {
-            java.nio.file.Files.move(
-                temporary.toPath(),
-                target.toPath(),
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING
-            )
-        }.getOrElse {
-            check(!target.exists() || target.delete())
-            check(temporary.renameTo(target))
+        try {
+            temporary.writeText(json.encodeToString(request))
+            replaceCloudRequestSnapshot(temporary.toPath(), target.toPath())
+        } finally {
+            temporary.delete()
         }
     }
 
