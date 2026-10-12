@@ -10,7 +10,7 @@
 - [x] Disable Android app auto-backup, exclude app-owned files from Android cloud/device transfer rules, and disable cleartext connections by default at source level
 - [x] Add static source-policy assertions for private-data backup and network defaults
 - [ ] Confirm protection in the actual merged APK manifest on a representative Android version
-- [ ] Resolve Android SDK configuration on authorized development laptop (Gradle 9.5.0 initializes, :app:tasks fails: SDK location not found)
+- [x] Reuse the authorized GoreeCloud Android SDK via ignored local.properties; Gradle 9.5.0 :app:tasks succeeds after NDK 29.0.14206865 installation (not an APK build)
 - [ ] Verify all inherited licenses including ML assets and native codecs
 - [ ] Perform a clean Android build and inspect merged manifest permissions and providers
 - [ ] Test upgrade/install and app profile isolation
