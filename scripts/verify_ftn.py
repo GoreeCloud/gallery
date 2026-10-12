@@ -29,6 +29,14 @@ legacy = ET.parse(ROOT / "app/src/main/res/xml/backup_rules.xml").getroot()
 assert {("root", "."), ("external", ".")} <= {
     (entry.get("domain"), entry.get("path")) for entry in legacy.findall("exclude")
 }
+modern = ET.parse(ROOT / "app/src/main/res/xml/data_extraction_rules.xml").getroot()
+for mode in ("cloud-backup", "device-transfer"):
+    section = modern.find(mode)
+    assert section is not None, mode
+    excludes = {(item.get("domain"), item.get("path")) for item in section.findall("exclude")}
+    assert {("root", "."), ("external", ".")} <= excludes, mode
+network = ET.parse(ROOT / "app/src/main/res/xml/network_security_config.xml").getroot()
+assert network.find("base-config").get("cleartextTrafficPermitted") == "false"
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
