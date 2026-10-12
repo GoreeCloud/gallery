@@ -37,6 +37,11 @@ for mode in ("cloud-backup", "device-transfer"):
     assert {("root", "."), ("external", ".")} <= excludes, mode
 network = ET.parse(ROOT / "app/src/main/res/xml/network_security_config.xml").getroot()
 assert network.find("base-config").get("cleartextTrafficPermitted") == "false"
+for permission in ("INTERNET", "MANAGE_EXTERNAL_STORAGE", "ACCESS_WIFI_STATE",
+                   "ACCESS_NETWORK_STATE", "ACCESS_LOCAL_NETWORK",
+                   "CHANGE_WIFI_MULTICAST_STATE", "ACCESS_FINE_LOCATION"):
+    assert f'"android.permission.{permission}"' in gradle, permission
+assert "if (isOffline)" in gradle and "stripPermissions.set(" in gradle
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
