@@ -73,6 +73,7 @@ assert '-PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt' in unit_ci
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt' in unit_ci
 assert '--tests com.dot.gallery.cloud.CloudTransferPolicyTest' in unit_ci
+assert "--tests com.dot.gallery.cloud.CloudRequestSnapshotTest" in unit_ci
 # Fail closed if a queued MOVE loses the durable transfer-state record.
 # Static guard only; the Android worker and interruption tests remain required.
 worker = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/sync/CloudAlbumCopyWorker.kt").read_text()
