@@ -13,6 +13,7 @@ import com.dot.gallery.cloud.core.shouldDeleteCloudSourceAfterTransfer
 import com.dot.gallery.cloud.sync.CloudAlbumCopyItemState
 import com.dot.gallery.cloud.sync.CloudAlbumTransferMode
 import com.dot.gallery.cloud.sync.isTransferFailure
+import com.dot.gallery.cloud.sync.isCloudTransferFinishedForRetention
 import com.dot.gallery.cloud.sync.shouldBeginCloudMoveCleanup
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -136,6 +137,53 @@ class CloudTransferPolicyTest {
         assertTrue(CloudAlbumCopyItemState.SOURCE_DELETE_PENDING.isTransferFailure())
         assertTrue(CloudAlbumCopyItemState.SOURCE_RETAINED.isTransferFailure())
         assertFalse(CloudAlbumCopyItemState.MOVED.isTransferFailure())
+    }
+
+    @Test
+    fun retentionExpiresOnlyFullyCompletedCopyOrMoveOperations() {
+        val finishedCopy = listOf(CloudAlbumCopyItemState.COPIED, CloudAlbumCopyItemState.ALREADY_PRESENT)
+        val finishedMove = listOf(CloudAlbumCopyItemState.MOVED, CloudAlbumCopyItemState.MOVED)
+
+        assertTrue(isCloudTransferFinishedForRetention(CloudAlbumTransferMode.COPY, finishedCopy))
+        assertTrue(isCloudTransferFinishedForRetention(CloudAlbumTransferMode.MOVE, finishedMove))
+        assertFalse(isCloudTransferFinishedForRetention(CloudAlbumTransferMode.COPY, emptyList()))
+        assertFalse(isCloudTransferFinishedForRetention(CloudAlbumTransferMode.MOVE, emptyList()))
+
+        for (unfinished in listOf(
+            CloudAlbumCopyItemState.PENDING,
+            CloudAlbumCopyItemState.FAILED,
+            CloudAlbumCopyItemState.ATTACH_PENDING,
+            CloudAlbumCopyItemState.SOURCE_DELETE_PENDING,
+            CloudAlbumCopyItemState.SOURCE_RETAINED
+        )) {
+            assertFalse(
+                isCloudTransferFinishedForRetention(
+                    CloudAlbumTransferMode.COPY,
+                    listOf(CloudAlbumCopyItemState.COPIED, unfinished)
+                )
+            )
+            assertFalse(
+                isCloudTransferFinishedForRetention(
+                    CloudAlbumTransferMode.MOVE,
+                    listOf(CloudAlbumCopyItemState.MOVED, unfinished)
+                )
+            )
+        }
+
+        // A successful destination upload alone must not imply that a MOVE
+        // has finished deleting its original source.
+        assertFalse(
+            isCloudTransferFinishedForRetention(
+                CloudAlbumTransferMode.MOVE,
+                listOf(CloudAlbumCopyItemState.COPIED, CloudAlbumCopyItemState.ALREADY_PRESENT)
+            )
+        )
+        assertFalse(
+            isCloudTransferFinishedForRetention(
+                CloudAlbumTransferMode.COPY,
+                listOf(CloudAlbumCopyItemState.MOVED)
+            )
+        )
     }
 
     private fun cloudUri(type: ProviderType, configId: Long, remoteId: String) = CloudUri(
