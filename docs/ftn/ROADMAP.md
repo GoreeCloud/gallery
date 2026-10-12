@@ -7,6 +7,10 @@
 - [x] Identify ReFra upstream revision and Apache-2.0 license
 - [x] Import source independently without activating upstream release workflows
 - [x] Isolate Android Development identity and start with offline/least-privilege settings
+- [x] Disable Android app auto-backup, exclude app-owned files from Android cloud/device transfer rules, and disable cleartext connections by default at source level
+- [x] Add static source-policy assertions for private-data backup and network defaults
+- [ ] Confirm protection in the actual merged APK manifest on a representative Android version
+- [ ] Resolve Android SDK configuration on authorized development laptop (Gradle 9.5.0 initializes, :app:tasks fails: SDK location not found)
 - [ ] Verify all inherited licenses including ML assets and native codecs
 - [ ] Perform a clean Android build and inspect merged manifest permissions and providers
 - [ ] Test upgrade/install and app profile isolation
