@@ -118,6 +118,8 @@ class CloudUriTest {
         val first = remoteStub(ProviderType.IMMICH)
         registry._providers[11L] = first
         assertSame(first, registry.resolveRemote(ProviderType.IMMICH, -1L))
+        assertNull(registry.resolveRemote(ProviderType.IMMICH, 0L))
+        assertNull(registry.resolveRemote(ProviderType.IMMICH, -2L))
         registry._providers[22L] = remoteStub(ProviderType.IMMICH)
         assertNull(registry.resolveRemote(ProviderType.IMMICH, -1L))
         assertNull(registry.resolveRemote(ProviderType.SMB, -1L))
