@@ -1,0 +1,38 @@
+*.iml
+.gradle
+/local.properties
+/.idea
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+api.properties
+/.kotlin
+/.vscode
+/.windsurf
+/.devin
+AGENTS.md
+CONTEXT.md
+**/build
+**/.kotlin
+
+# Signing material (PQC hybrid signing)
+new_release.jks
+*.lineage
+*.keystore
+
+# others
+skills-lock.json
+.agents/
+yolo_vs_sam/
+
+ml-models/segment/
+
+# >>> ml-models split (managed)
+ml-models/src/main/assets/arcface.onnx
+# <<< ml-models split (managed)
+
+/scripts/native/sources/
+/testing
