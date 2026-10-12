@@ -55,6 +55,8 @@ resolver = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/core/CloudUri.kt")
 assert "configId > 0L -> getByConfigId(configId)?.takeIf { it.providerType == providerType }" in resolver
 assert "configId == -1L -> getAllForType(providerType).singleOrNull()" in resolver
 assert "else -> null" in resolver
+assert 'val accountFields = parts.filter' in resolver
+assert 'accountFields.size > 1 || accountFields.any { !it.startsWith("cfg=") }' in resolver
 assert 'params["cfg"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null' in resolver
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
