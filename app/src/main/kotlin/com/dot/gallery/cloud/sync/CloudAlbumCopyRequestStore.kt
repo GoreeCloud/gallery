@@ -51,8 +51,14 @@ internal fun CloudAlbumCopyItemState.isTransferFailure(): Boolean =
 internal fun shouldBeginCloudMoveCleanup(
     mode: CloudAlbumTransferMode,
     states: List<CloudAlbumCopyItemState>
-): Boolean = mode == CloudAlbumTransferMode.MOVE && states.none {
-    it == CloudAlbumCopyItemState.FAILED || it == CloudAlbumCopyItemState.ATTACH_PENDING
+): Boolean = mode == CloudAlbumTransferMode.MOVE && states.isNotEmpty() && states.all {
+    // Cleanup may delete the cloud source: every destination must already
+    // exist before starting it, including after an interrupted/retried move.
+    it == CloudAlbumCopyItemState.COPIED ||
+        it == CloudAlbumCopyItemState.ALREADY_PRESENT ||
+        it == CloudAlbumCopyItemState.SOURCE_DELETE_PENDING ||
+        it == CloudAlbumCopyItemState.SOURCE_RETAINED ||
+        it == CloudAlbumCopyItemState.MOVED
 }
 
 @Serializable
@@ -75,6 +81,17 @@ data class CloudAlbumCopyRequest(
     val createdAt: Long,
     val items: List<CloudAlbumCopyItem>
 )
+
+// Transfer request JSON files are durable recovery records, even when an
+// interrupted copy or MOVE is older than the temporary-file retention window.
+// Only orphaned staging files may be automatically pruned.
+private const val STALE_TRANSFER_TEMP_RETENTION_MS = 7L * 24L * 60L * 60L * 1000L
+private val STALE_TRANSFER_TEMP_PATTERN = Regex("""\.[0-9a-fA-F-]{36}\.tmp""")
+
+internal fun shouldPruneCloudTransferTempFile(name: String, lastModifiedMs: Long, nowMs: Long): Boolean =
+    STALE_TRANSFER_TEMP_PATTERN.matches(name) &&
+        lastModifiedMs > 0L && nowMs >= lastModifiedMs &&
+        nowMs - lastModifiedMs > STALE_TRANSFER_TEMP_RETENTION_MS
 
 @Singleton
 class CloudAlbumCopyRequestStore @Inject constructor(
@@ -170,13 +187,12 @@ class CloudAlbumCopyRequestStore @Inject constructor(
     private fun pruneLocked(now: Long) {
         if (!directory.isDirectory) return
         directory.listFiles().orEmpty()
-            .filter { it.isFile && now - it.lastModified() > RETENTION_MS }
+            .filter { it.isFile && shouldPruneCloudTransferTempFile(it.name, it.lastModified(), now) }
             .forEach(File::delete)
     }
 
     companion object {
         private const val DIRECTORY = "cloud-album-copy"
-        private const val RETENTION_MS = 7L * 24L * 60L * 60L * 1000L
         private val ID_PATTERN = Regex("[0-9a-fA-F-]{36}")
     }
 }

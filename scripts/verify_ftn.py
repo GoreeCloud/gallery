@@ -51,6 +51,28 @@ for permission in ("INTERNET", "MANAGE_EXTERNAL_STORAGE", "ACCESS_WIFI_STATE",
                    "CHANGE_WIFI_MULTICAST_STATE", "ACCESS_FINE_LOCATION"):
     assert f'"android.permission.{permission}"' in gradle, permission
 assert "if (isOffline)" in gradle and "stripPermissions.set(" in gradle
+resolver = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/core/CloudUri.kt").read_text()
+assert "configId > 0L -> getByConfigId(configId)?.takeIf { it.providerType == providerType }" in resolver
+assert "configId == -1L -> getAllForType(providerType).singleOrNull()" in resolver
+assert "else -> null" in resolver
+assert 'val accountFields = parts.filter' in resolver
+assert 'accountFields.size > 1 || accountFields.any { !it.startsWith("cfg=") }' in resolver
+assert 'params["cfg"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null' in resolver
+# The targeted offline unit test must remain isolated without mutating full-suite sources.
+unit_gradle = (ROOT / "app/build.gradle.kts").read_text()
+unit_ci = (ROOT / ".github/workflows/android-kotlin.yml").read_text()
+assert 'getByName("test").setRoot("src/accountUriTest")' in unit_gradle
+assert '-PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest' in unit_ci
+assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt' in unit_ci
+assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt' in unit_ci
+assert '--tests com.dot.gallery.cloud.CloudTransferPolicyTest' in unit_ci
+# Fail closed if a queued MOVE loses the durable transfer-state record.
+# Static guard only; the Android worker and interruption tests remain required.
+worker = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/sync/CloudAlbumCopyWorker.kt").read_text()
+publish = worker.split("private suspend fun publishItem(", 1)[1].split("private suspend fun finishRequest(", 1)[0]
+assert "val persisted = store.update(requestId) { updated }" in publish
+assert '?: throw IOException("Cloud transfer request disappeared before state could be saved")' in publish
+assert "return persisted" in publish
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()

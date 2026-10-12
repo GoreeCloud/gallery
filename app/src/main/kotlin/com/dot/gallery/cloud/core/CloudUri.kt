@@ -62,9 +62,12 @@ data class CloudUri(
             if (remoteId.isEmpty()) return null
 
             val params = if (queryStart != -1) {
-                pathAndQuery.substring(queryStart + 1)
-                    .split('&')
-                    .mapNotNull { p ->
+                val parts = pathAndQuery.substring(queryStart + 1).split('&')
+                // Duplicated, incomplete or alternate-case account identities
+                // must never be reduced to an unrelated legacy lookup.
+                val accountFields = parts.filter { it.substringBefore('=').equals("cfg", ignoreCase = true) }
+                if (accountFields.size > 1 || accountFields.any { !it.startsWith("cfg=") }) return null
+                parts.mapNotNull { p ->
                         val idx = p.indexOf('=')
                         if (idx == -1) null else p.substring(0, idx) to p.substring(idx + 1)
                     }
@@ -77,7 +80,9 @@ data class CloudUri(
                 size = params["size"] ?: "preview",
                 typeParam = params["type"],
                 fileId = params["fileId"],
-                configId = params["cfg"]?.toLongOrNull() ?: -1L
+                configId = if ("cfg" in params) {
+                    params["cfg"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null
+                } else -1L
             )
         }
     }
@@ -85,8 +90,12 @@ data class CloudUri(
 
 /**
  * Resolve the [RemoteMediaProvider] for a parsed cloud URI: prefer the exact account instance
- * ([CloudUri.configId]) and fall back to the first instance of the type for back-compat with
- * URIs minted before the `cfg` query param existed.
+ * ([CloudUri.configId]); never fall back to a different account if it is missing.
+ * Legacy URIs without `cfg` work only if exactly one account of this type exists.
  */
 fun ProviderRegistry.resolveRemote(providerType: ProviderType, configId: Long): RemoteMediaProvider? =
-    ((if (configId > 0L) getByConfigId(configId) else null) ?: get(providerType)) as? RemoteMediaProvider
+    (when {
+        configId > 0L -> getByConfigId(configId)?.takeIf { it.providerType == providerType }
+        configId == -1L -> getAllForType(providerType).singleOrNull()
+        else -> null
+    }) as? RemoteMediaProvider
