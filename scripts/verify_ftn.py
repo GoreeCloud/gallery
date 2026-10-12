@@ -58,6 +58,13 @@ assert "else -> null" in resolver
 assert 'val accountFields = parts.filter' in resolver
 assert 'accountFields.size > 1 || accountFields.any { !it.startsWith("cfg=") }' in resolver
 assert 'params["cfg"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null' in resolver
+store = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/sync/CloudAlbumCopyRequestStore.kt").read_text()
+assert "target.delete()" not in store
+assert "temporary.renameTo(target)" not in store
+assert "replaceCloudRequestSnapshot(temporary.toPath(), target.toPath())" in store
+assert "shouldPruneCloudTransferTempFile(it.name, it.lastModified(), now)" in store
+assert "isCloudTransferFinishedForRetention" not in store
+
 # The targeted offline unit test must remain isolated without mutating full-suite sources.
 unit_gradle = (ROOT / "app/build.gradle.kts").read_text()
 unit_ci = (ROOT / ".github/workflows/android-kotlin.yml").read_text()
@@ -66,6 +73,7 @@ assert '-PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt' in unit_ci
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt' in unit_ci
 assert '--tests com.dot.gallery.cloud.CloudTransferPolicyTest' in unit_ci
+assert "--tests com.dot.gallery.cloud.CloudRequestSnapshotTest" in unit_ci
 # Fail closed if a queued MOVE loses the durable transfer-state record.
 # Static guard only; the Android worker and interruption tests remain required.
 worker = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/sync/CloudAlbumCopyWorker.kt").read_text()

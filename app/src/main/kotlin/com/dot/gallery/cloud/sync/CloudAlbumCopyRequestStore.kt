@@ -19,6 +19,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.nio.file.CopyOption
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.UUID
 import javax.inject.Inject
@@ -93,6 +96,18 @@ internal fun shouldPruneCloudTransferTempFile(name: String, lastModifiedMs: Long
         lastModifiedMs > 0L && nowMs >= lastModifiedMs &&
         nowMs - lastModifiedMs > STALE_TRANSFER_TEMP_RETENTION_MS
 
+internal fun replaceCloudRequestSnapshot(
+    temporary: Path,
+    target: Path,
+    move: (Path, Path, Array<out CopyOption>) -> Path = { src, dst, options -> Files.move(src, dst, *options) }
+) {
+    try {
+        move(temporary, target, arrayOf(StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING))
+    } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+        move(temporary, target, arrayOf(StandardCopyOption.REPLACE_EXISTING))
+    }
+}
+
 @Singleton
 class CloudAlbumCopyRequestStore @Inject constructor(
     @ApplicationContext context: Context
@@ -165,17 +180,11 @@ class CloudAlbumCopyRequestStore @Inject constructor(
         check(directory.exists() || directory.mkdirs())
         val target = requestFile(request.id)
         val temporary = File(directory, ".${request.id}.tmp")
-        temporary.writeText(json.encodeToString(request))
-        runCatching {
-            java.nio.file.Files.move(
-                temporary.toPath(),
-                target.toPath(),
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING
-            )
-        }.getOrElse {
-            check(!target.exists() || target.delete())
-            check(temporary.renameTo(target))
+        try {
+            temporary.writeText(json.encodeToString(request))
+            replaceCloudRequestSnapshot(temporary.toPath(), target.toPath())
+        } finally {
+            temporary.delete()
         }
     }
 
