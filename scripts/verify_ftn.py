@@ -64,6 +64,8 @@ unit_ci = (ROOT / ".github/workflows/android-kotlin.yml").read_text()
 assert 'getByName("test").setRoot("src/accountUriTest")' in unit_gradle
 assert '-PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest' in unit_ci
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt' in unit_ci
+assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt' in unit_ci
+assert '--tests com.dot.gallery.cloud.CloudTransferPolicyTest' in unit_ci
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
