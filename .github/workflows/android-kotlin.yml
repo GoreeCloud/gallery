@@ -21,5 +21,9 @@ jobs:
           packages: "platform-tools"
       - run: sdkmanager --channel=3 --install "platforms;android-37.0" "ndk;29.0.14206865" "cmake;3.31.6"
       - run: ./gradlew :app:compileUniversalNoMLDebugKotlin --no-daemon --console plain
+      - name: Stage isolated account URI regression source
+        run: |
+          mkdir -p app/src/accountUriTest/java/com/dot/gallery/cloud
+          cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt app/src/accountUriTest/java/com/dot/gallery/cloud/CloudUriTest.kt
       - name: Test cloud account URI isolation
-        run: ./gradlew :app:testUniversalNoMLDebugUnitTest --tests com.dot.gallery.cloud.CloudUriTest --no-daemon --console plain
+        run: ./gradlew :app:testUniversalNoMLDebugUnitTest -PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest --no-daemon --console plain
