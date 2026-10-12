@@ -22,19 +22,19 @@
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
     <!-- Required to download Map Preview for Media and FCast media serving -->
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
 
     <!-- Android 17+ requires runtime approval for direct connections to LAN addresses. -->
-    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK"/>
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" tools:node="remove" />
 
     <!-- Required for FCast device discovery and media streaming -->
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" tools:node="remove" />
 
     <!-- Required to read the current Wi-Fi SSID for cloud local/external URL switching.
          Stripped from the offline variant (see manifestConfig in app/build.gradle.kts). -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
 
     <!-- Remove unwanted permissions from being added -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>
@@ -58,7 +58,7 @@
         (OPTIONAL)
         Requested to create albums outside Internal Storage/Pictures or Internal Storage/DCIM
     -->
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:node="remove" />
     <!-- Foreground service type required for encryption/decryption background tasks on SDK 34+ -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
