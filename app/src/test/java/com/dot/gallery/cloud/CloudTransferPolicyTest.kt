@@ -14,6 +14,7 @@ import com.dot.gallery.cloud.sync.CloudAlbumCopyItemState
 import com.dot.gallery.cloud.sync.CloudAlbumTransferMode
 import com.dot.gallery.cloud.sync.isTransferFailure
 import com.dot.gallery.cloud.sync.shouldBeginCloudMoveCleanup
+import com.dot.gallery.cloud.sync.shouldPruneCloudTransferTempFile
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -136,6 +137,32 @@ class CloudTransferPolicyTest {
         assertTrue(CloudAlbumCopyItemState.SOURCE_DELETE_PENDING.isTransferFailure())
         assertTrue(CloudAlbumCopyItemState.SOURCE_RETAINED.isTransferFailure())
         assertFalse(CloudAlbumCopyItemState.MOVED.isTransferFailure())
+    }
+
+    @Test
+    fun unfinishedCloudTransferRecordsAreNeverAgePruned() {
+        val uuid = "123e4567-e89b-12d3-a456-426614174000"
+        val now = 20L * 24 * 60 * 60 * 1000
+        val old = now - 10L * 24 * 60 * 60 * 1000
+        // Completed requests are explicitly deleted; even old failed/pending
+        // durable JSON records must remain for recovery and retries.
+        assertFalse(shouldPruneCloudTransferTempFile("$uuid.json", old, now))
+        assertFalse(shouldPruneCloudTransferTempFile(".$uuid.json", old, now))
+        assertFalse(shouldPruneCloudTransferTempFile("other.json", old, now))
+    }
+
+    @Test
+    fun onlyOldOwnedTransferStagingFilesMayBeAgePruned() {
+        val uuid = "123e4567-e89b-12d3-a456-426614174000"
+        val name = ".$uuid.tmp"
+        val dayMs = 24L * 60 * 60 * 1000
+        val now = 20L * dayMs
+        assertTrue(shouldPruneCloudTransferTempFile(name, now - 8L * dayMs, now))
+        assertFalse(shouldPruneCloudTransferTempFile(name, now - 7L * dayMs, now))
+        assertFalse(shouldPruneCloudTransferTempFile(name, now - dayMs, now))
+        assertFalse(shouldPruneCloudTransferTempFile(name, now + dayMs, now))
+        assertFalse(shouldPruneCloudTransferTempFile(name, 0L, now))
+        assertFalse(shouldPruneCloudTransferTempFile("unrelated.tmp", now - 8L * dayMs, now))
     }
 
     private fun cloudUri(type: ProviderType, configId: Long, remoteId: String) = CloudUri(
