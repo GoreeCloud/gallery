@@ -67,6 +67,15 @@ assert "AtomicMoveNotSupportedException" in store
 assert "StandardCopyOption.ATOMIC_MOVE" in store
 assert store.count("StandardCopyOption.REPLACE_EXISTING") >= 2
 assert "temporary.delete()" in store
+assert "replaceCloudRequestSnapshot(temporary.toPath(), target.toPath())" in store
+assert "Files.move(source, destination, *options)" in store
+
+# Regress success and two distinct failure paths, not just source patterns.
+snapshot_test = (ROOT / "app/src/test/java/com/dot/gallery/cloud/CloudRequestSnapshotTest.kt").read_text()
+for test in ("unsupportedAtomicMoveReplacesCompleteSnapshotWithoutPredelete",
+             "failedFallbackPreservesPreviousSnapshotAndPropagatesFailure",
+             "unrelatedAtomicWriteFailureDoesNotTriggerFallbackOrEraseRecovery"):
+    assert test in snapshot_test
 
 # The targeted offline unit test must remain isolated without mutating full-suite sources.
 unit_gradle = (ROOT / "app/build.gradle.kts").read_text()
@@ -76,6 +85,8 @@ assert '-PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt' in unit_ci
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt' in unit_ci
 assert '--tests com.dot.gallery.cloud.CloudTransferPolicyTest' in unit_ci
+assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudRequestSnapshotTest.kt' in unit_ci
+assert '--tests com.dot.gallery.cloud.CloudRequestSnapshotTest' in unit_ci
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()

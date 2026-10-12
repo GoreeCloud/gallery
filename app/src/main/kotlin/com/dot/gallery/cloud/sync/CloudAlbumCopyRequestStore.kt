@@ -19,6 +19,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.io.File
+import java.nio.file.CopyOption
+import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.UUID
 import javax.inject.Inject
@@ -81,6 +84,24 @@ data class CloudAlbumCopyRequest(
     val createdAt: Long,
     val items: List<CloudAlbumCopyItem>
 )
+
+/**
+ * Persist a complete request snapshot without deleting the previous recovery record.
+ * A controllable mover makes unsupported-atomic and failed-fallback behavior testable.
+ */
+internal fun replaceCloudRequestSnapshot(
+    temporary: Path,
+    target: Path,
+    move: (Path, Path, Array<out CopyOption>) -> Path = { source, destination, options ->
+        Files.move(source, destination, *options)
+    }
+) {
+    try {
+        move(temporary, target, arrayOf(StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING))
+    } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+        move(temporary, target, arrayOf(StandardCopyOption.REPLACE_EXISTING))
+    }
+}
 
 @Singleton
 class CloudAlbumCopyRequestStore @Inject constructor(
@@ -156,22 +177,7 @@ class CloudAlbumCopyRequestStore @Inject constructor(
         val temporary = File(directory, ".${request.id}.tmp")
         try {
             temporary.writeText(json.encodeToString(request))
-            try {
-                java.nio.file.Files.move(
-                    temporary.toPath(),
-                    target.toPath(),
-                    StandardCopyOption.ATOMIC_MOVE,
-                    StandardCopyOption.REPLACE_EXISTING
-                )
-            } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
-                // Do not delete the previous request before a replacement is ready.
-                // A failure here preserves the old request for recovery.
-                java.nio.file.Files.move(
-                    temporary.toPath(),
-                    target.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING
-                )
-            }
+            replaceCloudRequestSnapshot(temporary.toPath(), target.toPath())
         } finally {
             temporary.delete()
         }
