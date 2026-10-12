@@ -91,4 +91,8 @@ data class CloudUri(
  * Legacy URIs without `cfg` work only if exactly one account of this type exists.
  */
 fun ProviderRegistry.resolveRemote(providerType: ProviderType, configId: Long): RemoteMediaProvider? =
-    (if (configId > 0L) getByConfigId(configId)?.takeIf { it.providerType == providerType } else getAllForType(providerType).singleOrNull()) as? RemoteMediaProvider
+    (when {
+        configId > 0L -> getByConfigId(configId)?.takeIf { it.providerType == providerType }
+        configId == -1L -> getAllForType(providerType).singleOrNull()
+        else -> null
+    }) as? RemoteMediaProvider
