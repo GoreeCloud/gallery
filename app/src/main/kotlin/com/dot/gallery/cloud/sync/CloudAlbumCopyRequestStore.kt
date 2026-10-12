@@ -82,6 +82,29 @@ data class CloudAlbumCopyRequest(
     val items: List<CloudAlbumCopyItem>
 )
 
+/**
+ * Persist a completed transfer-state snapshot without deleting the prior snapshot on failure.
+ * Only unsupported atomic moves retry without ATOMIC_MOVE; all other errors fail closed.
+ *
+ * The injectable mover permits deterministic JVM coverage of filesystems without atomic
+ * rename support, without requiring an actual unsupported filesystem in CI.
+ */
+internal fun replaceCloudCopyRequestFile(
+    temporary: java.nio.file.Path,
+    target: java.nio.file.Path,
+    mover: (java.nio.file.Path, java.nio.file.Path, Array<out java.nio.file.CopyOption>) -> Unit =
+        { from, to, options ->
+            java.nio.file.Files.move(from, to, *options)
+            Unit
+        }
+) {
+    try {
+        mover(temporary, target, arrayOf(StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING))
+    } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+        mover(temporary, target, arrayOf(StandardCopyOption.REPLACE_EXISTING))
+    }
+}
+
 @Singleton
 class CloudAlbumCopyRequestStore @Inject constructor(
     @ApplicationContext context: Context
@@ -155,17 +178,7 @@ class CloudAlbumCopyRequestStore @Inject constructor(
         val target = requestFile(request.id)
         val temporary = File(directory, ".${request.id}.tmp")
         temporary.writeText(json.encodeToString(request))
-        runCatching {
-            java.nio.file.Files.move(
-                temporary.toPath(),
-                target.toPath(),
-                StandardCopyOption.ATOMIC_MOVE,
-                StandardCopyOption.REPLACE_EXISTING
-            )
-        }.getOrElse {
-            check(!target.exists() || target.delete())
-            check(temporary.renameTo(target))
-        }
+        replaceCloudCopyRequestFile(temporary.toPath(), target.toPath())
     }
 
     private fun requestFile(id: String): File {
