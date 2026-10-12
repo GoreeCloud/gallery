@@ -58,6 +58,16 @@ assert "else -> null" in resolver
 assert 'val accountFields = parts.filter' in resolver
 assert 'accountFields.size > 1 || accountFields.any { !it.startsWith("cfg=") }' in resolver
 assert 'params["cfg"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null' in resolver
+# A failed atomic rename must never pre-delete a persisted cloud transfer request.
+# This is a source regression guard; filesystem failure behavior still needs runtime tests.
+store = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/sync/CloudAlbumCopyRequestStore.kt").read_text()
+assert "target.delete()" not in store
+assert "temporary.renameTo(target)" not in store
+assert "AtomicMoveNotSupportedException" in store
+assert "StandardCopyOption.ATOMIC_MOVE" in store
+assert store.count("StandardCopyOption.REPLACE_EXISTING") >= 2
+assert "temporary.delete()" in store
+
 # The targeted offline unit test must remain isolated without mutating full-suite sources.
 unit_gradle = (ROOT / "app/build.gradle.kts").read_text()
 unit_ci = (ROOT / ".github/workflows/android-kotlin.yml").read_text()
