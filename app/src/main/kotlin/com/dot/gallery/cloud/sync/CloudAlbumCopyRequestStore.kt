@@ -96,6 +96,18 @@ internal fun shouldPruneCloudTransferTempFile(name: String, lastModifiedMs: Long
         lastModifiedMs > 0L && nowMs >= lastModifiedMs &&
         nowMs - lastModifiedMs > STALE_TRANSFER_TEMP_RETENTION_MS
 
+internal fun replaceCloudRequestSnapshot(
+    temporary: Path,
+    target: Path,
+    move: (Path, Path, Array<out CopyOption>) -> Path = { src, dst, options -> Files.move(src, dst, *options) }
+) {
+    try {
+        move(temporary, target, arrayOf(StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING))
+    } catch (_: java.nio.file.AtomicMoveNotSupportedException) {
+        move(temporary, target, arrayOf(StandardCopyOption.REPLACE_EXISTING))
+    }
+}
+
 @Singleton
 class CloudAlbumCopyRequestStore @Inject constructor(
     @ApplicationContext context: Context
