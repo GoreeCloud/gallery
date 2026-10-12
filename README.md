@@ -26,6 +26,8 @@ Do not publish a build from this initial import without reviewing merged permiss
 ## Migration and attribution
 
 - [Fork-To-Native roadmap](docs/ftn/ROADMAP.md)
+- [Features and Capabilities Catalog](docs/FEATURES_AND_CAPABILITIES.md) — proposed 18-section scope, not implementation evidence
+- [Editable DOCX catalog in GoreeCloud Drive](https://docs.google.com/document/d/1wXQzRwkEj4T_16sa-jlNXGVAfo5ww1C7/edit) — planning reference
 - [Upstream provenance](UPSTREAM-PROVENANCE.md)
 - [Apache License 2.0](LICENSE)
 - [Preserved upstream README](docs/upstream/README.md)
