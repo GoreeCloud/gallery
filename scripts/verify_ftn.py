@@ -69,6 +69,13 @@ assert store.count("StandardCopyOption.REPLACE_EXISTING") >= 2
 assert "temporary.delete()" in store
 assert "replaceCloudRequestSnapshot(temporary.toPath(), target.toPath())" in store
 assert "Files.move(source, destination, *options)" in store
+assert "isCloudTransferFinishedForRetention(" in store
+assert "request.id == file.nameWithoutExtension" in store
+assert "file.extension == \"json\"" in store
+assert "request.items.map(CloudAlbumCopyItem::state)" in store
+assert ".forEach(File::delete)" not in store
+transfer_tests = (ROOT / "app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt").read_text()
+assert "retentionExpiresOnlyFullyCompletedCopyOrMoveOperations" in transfer_tests
 
 # Regress success and two distinct failure paths, not just source patterns.
 snapshot_test = (ROOT / "app/src/test/java/com/dot/gallery/cloud/CloudRequestSnapshotTest.kt").read_text()

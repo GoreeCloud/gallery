@@ -64,6 +64,18 @@ internal fun shouldBeginCloudMoveCleanup(
         it == CloudAlbumCopyItemState.MOVED
 }
 
+/** Only fully completed cloud copy/move jobs qualify for normal expiry. */
+internal fun isCloudTransferFinishedForRetention(
+    mode: CloudAlbumTransferMode,
+    states: List<CloudAlbumCopyItemState>
+): Boolean = states.isNotEmpty() && states.all { state ->
+    when (mode) {
+        CloudAlbumTransferMode.COPY ->
+            state == CloudAlbumCopyItemState.COPIED || state == CloudAlbumCopyItemState.ALREADY_PRESENT
+        CloudAlbumTransferMode.MOVE -> state == CloudAlbumCopyItemState.MOVED
+    }
+}
+
 @Serializable
 data class CloudAlbumCopyItem(
     val media: Media,
@@ -191,8 +203,27 @@ class CloudAlbumCopyRequestStore @Inject constructor(
     private fun pruneLocked(now: Long) {
         if (!directory.isDirectory) return
         directory.listFiles().orEmpty()
-            .filter { it.isFile && now - it.lastModified() > RETENTION_MS }
-            .forEach(File::delete)
+            .filter { file ->
+                file.isFile &&
+                    file.extension == "json" &&
+                    ID_PATTERN.matches(file.nameWithoutExtension) &&
+                    file.lastModified() <= now &&
+                    now - file.lastModified() > RETENTION_MS
+            }
+            .forEach { file ->
+                val request = runCatching {
+                    json.decodeFromString<CloudAlbumCopyRequest>(file.readText())
+                }.getOrNull()
+                if (request != null &&
+                    request.id == file.nameWithoutExtension &&
+                    isCloudTransferFinishedForRetention(
+                        request.mode,
+                        request.items.map(CloudAlbumCopyItem::state)
+                    )
+                ) {
+                    file.delete()
+                }
+            }
     }
 
     companion object {
