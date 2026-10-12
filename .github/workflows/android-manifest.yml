@@ -20,8 +20,11 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools"
       - name: Install pinned SDK and build requirements
-        run: $ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager --install "platforms;android-37" "ndk;29.0.14206865" "cmake;3.31.6"
+        run: sdkmanager --install "platforms;android-37" "ndk;29.0.14206865" "cmake;3.31.6"
       - name: Compile merged Android manifest
         run: ./gradlew :app:processUniversalNoMLDebugMainManifest --no-daemon --console=plain
       - name: Verify offline permissions and backup policy
