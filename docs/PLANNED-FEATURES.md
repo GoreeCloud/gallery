@@ -1,6 +1,6 @@
 <!-- GoreeCloud Gallery: proposal-only feature scope. Implementation status must be verified against authoritative source and release evidence. -->
 
-> **Status: Proposed capability catalog, not an implementation or release claim.** This document preserves the owner-submitted 18-section feature scope. Individual capabilities require design, implementation, testing and verification before they can be reported as implemented. The editable Word catalog is stored in [GoreeCloud Feature Roadmap](https://docs.google.com/document/d/1wXQzRwkEj4T_16sa-jlNXGVAfo5ww1C7/edit). This Markdown file is the repository-native reference, not the authority for live application status.
+> **Status: Proposed capability catalog, not an implementation or release claim.** This document preserves the owner-submitted 18-section feature scope. Individual capabilities require design, implementation, testing and verification before they can be reported as implemented. This is the canonical repository-native planned-feature catalog migrated from the retired Drive folder on 2026-10-12; current application status remains subject to implementation and acceptance evidence.
 
 # GoreeCloud Gallery
 ## Features and Capabilities
