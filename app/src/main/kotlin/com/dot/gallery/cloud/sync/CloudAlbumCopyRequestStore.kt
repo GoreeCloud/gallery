@@ -203,8 +203,27 @@ class CloudAlbumCopyRequestStore @Inject constructor(
     private fun pruneLocked(now: Long) {
         if (!directory.isDirectory) return
         directory.listFiles().orEmpty()
-            .filter { it.isFile && now - it.lastModified() > RETENTION_MS }
-            .forEach(File::delete)
+            .filter { file ->
+                file.isFile &&
+                    file.extension == "json" &&
+                    ID_PATTERN.matches(file.nameWithoutExtension) &&
+                    file.lastModified() <= now &&
+                    now - file.lastModified() > RETENTION_MS
+            }
+            .forEach { file ->
+                val request = runCatching {
+                    json.decodeFromString<CloudAlbumCopyRequest>(file.readText())
+                }.getOrNull()
+                if (request != null &&
+                    request.id == file.nameWithoutExtension &&
+                    isCloudTransferFinishedForRetention(
+                        request.mode,
+                        request.items.map(CloudAlbumCopyItem::state)
+                    )
+                ) {
+                    file.delete()
+                }
+            }
     }
 
     companion object {
