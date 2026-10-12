@@ -23,6 +23,7 @@ manifestConfig {
                 "android.permission.MANAGE_EXTERNAL_STORAGE",
                 "android.permission.ACCESS_WIFI_STATE",
                 "android.permission.ACCESS_NETWORK_STATE",
+                "android.permission.ACCESS_LOCAL_NETWORK",
                 "android.permission.CHANGE_WIFI_MULTICAST_STATE",
                 "android.permission.ACCESS_FINE_LOCATION"
             )
