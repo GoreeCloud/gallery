@@ -1,10 +1,29 @@
-name: Android manifest gate
-on: [push, pull_request]
+name: Android offline manifest
+
+on:
+  pull_request:
+  push:
+    branches: ["ftn/**"]
+  workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
-  verify:
+  offline-manifest:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
-      - run: python3 scripts/verify_ftn.py
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+      - name: Install pinned SDK and build requirements
+        run: sdkmanager --install "platforms;android-37" "ndk;29.0.14206865" "cmake;3.31.6"
+      - name: Compile merged Android manifest
+        run: ./gradlew :app:processUniversalNoMLDebugMainManifest --no-daemon --console=plain
+      - name: Verify offline permissions and backup policy
+        run: python3 scripts/check_merged_manifest.py
