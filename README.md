@@ -1,35 +1,29 @@
 # GoreeCloud Gallery
 
-**Fork-To-Native • Android • Development (not Stable)**
+**Fork-To-Native · Android · Development — not Stable**
 
-GoreeCloud Gallery is being established as a GoreeCloud-owned, offline-first media gallery for Android. Its first source foundation imports [ReFra](https://github.com/IacobIonut01/ReFra), licensed under Apache-2.0. This is an independent source import into GoreeCloud/gallery, not an upstream GitHub fork, and not yet a finished native product.
+GoreeCloud Gallery is an offline-first Android photo and video gallery under independent GoreeCloud ownership. Its initial source was imported from the Apache-2.0 licensed [ReFra](https://github.com/IacobIonut01/ReFra). An upstream-source import is **not** completion of a native GoreeCloud application.
 
-## Verified foundation
+## Source and compatibility
 
-- Upstream source commit: 43facd9f5c9a44b21d07c116c23618f3e896097c (October 12, 2026 snapshot)
-- Development package: com.goreecloud.gallery.ftn (plus applicable build type suffixes)
-- Intended final package: com.goreecloud.gallery, only after explicit migration and validation
-- Stack: Kotlin, Jetpack Compose, Android/MediaStore, native codecs, optional on-device ML assets
-- Defaults: offline-first, no all-files access, external cloud providers disabled, insecure TLS not allowed
-- The imported source has not yet passed a GoreeCloud Android build or device acceptance
-- Glaze 1.7 migration remains required; imported upstream Compose styling is not accepted Glaze conformance
-- No public or Stable GoreeCloud build has been authorized or signed
+- Upstream source: `IacobIonut01/ReFra@43facd9f5c9a44b21d07c116c23618f3e896097c` (October 12, 2026 snapshot).
+- Development application ID: `com.goreecloud.gallery.ftn` (additional build-type suffixes may apply). The intended canonical ID `com.goreecloud.gallery` requires a separate accepted migration.
+- Stack: Android, Kotlin, Jetpack Compose, MediaStore, inherited native codecs and optional local ML models.
+- Default configuration: offline-first, no all-files access, no inherited cloud providers, and no insecure TLS.
+- Android private app-data backup is disabled and Android extraction rules exclude app-owned data at source level. Compiled manifest and device validation remain required.
+- Glaze 1.7 presentation, security/privacy and complete first-party feature ownership remain unfinished. No signed GoreeCloud release or Stable acceptance is claimed.
 
-## Source verification
+## Feature documentation
 
-    python3 scripts/verify_ftn.py
+- [Planned Features and Capabilities](docs/PLANNED-FEATURES.md) — canonical 18-section **proposal**, not implemented-feature evidence.
+- [Implemented Features](docs/IMPLEMENTED-FEATURES.md) — evidence-backed first-party implementation ledger; currently limited pending validation.
+- [Fork-To-Native Roadmap](docs/ftn/ROADMAP.md) — source transformation milestones, blockers and release gates.
+- [Upstream Provenance](UPSTREAM-PROVENANCE.md), [Apache-2.0 License](LICENSE) and [preserved upstream README](docs/upstream/README.md).
 
-For Android builds, use Android SDK 37, Java 17 and the pinned Android NDK/CMake plus dependencies declared in the source tree. Upstream ABI and ML variants are retained for migration analysis, not release approval.
+## Validation
 
-Do not publish a build from this initial import without reviewing merged permissions, third-party model and codec licensing, the Android signing/update identity, and representative-device behavior.
+Run `python3 scripts/verify_ftn.py` for deterministic source policy checks. GitHub Actions also attempts to compile the offline Android merged manifest and check removed permissions; review the latest CI result rather than assuming it passed.
 
-## Migration and attribution
+A release requires a clean Android build, merged-manifest checks, dependency and ML-model license review, real-device and profile testing, Glaze acceptance, security/privacy controls, and persistent Development signing plus upgrade/recovery evidence.
 
-- [Fork-To-Native roadmap](docs/ftn/ROADMAP.md)
-- [Features and Capabilities Catalog](docs/FEATURES_AND_CAPABILITIES.md) — proposed 18-section scope, not implementation evidence
-- [Editable DOCX catalog in GoreeCloud Drive](https://docs.google.com/document/d/1wXQzRwkEj4T_16sa-jlNXGVAfo5ww1C7/edit) — planning reference
-- [Upstream provenance](UPSTREAM-PROVENANCE.md)
-- [Apache License 2.0](LICENSE)
-- [Preserved upstream README](docs/upstream/README.md)
-
-ReFra's upstream feature set is a useful starting point, not proof those features work or are accepted in GoreeCloud Gallery. Existing first-party GoreeCloud Gallery work in other authorized repositories must be compared before migration; it has not been overwritten.
+Preserve and compare the earlier GoreeCloud Gallery lineage documented under `GoreeCloud/android-app-defaults`; this import does not establish feature parity or authorize replacing an existing Gallery installation.
