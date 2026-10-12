@@ -406,10 +406,14 @@ class CloudAlbumCopyWorker @AssistedInject constructor(
         item: CloudAlbumCopyItem
     ): CloudAlbumCopyRequest {
         val updated = updateItem(request, index, item)
-        store.update(requestId) { updated }
-        setProgress(progressData(updated, index + 1))
-        runCatching { setForeground(foregroundInfo(updated, index + 1)) }
-        return updated
+        // If the request was removed (for example, while cancelling), never
+        // continue with an unpersisted state. In MOVE mode that could otherwise
+        // allow source deletion without a durable record of the destination.
+        val persisted = store.update(requestId) { updated }
+            ?: throw IOException("Cloud transfer request disappeared before state could be saved")
+        setProgress(progressData(persisted, index + 1))
+        runCatching { setForeground(foregroundInfo(persisted, index + 1)) }
+        return persisted
     }
 
     private suspend fun finishRequest(
