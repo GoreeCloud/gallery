@@ -386,6 +386,11 @@ android {
                 )
             }
         }
+        // Use an isolated unit-test source root only for the offline URI regression.
+        // Normal full-feature test sources remain intact.
+        if (gradle.startParameter.projectProperties["goreecloudUriOnlyTests"] == "true") {
+            getByName("test").setRoot("src/accountUriTest")
+        }
         if (includeMaps) {
             getByName("test").kotlin.srcDir("src/mapsTest/kotlin")
         }
