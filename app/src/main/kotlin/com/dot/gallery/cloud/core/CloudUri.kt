@@ -89,4 +89,4 @@ data class CloudUri(
  * URIs minted before the `cfg` query param existed.
  */
 fun ProviderRegistry.resolveRemote(providerType: ProviderType, configId: Long): RemoteMediaProvider? =
-    ((if (configId > 0L) getByConfigId(configId) else null) ?: get(providerType)) as? RemoteMediaProvider
+    (if (configId > 0L) getByConfigId(configId)?.takeIf { it.providerType == providerType } else get(providerType)) as? RemoteMediaProvider

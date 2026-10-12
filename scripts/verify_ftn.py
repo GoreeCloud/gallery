@@ -42,6 +42,8 @@ for permission in ("INTERNET", "MANAGE_EXTERNAL_STORAGE", "ACCESS_WIFI_STATE",
                    "CHANGE_WIFI_MULTICAST_STATE", "ACCESS_FINE_LOCATION"):
     assert f'"android.permission.{permission}"' in gradle, permission
 assert "if (isOffline)" in gradle and "stripPermissions.set(" in gradle
+resolver = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/core/CloudUri.kt").read_text()
+assert "getByConfigId(configId)?.takeIf { it.providerType == providerType } else get(providerType)" in resolver
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
