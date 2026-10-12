@@ -66,6 +66,13 @@ assert '-PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt' in unit_ci
 assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt' in unit_ci
 assert '--tests com.dot.gallery.cloud.CloudTransferPolicyTest' in unit_ci
+# Fail closed if a queued MOVE loses the durable transfer-state record.
+# Static guard only; the Android worker and interruption tests remain required.
+worker = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/sync/CloudAlbumCopyWorker.kt").read_text()
+publish = worker.split("private suspend fun publishItem(", 1)[1].split("private suspend fun finishRequest(", 1)[0]
+assert "val persisted = store.update(requestId) { updated }" in publish
+assert '?: throw IOException("Cloud transfer request disappeared before state could be saved")' in publish
+assert "return persisted" in publish
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
