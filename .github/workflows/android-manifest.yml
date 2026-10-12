@@ -24,7 +24,7 @@ jobs:
         with:
           packages: "platform-tools"
       - name: Install pinned SDK and build requirements
-        run: sdkmanager --install "platforms;android-37" "ndk;29.0.14206865" "cmake;3.31.6"
+        run: sdkmanager --channel=3 --install "platforms;android-37" "ndk;29.0.14206865" "cmake;3.31.6"
       - name: Compile merged Android manifest
         run: ./gradlew :app:processUniversalNoMLDebugMainManifest --no-daemon --console=plain
       - name: Verify offline permissions and backup policy
