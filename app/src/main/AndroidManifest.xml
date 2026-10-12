@@ -22,7 +22,7 @@
     <uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION" />
 
     <!-- Required to download Map Preview for Media and FCast media serving -->
-    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
 
     <!-- Android 17+ requires runtime approval for direct connections to LAN addresses. -->
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK"/>
