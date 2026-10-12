@@ -21,6 +21,14 @@ assert '"android.permission.INTERNET"' in gradle
 assert '"android.permission.MANAGE_EXTERNAL_STORAGE"' in gradle
 assert re.search(r'(?m)^\s*<string name="app_name">GoreeCloud Gallery</string>',
                  (ROOT / "app/src/main/res/values/strings.xml").read_text())
+ANDROID = "{http://schemas.android.com/apk/res/android}"
+manifest = ET.parse(ROOT / "app/src/main/AndroidManifest.xml").getroot()
+app = manifest.find("application")
+assert app is not None and app.get(ANDROID + "allowBackup") == "false"
+legacy = ET.parse(ROOT / "app/src/main/res/xml/backup_rules.xml").getroot()
+assert {("root", "."), ("external", ".")} <= {
+    (entry.get("domain"), entry.get("path")) for entry in legacy.findall("exclude")
+}
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
