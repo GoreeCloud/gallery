@@ -6,11 +6,16 @@
 package com.dot.gallery.cloud
 
 import com.dot.gallery.cloud.core.CloudUri
+import com.dot.gallery.cloud.core.ProviderRegistry
 import com.dot.gallery.cloud.core.ProviderType
+import com.dot.gallery.cloud.core.capabilities.RemoteMediaProvider
+import com.dot.gallery.cloud.core.resolveRemote
 import com.dot.gallery.cloud.image.firstAvailableVideoFrame
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertNull
 import org.junit.Test
+import java.lang.reflect.Proxy
 
 /**
  * Pure-JVM tests for [CloudUri.parse] and [CloudUri.effectiveSize].
@@ -85,10 +90,49 @@ class CloudUriTest {
     }
 
     @Test
-    fun invalidCfgParamFallsBackToDefault() {
-        val uri = CloudUri.parse("cloud://IMMICH/x?cfg=notanumber")!!
-        assertEquals(-1L, uri.configId)
+    fun invalidExplicitAccountIdsFailClosed() {
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg=notanumber"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg=0"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg=-9"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg="))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg=9223372036854775808"))
+        assertEquals(-1L, CloudUri.parse("cloud://IMMICH/x")!!.configId)
     }
+
+    @Test
+    fun explicitCloudAccountIsNeverResolvedViaAnotherAccount() {
+        val registry = ProviderRegistry()
+        val first = remoteStub(ProviderType.IMMICH)
+        val second = remoteStub(ProviderType.IMMICH)
+        registry._providers[11L] = first
+        registry._providers[22L] = second
+
+        assertSame(second, registry.resolveRemote(ProviderType.IMMICH, 22L))
+        assertNull(registry.resolveRemote(ProviderType.IMMICH, 33L))
+        assertNull(registry.resolveRemote(ProviderType.WEBDAV, 11L))
+    }
+
+    @Test
+    fun legacyCloudUriFallsBackOnlyForExactlyOneMatchingAccount() {
+        val registry = ProviderRegistry()
+        val first = remoteStub(ProviderType.IMMICH)
+        registry._providers[11L] = first
+        assertSame(first, registry.resolveRemote(ProviderType.IMMICH, -1L))
+        registry._providers[22L] = remoteStub(ProviderType.IMMICH)
+        assertNull(registry.resolveRemote(ProviderType.IMMICH, -1L))
+        assertNull(registry.resolveRemote(ProviderType.SMB, -1L))
+    }
+
+    private fun remoteStub(type: ProviderType): RemoteMediaProvider =
+        Proxy.newProxyInstance(
+            RemoteMediaProvider::class.java.classLoader,
+            arrayOf(RemoteMediaProvider::class.java)
+        ) { _, method, _ ->
+            when (method.name) {
+                "getProviderType" -> type
+                else -> throw UnsupportedOperationException(method.name)
+            }
+        } as RemoteMediaProvider
 
     @Test
     fun effectiveSizeDowngradesPreviewForGridCells() {
