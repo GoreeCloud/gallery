@@ -56,6 +56,12 @@ assert "configId > 0L -> getByConfigId(configId)?.takeIf { it.providerType == pr
 assert "configId == -1L -> getAllForType(providerType).singleOrNull()" in resolver
 assert "else -> null" in resolver
 assert 'params["cfg"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null' in resolver
+# Keep the CI-only isolated JVM test arrangement explicit and reversible.
+test_gradle = (ROOT / "app/build.gradle.kts").read_text()
+test_ci = (ROOT / ".github/workflows/android-kotlin.yml").read_text()
+assert 'getByName("test").setRoot("src/accountUriTest")' in test_gradle
+assert '-PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest' in test_ci
+assert 'cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt' in test_ci
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
