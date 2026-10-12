@@ -100,6 +100,17 @@ class CloudUriTest {
     }
 
     @Test
+    fun rejectsAmbiguousOrIncompleteAccountQueryFields() {
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg&size=preview"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg=7&cfg=8"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg=7&cfg=7"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?CFG=7"))
+        assertNull(CloudUri.parse("cloud://IMMICH/x?cfg=7&Cfg=9"))
+        assertEquals(7L, CloudUri.parse("cloud://IMMICH/x?size=preview&cfg=7")!!.configId)
+    }
+
+    @Test
     fun explicitCloudAccountIsNeverResolvedViaAnotherAccount() {
         val registry = ProviderRegistry()
         val first = remoteStub(ProviderType.IMMICH)

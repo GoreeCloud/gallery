@@ -62,9 +62,12 @@ data class CloudUri(
             if (remoteId.isEmpty()) return null
 
             val params = if (queryStart != -1) {
-                pathAndQuery.substring(queryStart + 1)
-                    .split('&')
-                    .mapNotNull { p ->
+                val parts = pathAndQuery.substring(queryStart + 1).split('&')
+                // Duplicated, incomplete or alternate-case account identities
+                // must never be reduced to an unrelated legacy lookup.
+                val accountFields = parts.filter { it.substringBefore('=').equals("cfg", ignoreCase = true) }
+                if (accountFields.size > 1 || accountFields.any { !it.startsWith("cfg=") }) return null
+                parts.mapNotNull { p ->
                         val idx = p.indexOf('=')
                         if (idx == -1) null else p.substring(0, idx) to p.substring(idx + 1)
                     }
