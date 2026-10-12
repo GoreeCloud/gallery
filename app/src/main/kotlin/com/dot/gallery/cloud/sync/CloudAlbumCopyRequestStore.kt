@@ -51,8 +51,14 @@ internal fun CloudAlbumCopyItemState.isTransferFailure(): Boolean =
 internal fun shouldBeginCloudMoveCleanup(
     mode: CloudAlbumTransferMode,
     states: List<CloudAlbumCopyItemState>
-): Boolean = mode == CloudAlbumTransferMode.MOVE && states.none {
-    it == CloudAlbumCopyItemState.FAILED || it == CloudAlbumCopyItemState.ATTACH_PENDING
+): Boolean = mode == CloudAlbumTransferMode.MOVE && states.isNotEmpty() && states.all {
+    // Cleanup may delete the cloud source: every destination must already
+    // exist before starting it, including after an interrupted/retried move.
+    it == CloudAlbumCopyItemState.COPIED ||
+        it == CloudAlbumCopyItemState.ALREADY_PRESENT ||
+        it == CloudAlbumCopyItemState.SOURCE_DELETE_PENDING ||
+        it == CloudAlbumCopyItemState.SOURCE_RETAINED ||
+        it == CloudAlbumCopyItemState.MOVED
 }
 
 @Serializable

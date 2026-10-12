@@ -114,6 +114,25 @@ class CloudTransferPolicyTest {
                 listOf(CloudAlbumCopyItemState.COPIED, CloudAlbumCopyItemState.ALREADY_PRESENT)
             )
         )
+        assertFalse(shouldBeginCloudMoveCleanup(CloudAlbumTransferMode.MOVE, emptyList()))
+        assertFalse(
+            shouldBeginCloudMoveCleanup(
+                CloudAlbumTransferMode.MOVE,
+                listOf(CloudAlbumCopyItemState.COPIED, CloudAlbumCopyItemState.PENDING)
+            )
+        )
+        assertFalse(
+            shouldBeginCloudMoveCleanup(
+                CloudAlbumTransferMode.MOVE,
+                listOf(CloudAlbumCopyItemState.ALREADY_PRESENT, CloudAlbumCopyItemState.ATTACH_PENDING)
+            )
+        )
+        assertTrue(
+            shouldBeginCloudMoveCleanup(
+                CloudAlbumTransferMode.MOVE,
+                listOf(CloudAlbumCopyItemState.MOVED, CloudAlbumCopyItemState.SOURCE_DELETE_PENDING)
+            )
+        )
         assertTrue(CloudAlbumCopyItemState.SOURCE_DELETE_PENDING.isTransferFailure())
         assertTrue(CloudAlbumCopyItemState.SOURCE_RETAINED.isTransferFailure())
         assertFalse(CloudAlbumCopyItemState.MOVED.isTransferFailure())
