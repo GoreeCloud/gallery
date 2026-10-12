@@ -23,6 +23,15 @@ assert re.search(r'(?m)^\s*<string name="app_name">GoreeCloud Gallery</string>',
                  (ROOT / "app/src/main/res/values/strings.xml").read_text())
 ANDROID = "{http://schemas.android.com/apk/res/android}"
 manifest = ET.parse(ROOT / "app/src/main/AndroidManifest.xml").getroot()
+TOOLS = "{http://schemas.android.com/tools}"
+for permission in ("INTERNET", "MANAGE_EXTERNAL_STORAGE", "ACCESS_LOCAL_NETWORK",
+                   "ACCESS_FINE_LOCATION", "ACCESS_WIFI_STATE", "ACCESS_NETWORK_STATE",
+                   "CHANGE_WIFI_MULTICAST_STATE"):
+    matches = [
+        node for node in manifest.findall("uses-permission")
+        if node.get(ANDROID + "name") == "android.permission." + permission
+    ]
+    assert len(matches) == 1 and matches[0].get(TOOLS + "node") == "remove", permission
 app = manifest.find("application")
 assert app is not None and app.get(ANDROID + "allowBackup") == "false"
 legacy = ET.parse(ROOT / "app/src/main/res/xml/backup_rules.xml").getroot()
