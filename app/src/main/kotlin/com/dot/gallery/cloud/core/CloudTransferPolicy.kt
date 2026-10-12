@@ -25,7 +25,7 @@ fun shouldDeleteCloudSourceAfterTransfer(
     source: CloudUri,
     destination: CloudAlbumIdentity,
     destinationRemoteId: String?
-): Boolean = destinationRemoteId != null &&
+): Boolean = !destinationRemoteId.isNullOrBlank() &&
     (source.providerType != destination.providerType ||
         source.configId != destination.serverConfigId ||
         source.remoteId != destinationRemoteId)
