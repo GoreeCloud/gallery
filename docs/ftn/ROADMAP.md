@@ -15,6 +15,9 @@
 - [ ] Perform a clean Android build and inspect merged manifest permissions and providers
 - [ ] Test upgrade/install and app profile isolation
 
+- [x] Reconcile active branch with main's canonical Planned/Implemented feature ledgers and remove superseded duplicate catalog
+- [x] Introduce merged-Android-manifest CI gate (actual result remains under validation)
+
 ## GoreeCloud identity and feature preservation
 - [ ] Audit and replace remaining upstream branding, icons, external links and promotional components
 - [ ] Implement approved Stable Glaze 1.7 native tokens, components, interactions and adaptive layouts
