@@ -2,6 +2,7 @@
 """Dependency-free source policy checks; NOT an Android build/security audit."""
 from pathlib import Path
 import re
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 props = dict(
