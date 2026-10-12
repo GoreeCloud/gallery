@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GoreeCloud Gallery Fork-To-Native Development defaults to offline operation.
+  Explicit network features must use validated TLS and must not silently
+  re-enable HTTP cleartext for the entire application. Any future per-server
+  exception requires separate authorization, UI disclosure and testing.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+</network-security-config>

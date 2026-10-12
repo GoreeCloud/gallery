@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Fork-To-Native privacy gate: decline cloud backup of all app-private data.
+  Keep vault databases, preferences, authentication material and local metadata
+  out of system automatic backups until a reviewed, encrypted export/recovery
+  design is approved.
+-->
+<full-backup-content>
+    <exclude domain="root" path="." />
+    <exclude domain="external" path="." />
+</full-backup-content>

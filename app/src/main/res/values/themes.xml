@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Gallery" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+
+    <!-- windowSplashScreenBehavior=icon_preferred keeps the icon on every cold
+         start: without it, launches not initiated by a system surface (the app's
+         own restart after an icon change, notifications, deep links) get a
+         solid-color splash with no icon at all on API 33+. -->
+    <style name="Theme.Gallery.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splashColorBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+        <item name="postSplashScreenTheme">@style/Theme.Gallery</item>
+    </style>
+
+    <!-- Same splash treatment but with the legacy Gallery logo. Applied when a
+         Gallery-logo launcher alias is active: persisted through
+         SplashScreen.setSplashScreenTheme on API 31+, or set via Activity.setTheme
+         before installSplashScreen on older versions. -->
+    <style name="Theme.Gallery.Splash.Gallery" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splashColorBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_gallery_foreground</item>
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+        <item name="postSplashScreenTheme">@style/Theme.Gallery</item>
+    </style>
+
+    <!-- Same splash treatment but with the monochrome launcher glyph. Applied
+         while a monochrome launcher alias is active. -->
+    <style name="Theme.Gallery.Splash.Mono" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splashColorBackground</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground_monochrome</item>
+        <item name="android:windowSplashScreenBehavior">icon_preferred</item>
+        <item name="postSplashScreenTheme">@style/Theme.Gallery</item>
+    </style>
+
+</resources>
+
