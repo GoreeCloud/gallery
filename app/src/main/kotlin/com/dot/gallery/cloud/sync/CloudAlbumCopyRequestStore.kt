@@ -64,6 +64,18 @@ internal fun shouldBeginCloudMoveCleanup(
         it == CloudAlbumCopyItemState.MOVED
 }
 
+/** Only fully completed cloud copy/move jobs qualify for normal expiry. */
+internal fun isCloudTransferFinishedForRetention(
+    mode: CloudAlbumTransferMode,
+    states: List<CloudAlbumCopyItemState>
+): Boolean = states.isNotEmpty() && states.all { state ->
+    when (mode) {
+        CloudAlbumTransferMode.COPY ->
+            state == CloudAlbumCopyItemState.COPIED || state == CloudAlbumCopyItemState.ALREADY_PRESENT
+        CloudAlbumTransferMode.MOVE -> state == CloudAlbumCopyItemState.MOVED
+    }
+}
+
 @Serializable
 data class CloudAlbumCopyItem(
     val media: Media,
