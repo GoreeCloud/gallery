@@ -52,7 +52,9 @@ for permission in ("INTERNET", "MANAGE_EXTERNAL_STORAGE", "ACCESS_WIFI_STATE",
     assert f'"android.permission.{permission}"' in gradle, permission
 assert "if (isOffline)" in gradle and "stripPermissions.set(" in gradle
 resolver = (ROOT / "app/src/main/kotlin/com/dot/gallery/cloud/core/CloudUri.kt").read_text()
-assert "getByConfigId(configId)?.takeIf { it.providerType == providerType } else getAllForType(providerType).singleOrNull()" in resolver
+assert "configId > 0L -> getByConfigId(configId)?.takeIf { it.providerType == providerType }" in resolver
+assert "configId == -1L -> getAllForType(providerType).singleOrNull()" in resolver
+assert "else -> null" in resolver
 assert 'params["cfg"]?.toLongOrNull()?.takeIf { it > 0L } ?: return null' in resolver
 assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
