@@ -66,6 +66,11 @@ class CloudTransferPolicyTest {
         val sameAccount = CloudAlbumIdentity(ProviderType.SMB, 11L, "Camera")
 
         assertFalse(shouldDeleteCloudSourceAfterTransfer(source, sameAccount, null))
+        // A successful transfer must provide a real destination identity
+        // before a MOVE operation may delete its original source.
+        assertFalse(shouldDeleteCloudSourceAfterTransfer(source, sameAccount, ""))
+        assertFalse(shouldDeleteCloudSourceAfterTransfer(source, sameAccount, "  "))
+        assertFalse(shouldDeleteCloudSourceAfterTransfer(source, sameAccount, "\n"))
         assertFalse(
             shouldDeleteCloudSourceAfterTransfer(
                 source,
