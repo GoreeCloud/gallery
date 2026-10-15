@@ -13,6 +13,7 @@ import org.junit.Test
 class ExtractedFramePolicyTest {
     @Test
     fun onlyEligibleLocalImageRootsArePreserved() {
+        assertEquals("Pictures/GoreeCloud Gallery/Extracted Frames", ExtractedFrameDestination.FALLBACK)
         assertEquals("DCIM/Camera", ExtractedFrameDestination.resolve(FrameSourceKind.LOCAL, "DCIM/Camera/"))
         assertEquals("Pictures/Trips", ExtractedFrameDestination.resolve(FrameSourceKind.LOCAL, "/Pictures/Trips"))
         assertEquals(ExtractedFrameDestination.FALLBACK, ExtractedFrameDestination.resolve(FrameSourceKind.LOCAL, "Movies/Clips"))
