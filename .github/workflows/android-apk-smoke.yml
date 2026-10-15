@@ -1,0 +1,59 @@
+name: Gallery offline APK smoke
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "ml-models/**"
+      - "gradle/**"
+      - ".github/workflows/android-apk-smoke.yml"
+      - "scripts/check_merged_manifest.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  assemble-offline-noml:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools"
+      - name: Install Android toolchain
+        run: sdkmanager --channel=3 --install "platforms;android-37.0" "ndk;29.0.14206865" "cmake;3.31.6"
+      - name: Assemble offline NoML development APK
+        run: ./gradlew :app:assembleUniversalNoMLDebug --no-daemon --console plain
+      - name: Validate compiled privacy manifest
+        run: python3 scripts/check_merged_manifest.py
+      - name: Inspect generated APK without publishing it
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import zipfile
+          from pathlib import Path
+
+          root = Path("app/build/outputs/apk")
+          candidates = [p for p in root.rglob("*.apk") if "univers" in str(p).lower() and "noml" in str(p).lower() and "debug" in str(p).lower()]
+          if len(candidates) != 1:
+              raise SystemExit(f"Expected exactly one universal NoML debug APK, got {len(candidates)}: {candidates}")
+          apk = candidates[0]
+          with zipfile.ZipFile(apk) as archive:
+              bad = archive.testzip()
+              names = set(archive.namelist())
+              if bad:
+                  raise SystemExit(f"APK ZIP integrity failed at {bad}")
+              if "AndroidManifest.xml" not in names or "classes.dex" not in names:
+                  raise SystemExit("APK missing AndroidManifest.xml or classes.dex")
+          digest = hashlib.sha256(apk.read_bytes()).hexdigest()
+          print(f"PASS: APK assembled and ZIP validated; size={apk.stat().st_size}, sha256={digest}")
+          print("This is an ephemeral debug CI artifact, not a persistently signed Development release or verified device installation.")
+          PY
