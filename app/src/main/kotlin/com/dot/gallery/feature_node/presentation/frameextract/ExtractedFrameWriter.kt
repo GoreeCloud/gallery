@@ -17,7 +17,7 @@ import java.util.TimeZone
 import java.util.UUID
 
 object ExtractedFrameDestination {
-    const val FALLBACK = "Pictures/ReFra/Extracted Frames"
+    const val FALLBACK = "Pictures/GoreeCloud Gallery/Extracted Frames"
 
     fun resolve(sourceKind: FrameSourceKind, sourceRelativePath: String): String {
         if (sourceKind != FrameSourceKind.LOCAL) return FALLBACK

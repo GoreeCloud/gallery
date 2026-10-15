@@ -23,16 +23,15 @@ import java.util.zip.ZipOutputStream
 /**
  * Turns sanitized entries into share-ready artifacts: markdown clipboard text,
  * a zip diagnostics bundle (device info + JSONL logs + crash logs) shared via
- * FileProvider, and a prefilled GitHub bug-report URL.
+ * FileProvider, and a first-party GitHub bug-report link.
  *
- * GitHub rejects new-issue URLs past roughly 8 KB, so inline bodies are capped
- * and full logs always travel via clipboard or the zip.
+ * Diagnostic content is never embedded in the URL: it must be reviewed and
+ * explicitly pasted or shared by the user.
  */
 object LogExporter {
 
-    const val ISSUES_NEW_URL = "https://github.com/IacobIonut01/ReFra/issues/new"
+    const val ISSUES_NEW_URL = "https://github.com/GoreeCloud/gallery/issues/new"
     private const val ISSUE_TEMPLATE = "bug_report.md"
-    private const val MAX_URL_LENGTH = 7500
     private const val MAX_INLINE_BODY_CHARS = 3000
 
     private val json = Json { encodeDefaults = false; ignoreUnknownKeys = true }
@@ -42,7 +41,7 @@ object LogExporter {
         entries: List<LogEntry>,
         forGithub: Boolean = false,
     ): String = buildString {
-        appendLine("### ReFra diagnostics")
+        appendLine("### GoreeCloud Gallery diagnostics")
         appendLine()
         appendLine("```")
         appendLine(DiagnosticInfo.asText(context))
@@ -65,7 +64,7 @@ object LogExporter {
     }
 
     /**
-     * Writes `refra-diagnostics-<ts>.zip` into `cacheDir/share/` containing
+     * Writes `goreecloud-gallery-diagnostics-<ts>.zip` into `cacheDir/share/` containing
      * `device-info.txt`, `logs.jsonl` (already-sanitized entries) and any
      * crash logs. Old bundles are swept before writing.
      */
@@ -77,7 +76,7 @@ object LogExporter {
         val dir = File(context.cacheDir, "share").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        val out = File(dir, "refra-diagnostics-$stamp.zip")
+        val out = File(dir, "goreecloud-gallery-diagnostics-$stamp.zip")
         ZipOutputStream(BufferedOutputStream(FileOutputStream(out))).use { zip ->
             zip.putNextEntry(ZipEntry("device-info.txt"))
             zip.write(DiagnosticInfo.asText(context).toByteArray())
@@ -106,29 +105,20 @@ object LogExporter {
         return Intent(Intent.ACTION_SEND).apply {
             type = "application/zip"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "ReFra diagnostics")
+            putExtra(Intent.EXTRA_SUBJECT, "GoreeCloud Gallery diagnostics")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
 
     /**
-     * Prefilled `issues/new` URL. [title] and [body] are URL-encoded; the total
-     * URL is capped at [MAX_URL_LENGTH] with a truncation marker — callers put
-     * the full payload on the clipboard instead of relying on the URL.
+     * First-party issue URL with a generic title only. URL query parameters
+     * leave the device as soon as the browser opens; do not include diagnostics.
      */
-    fun issueUrl(title: String, body: String): String {
-        val encodedTitle = urlEncode(title)
-        val encodedBody = urlEncode(body)
-        val base = "$ISSUES_NEW_URL?template=$ISSUE_TEMPLATE&labels=bug&title=$encodedTitle&body="
-        val room = (MAX_URL_LENGTH - base.length).coerceAtLeast(0)
-        val bodyPart = if (encodedBody.length <= room) encodedBody
-        else encodedBody.take(room - TRUNCATED_ENCODED.length) + TRUNCATED_ENCODED
-        return base + bodyPart
-    }
+    fun issueUrl(title: String): String = "$ISSUES_NEW_URL?template=$ISSUE_TEMPLATE&labels=bug&title=${urlEncode(title.take(100))}"
 
     /**
-     * Issue body matching `bug_report.md`, with device info filled in and an
-     * optional error entry + breadcrumbs embedded when under the inline cap.
+     * Optional local issue body for explicit user review and manual sharing.
+     * This data must not be inserted into the issue URL automatically.
      */
     fun issueBody(
         context: Context,
@@ -170,7 +160,6 @@ object LogExporter {
         appendLine("*Full logs were copied to the clipboard — paste them here if the file is not attached.*")
     }
 
-    private const val TRUNCATED_ENCODED = "%0A%5Btruncated%5D"
 
     /**
      * JVM-friendly percent-encoding (`android.net.Uri.encode` is unavailable in

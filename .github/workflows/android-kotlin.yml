@@ -27,5 +27,9 @@ jobs:
           cp app/src/test/java/com/dot/gallery/cloud/CloudUriTest.kt app/src/accountUriTest/java/com/dot/gallery/cloud/CloudUriTest.kt
           cp app/src/test/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt app/src/accountUriTest/java/com/dot/gallery/cloud/CloudTransferPolicyTest.kt
           cp app/src/test/java/com/dot/gallery/cloud/CloudRequestSnapshotTest.kt app/src/accountUriTest/java/com/dot/gallery/cloud/CloudRequestSnapshotTest.kt
+          mkdir -p app/src/accountUriTest/java/com/dot/gallery/frameextract
+          cp app/src/test/java/com/dot/gallery/frameextract/ExtractedFramePolicyTest.kt app/src/accountUriTest/java/com/dot/gallery/frameextract/ExtractedFramePolicyTest.kt
+          mkdir -p app/src/accountUriTest/java/com/dot/gallery/core/logging
+          cp app/src/test/java/com/dot/gallery/core/logging/LogExporterTest.kt app/src/accountUriTest/java/com/dot/gallery/core/logging/LogExporterTest.kt
       - name: Test cloud account URI isolation
-        run: ./gradlew :app:testUniversalNoMLDebugUnitTest -PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest --tests com.dot.gallery.cloud.CloudTransferPolicyTest --tests com.dot.gallery.cloud.CloudRequestSnapshotTest --no-daemon --console plain
+        run: ./gradlew :app:testUniversalNoMLDebugUnitTest -PgoreecloudUriOnlyTests=true --tests com.dot.gallery.cloud.CloudUriTest --tests com.dot.gallery.cloud.CloudTransferPolicyTest --tests com.dot.gallery.cloud.CloudRequestSnapshotTest --tests com.dot.gallery.frameextract.ExtractedFramePolicyTest --tests com.dot.gallery.core.logging.LogExporterTest --no-daemon --console plain
