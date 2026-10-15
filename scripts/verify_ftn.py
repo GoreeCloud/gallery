@@ -85,4 +85,16 @@ assert (ROOT / "LICENSE").is_file()
 assert (ROOT / "UPSTREAM-PROVENANCE.md").is_file()
 assert not (ROOT / ".github/workflows/stable.yml").exists()
 assert not (ROOT / ".github/workflows/nightly.yml").exists()
+# First-party diagnostics and new export locations must never regress to the upstream identity.
+log_export = (ROOT / "app/src/main/kotlin/com/dot/gallery/core/logging/LogExporter.kt").read_text()
+assert 'https://github.com/GoreeCloud/gallery/issues/new' in log_export
+assert "IacobIonut01/ReFra/issues/new" not in log_export
+assert "GoreeCloud Gallery diagnostics" in log_export
+assert "goreecloud-gallery-diagnostics-" in log_export
+frame_writer = (ROOT / "app/src/main/kotlin/com/dot/gallery/feature_node/presentation/frameextract/ExtractedFrameWriter.kt").read_text()
+assert 'const val FALLBACK = "Pictures/GoreeCloud Gallery/Extracted Frames"' in frame_writer
+dev_view = (ROOT / "app/src/main/kotlin/com/dot/gallery/feature_node/presentation/settings/subsettings/DeveloperViewModel.kt").read_text()
+assert '[BUG] GoreeCloud Gallery issue report' in dev_view
+assert (ROOT / ".github/ISSUE_TEMPLATE/bug_report.md").is_file()
+
 print("PASS: FTN source checks. Build/APK/device validation is still required.")
