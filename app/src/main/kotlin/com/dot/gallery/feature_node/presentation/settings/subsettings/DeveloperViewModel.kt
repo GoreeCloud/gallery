@@ -201,12 +201,9 @@ class DeveloperViewModel @Inject constructor(
         }
 
     suspend fun issueUrlFor(entry: LogEntry?): String = withContext(Dispatchers.Default) {
-        val title = if (entry != null) {
-            "[BUG] ${entry.message.take(60)}"
-        } else {
-            "[BUG] GoreeCloud Gallery issue report"
-        }
-        LogExporter.issueUrl(title, LogExporter.issueBody(context, entry))
+        val title = if (entry == null) "[BUG] GoreeCloud Gallery issue report"
+                    else "[BUG] GoreeCloud Gallery error report"
+        LogExporter.issueUrl(title)
     }
 
     private fun recompute() {
