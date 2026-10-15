@@ -76,14 +76,7 @@ fun CrashReportPrompt() {
                     entry?.let {
                         clipboard.setText(AnnotatedString(LogExporter.entryText(it)))
                     }
-                    val title =
-                        "[BUG] Crash: ${entry?.message?.take(50) ?: "uncaught exception"}"
-                    uriHandler.openUri(
-                        LogExporter.issueUrl(
-                            title,
-                            LogExporter.issueBody(context, entry)
-                        )
-                    )
+                    uriHandler.openUri(LogExporter.issueUrl("[BUG] GoreeCloud Gallery crash report"))
                 }
             }) {
                 Text(stringResource(R.string.dev_action_report))
