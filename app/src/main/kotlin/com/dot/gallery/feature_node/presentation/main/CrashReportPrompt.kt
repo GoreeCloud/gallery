@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -35,12 +34,12 @@ import java.io.File
  * Post-crash nudge: when developer mode collected an uncaught exception the
  * previous session and it was never surfaced, ask once whether to file it as a
  * GitHub issue. The crash log (already anonymized by [com.dot.gallery.core.logging.LogSanitizer])
- * is copied to the clipboard so it can be pasted into the prefilled issue.
+ * is copied to the clipboard only after the user chooses Report. The browser
+ * receives a generic issue-template URL; the user reviews diagnostics before pasting.
  */
 @Composable
 fun CrashReportPrompt() {
     if (!AppLog.enabled) return
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
     val uriHandler = LocalUriHandler.current
