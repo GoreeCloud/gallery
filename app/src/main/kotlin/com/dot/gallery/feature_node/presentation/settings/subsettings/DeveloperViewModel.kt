@@ -204,7 +204,7 @@ class DeveloperViewModel @Inject constructor(
         val title = if (entry != null) {
             "[BUG] ${entry.message.take(60)}"
         } else {
-            "[BUG] Issue reported from ReFra"
+            "[BUG] GoreeCloud Gallery issue report"
         }
         LogExporter.issueUrl(title, LogExporter.issueBody(context, entry))
     }
