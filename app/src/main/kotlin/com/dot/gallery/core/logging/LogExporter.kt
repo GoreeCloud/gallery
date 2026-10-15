@@ -116,15 +116,7 @@ object LogExporter {
      * URL is capped at [MAX_URL_LENGTH] with a truncation marker — callers put
      * the full payload on the clipboard instead of relying on the URL.
      */
-    fun issueUrl(title: String, body: String): String {
-        val encodedTitle = urlEncode(title)
-        val encodedBody = urlEncode(body)
-        val base = "$ISSUES_NEW_URL?template=$ISSUE_TEMPLATE&labels=bug&title=$encodedTitle&body="
-        val room = (MAX_URL_LENGTH - base.length).coerceAtLeast(0)
-        val bodyPart = if (encodedBody.length <= room) encodedBody
-        else encodedBody.take(room - TRUNCATED_ENCODED.length) + TRUNCATED_ENCODED
-        return base + bodyPart
-    }
+    fun issueUrl(title: String): String = "$ISSUES_NEW_URL?template=$ISSUE_TEMPLATE&labels=bug&title=${urlEncode(title.take(100))}"
 
     /**
      * Issue body matching `bug_report.md`, with device info filled in and an
