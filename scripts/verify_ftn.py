@@ -97,5 +97,9 @@ dev_view = (ROOT / "app/src/main/kotlin/com/dot/gallery/feature_node/presentatio
 assert '[BUG] GoreeCloud Gallery issue report' in dev_view
 assert (ROOT / ".github/ISSUE_TEMPLATE/bug_report.md").is_file()
 assert "--tests com.dot.gallery.frameextract.ExtractedFramePolicyTest" in unit_ci
+assert "--tests com.dot.gallery.core.logging.LogExporterTest" in unit_ci
+assert "fun issueUrl(title: String): String" in log_export
+assert "body=$encodedBody" not in log_export
+assert "fun issueUrl(title: String, body: String)" not in log_export
 
 print("PASS: FTN source checks. Build/APK/device validation is still required.")
