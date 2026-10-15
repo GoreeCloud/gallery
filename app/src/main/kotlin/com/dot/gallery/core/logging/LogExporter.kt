@@ -23,16 +23,15 @@ import java.util.zip.ZipOutputStream
 /**
  * Turns sanitized entries into share-ready artifacts: markdown clipboard text,
  * a zip diagnostics bundle (device info + JSONL logs + crash logs) shared via
- * FileProvider, and a prefilled GitHub bug-report URL.
+ * FileProvider, and a first-party GitHub bug-report link.
  *
- * GitHub rejects new-issue URLs past roughly 8 KB, so inline bodies are capped
- * and full logs always travel via clipboard or the zip.
+ * Diagnostic content is never embedded in the URL: it must be reviewed and
+ * explicitly pasted or shared by the user.
  */
 object LogExporter {
 
     const val ISSUES_NEW_URL = "https://github.com/GoreeCloud/gallery/issues/new"
     private const val ISSUE_TEMPLATE = "bug_report.md"
-    private const val MAX_URL_LENGTH = 7500
     private const val MAX_INLINE_BODY_CHARS = 3000
 
     private val json = Json { encodeDefaults = false; ignoreUnknownKeys = true }
@@ -112,15 +111,14 @@ object LogExporter {
     }
 
     /**
-     * Prefilled `issues/new` URL. [title] and [body] are URL-encoded; the total
-     * URL is capped at [MAX_URL_LENGTH] with a truncation marker — callers put
-     * the full payload on the clipboard instead of relying on the URL.
+     * First-party issue URL with a generic title only. URL query parameters
+     * leave the device as soon as the browser opens; do not include diagnostics.
      */
     fun issueUrl(title: String): String = "$ISSUES_NEW_URL?template=$ISSUE_TEMPLATE&labels=bug&title=${urlEncode(title.take(100))}"
 
     /**
-     * Issue body matching `bug_report.md`, with device info filled in and an
-     * optional error entry + breadcrumbs embedded when under the inline cap.
+     * Optional local issue body for explicit user review and manual sharing.
+     * This data must not be inserted into the issue URL automatically.
      */
     fun issueBody(
         context: Context,
@@ -162,7 +160,6 @@ object LogExporter {
         appendLine("*Full logs were copied to the clipboard — paste them here if the file is not attached.*")
     }
 
-    private const val TRUNCATED_ENCODED = "%0A%5Btruncated%5D"
 
     /**
      * JVM-friendly percent-encoding (`android.net.Uri.encode` is unavailable in
