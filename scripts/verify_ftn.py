@@ -96,5 +96,6 @@ assert 'const val FALLBACK = "Pictures/GoreeCloud Gallery/Extracted Frames"' in 
 dev_view = (ROOT / "app/src/main/kotlin/com/dot/gallery/feature_node/presentation/settings/subsettings/DeveloperViewModel.kt").read_text()
 assert '[BUG] GoreeCloud Gallery issue report' in dev_view
 assert (ROOT / ".github/ISSUE_TEMPLATE/bug_report.md").is_file()
+assert "--tests com.dot.gallery.frameextract.ExtractedFramePolicyTest" in unit_ci
 
 print("PASS: FTN source checks. Build/APK/device validation is still required.")
