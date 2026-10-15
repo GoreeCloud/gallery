@@ -30,7 +30,7 @@ import java.util.zip.ZipOutputStream
  */
 object LogExporter {
 
-    const val ISSUES_NEW_URL = "https://github.com/IacobIonut01/ReFra/issues/new"
+    const val ISSUES_NEW_URL = "https://github.com/GoreeCloud/gallery/issues/new"
     private const val ISSUE_TEMPLATE = "bug_report.md"
     private const val MAX_URL_LENGTH = 7500
     private const val MAX_INLINE_BODY_CHARS = 3000
@@ -42,7 +42,7 @@ object LogExporter {
         entries: List<LogEntry>,
         forGithub: Boolean = false,
     ): String = buildString {
-        appendLine("### ReFra diagnostics")
+        appendLine("### GoreeCloud Gallery diagnostics")
         appendLine()
         appendLine("```")
         appendLine(DiagnosticInfo.asText(context))
@@ -65,7 +65,7 @@ object LogExporter {
     }
 
     /**
-     * Writes `refra-diagnostics-<ts>.zip` into `cacheDir/share/` containing
+     * Writes `goreecloud-gallery-diagnostics-<ts>.zip` into `cacheDir/share/` containing
      * `device-info.txt`, `logs.jsonl` (already-sanitized entries) and any
      * crash logs. Old bundles are swept before writing.
      */
@@ -77,7 +77,7 @@ object LogExporter {
         val dir = File(context.cacheDir, "share").apply { mkdirs() }
         dir.listFiles()?.forEach { it.delete() }
         val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        val out = File(dir, "refra-diagnostics-$stamp.zip")
+        val out = File(dir, "goreecloud-gallery-diagnostics-$stamp.zip")
         ZipOutputStream(BufferedOutputStream(FileOutputStream(out))).use { zip ->
             zip.putNextEntry(ZipEntry("device-info.txt"))
             zip.write(DiagnosticInfo.asText(context).toByteArray())
@@ -106,7 +106,7 @@ object LogExporter {
         return Intent(Intent.ACTION_SEND).apply {
             type = "application/zip"
             putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "ReFra diagnostics")
+            putExtra(Intent.EXTRA_SUBJECT, "GoreeCloud Gallery diagnostics")
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
     }
